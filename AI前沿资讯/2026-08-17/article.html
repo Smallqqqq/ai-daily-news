@@ -1,0 +1,421 @@
+<section style="max-width:677px;margin:0 auto;padding:10px 0;font-size:16px;line-height:2.1;color:#333333;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;background-color:#ffffff;">
+
+<!-- 日期副标题：不渲染文章标题，title 在 frontmatter -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-17</p>
+
+<!-- 摘要卡 -->
+<section style="background-color:#f0f9eb;border-radius:10px;padding:18px 20px;margin:0 0 28px 0;border:1px solid #c8e6c9;">
+  <p style="margin:0 0 10px 0;font-size:15px;color:#2e7d32;line-height:2.0;"><strong style="color:#1b5e20;">摘要</strong></p>
+  <p style="margin:0 0 10px 0;font-size:15px;color:#2e7d32;line-height:2.0;">本期覆盖 2026-08-16 至 2026-08-17 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Lobsters / arXiv / HF Papers / 知乎。精选 9 条按影响力排序。</p>
+  <p style="margin:0;font-size:15px;color:#2e7d32;line-height:2.0;"><strong style="color:#07c160;">核心主题：</strong><strong style="color:#2e7d32;">deepsec 安全扫描</strong>、<strong style="color:#2e7d32;">Claude 系统提示词</strong>、<strong style="color:#2e7d32;">DeepSeek 错峰定价</strong></p>
+</section>
+
+<!-- 条目1 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. Vercel deepsec（开源 AI 安全扫描 harness）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.0/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">热度：X trending 1.1K posts · GitHub 单日多报道 · daily.dev 热推</span>
+</section>
+
+![deepsec-demo](./deepsec-demo.png)
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Vercel Labs 8-16 开源的漏洞扫描框架，专治一个问题：AI 写代码太快，传统安全审查追不上。流程分两层：110 个正则 matcher 先标记安全敏感文件，2000 文件的项目约 <strong style="color:#07c160;">15 秒</strong>，无 AI 调用。然后 Claude/Codex 等 coding agent 逐个深查数据流和缓解措施，第二层 agent 过滤误报。五阶段工作流：scan → process → revalidate → enrich → export，状态全落在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">.deepsec/</code> 文件夹。支持 PR 模式 diff 扫描（CI 门禁）、断点续扫、git 提交人归属分析。可在 Vercel Sandbox 微虚拟机横向扩展，Vercel 扫自家代码库时日常跑到 <strong style="color:#07c160;">1000+ 并发沙箱</strong>。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 在要扫的仓库根目录执行，交互式向导选模型和付费方式
+npx deepsec init
+
+# 常规命令：scan（正则初筛）/ process（AI 深查）/ report / export
+npx deepsec scan && npx deepsec process
+
+# PR 模式：只扫 diff 里改动的文件
+npx deepsec process --diff
+# 自带模型订阅（Claude/Codex）即可跑，无需 Vercel 账号：
+# npx deepsec init --model-auth direct --ai-provider anthropic --ai-api-key-env ANTHROPIC_API_KEY</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">传统 SAST 靠规则匹配，误报率高且看不懂业务逻辑；deepsec 用 coding agent 做数据流推理，能追"用户输入 → 文件写入"这类跨函数链路。成本模型是公开的争议点：大仓库全量深查可能烧掉<strong style="color:#07c160;">数万美元</strong> token 费，所以它默认支持 Vercel AI Gateway 或自带 key，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">triage</code> 子命令用便宜模型做 P0/P1/P2 初分。对已有代码库做一次性历史欠账扫描，是它和"只在 PR 上跑审查"的工具（CodeRabbit 类）最大的差别。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color:#f0f9eb;border-left:4px solid #07c160;margin:0 0 12px 0;padding:14px 18px;border-radius:0 6px 6px 0;color:#555555;line-height:2.0;">
+  <p style="margin:0;font-size:15px;">X trending 条目「Vercel Open-Sources Deepsec AI Tool for Code Vulnerability Scans」累计 1.1K posts，讨论焦点是"AI 写代码 → AI 审代码"的闭环是否成立。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">daily.dev 的拆解文章提醒："costs potentially reaching tens of thousands of dollars for large repos"——热度之外，社区对 token 成本账算得很细。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/vercel-labs/deepsec</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目2 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. Claude System Prompts（Anthropic 公开消费级系统提示词）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">热度：HN 551 points / 230 comments，8-17 首页第一</span>
+</section>
+
+![claude-system-prompts-demo](./claude-system-prompts-demo.png)
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Anthropic 在官方文档 release notes 里新增「System Prompts」章节，公开 claude.ai 网页版和移动端各模型的完整系统提示词原文。覆盖 Opus 5、Fable 5、Opus 4.8、Opus 4.7、Sonnet 4.6 等。每份提示词按 XML 标签组织：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">&lt;product_information&gt;</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">&lt;default_stance&gt;</code>（默认帮助，仅在具体严重风险时拒绝）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">&lt;refusal_handling&gt;</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">&lt;tone_and_formatting&gt;</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">&lt;user_wellbeing&gt;</code>（心理危机处理）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">&lt;knowledge_cutoff&gt;</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">&lt;responding_to_mistakes_and_criticism&gt;</code>。版本间的差异用加粗标注，方便对比各代模型的行为设计变化。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 页面：platform.claude.com/docs/en/release-notes/system-prompts
+# 注意：文档明确声明不适用于 Claude API / Claude Code / Cowork，
+# 这些提示词假设存在 web search、Artifacts、memory 等消费级功能。
+# 实际用法是把它当提示词工程的蓝本，移植结构范式：
+# &lt;product_information&gt; + &lt;default_stance&gt; + &lt;tone_and_formatting&gt; + &lt;knowledge_cutoff&gt;</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这是 Anthropic 第一次把消费级产品的完整系统提示词摆到台面上。此前各家系统提示词要么靠泄露、要么靠用户侧提取，这次是官方渠道、带版本标注、可持续跟踪。对提示词工程师的参考价值具体：default stance 的措辞（"help unless specific risk"）、危机场景的话术模板、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">&lt;evenhandedness&gt;</code> 处理争议话题的方式，都是生产级系统提示词可直接抄的结构。HN <strong style="color:#07c160;">551 分</strong>是当日全站最高。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color:#f0f9eb;border-left:4px solid #07c160;margin:0 0 12px 0;padding:14px 18px;border-radius:0 6px 6px 0;color:#555555;line-height:2.0;">
+  <p style="margin:0;font-size:15px;">HN 帖子 551 points / 230 comments，首页第一。评论区集中在对比各版本提示词的措辞变化（尤其 Fable 5 的安全路由说明 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">&lt;fable_safeguards_routing&gt;</code>）。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">文档自身注明每模型 ID 从 Claude 4.6 起是固定快照（single fixed snapshot），系统提示词随版本冻结，便于审计。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>platform.claude.com/docs/en/release-notes/system-prompts</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目3 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. FreeBuff（DeepSeek V4 Pro 永久免费，终端广告盈利）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">热度：X 首发推文 1.2M views · 多个 YouTube 教程跟进</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Codebuff 创始人 James Grugett（@jahooma）做的免费终端 coding agent，商业模式是终端里插小段文字广告，不收订阅、不发额度卡。Full mode（25 个国家）下可用 DeepSeek V4 Pro 和 V4 Flash 0731、GPT-5.6 Luna、MiniMax M3、MiMo 2.5，GLM 5.2 靠会话积分解锁；其余地区走 limited mode（V4 Flash + MiMo，每天 6 个一小时会话）。内置 9 个子 agent、代码审查、browser-use 测试。8-13 DeepSeek V4 Pro GA 当天上线，正好接住涨价讨论。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>npm install -g freebuff
+cd 你的项目目录
+freebuff          # 首次启动选主力模型，选 DeepSeek V4 Pro 即可
+# 无 API key、无信用卡、无注册。数据可能用于广告个性化与模型训练，
+# 敏感代码不要跑在免费档。</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">DeepSeek 8-16 把 V4 Pro 国际 API 输出价提到峰值 <strong style="color:#07c160;">$3.96/M</strong>，FreeBuff 用广告替代了计费。对学生的吸引力是实打实的 0 成本：1.6T 参数的旗舰模型 + 完整 agent 框架，此前同类工具要么按 token 收钱（Cursor/Copilot），要么只免费给 Flash 级小模型（Cline/OpenCode 的免费档）。代价写在明面上：prompts 可能参与广告个性化，数据可能进训练集。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color:#f0f9eb;border-left:4px solid #07c160;margin:0 0 12px 0;padding:14px 18px;border-radius:0 6px 6px 0;color:#555555;line-height:2.0;">
+  <p style="margin:0;font-size:15px;">首发推文 1.2M views，@PrayagChhabra 回复："Used your product for 3 hours straight today… keep this utopia forever"。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">YouTube 教程「Deepseek FREE Coder Setup」把它列为"免费跑 1.6T Pro"的唯一路径，同时提醒："Freebuff is free because it uses ads and may use your data for ad personalization and AI training"。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>x.com/jahooma/status/2088052629347967108</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目4 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. Unsloth Desktop（本地跑训一站式，8-11 发布持续霸榜）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">热度：GitHub 572 stars/day · 总星 72.6k</span>
+</section>
+
+![unsloth-demo](./unsloth-demo.png)
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Unsloth 8-11 发布 Unsloth Desktop，把原来的 Python 微调库升级成完整本地 AI 工作台：在 Mac/Windows/Linux 上运行、训练、连接 <strong style="color:#07c160;">500+</strong> 文本/图像/视频/音频模型。内置模型中心按设备选量化版本，训练走无代码工作流，支持 3 倍速训练、500K 上下文训练、量化感知训练（NVFP4）。本地模型通过 OpenAI/Anthropic 兼容端点接给 Claude Code、Codex、Hermes、OpenCode、OpenClaw，还有 Cloudflare 隧道做远程访问。新模型 Day Zero 支持：Qwen3.8、Kimi K3、DeepSeek-V4、Muse Glimmer 全部当天适配。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 桌面应用：unsloth.ai 下载 Mac/Windows/Linux 安装包
+# 或命令行方式
+pip install unsloth
+unsloth start     # 起本地 UI + 兼容 API
+# 把 Claude Code 指到本地模型：ANTHROPIC_BASE_URL=http://localhost:xxxx</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天 <strong style="color:#07c160;">572 stars/day</strong> 仍排 GitHub Trending 前列，总星 72.6k。它解决的痛点具体：Qwen3.8/Kimi K3 这类新开源模型发布后，本地用户的量化版本、GGUF 放置策略、微调配方过去要自己拼 llama.cpp + transformers + 一堆脚本，Desktop 把它们收进一个模型中心。AMD 训练支持（Windows/WSL/Linux）和 500K 上下文训练是竞品（LM Studio 偏推理、Ollama 无训练）没有的组合。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color:#f0f9eb;border-left:4px solid #07c160;margin:0 0 12px 0;padding:14px 18px;border-radius:0 6px 6px 0;color:#555555;line-height:2.0;">
+  <p style="margin:0;font-size:15px;">X/Instagram 的 trending 播报（8-13）："Local UI to run and train LLMs and diffusion models… ⭐ 70,896 stars"，被多账号转发。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">更新日志 8-11 起连续发版：Desktop 首发、Kimi K3 + Deep Research + Parallel Chat、AMD 支持，一周三更。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/unslothai/unsloth</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目5 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. Zhihu CLI（知乎官方开放平台给 Agent 开的通道）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">热度：知乎热榜「Zhihu CLI上线」326 万热度 · 官方文章 904 赞同</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">知乎数据开放平台推出的官方命令行工具，配套 Skill 和托管 MCP 服务三种接入形态。Agent 拿到 Access Secret 后可搜索知乎站内与全网内容、读热榜、调知乎直答、读取用户自己的创作/关注/收藏数据。官方 Skill 安装就一句话：把「请下载安装 zhihu-cli skill 并完成初始化配置」发给 Claude Code/Codex/Cursor，Agent 自动完成下载、安装、初始化。CLI 二进制的供应链校验做得严：官方域名 + 文件大小 + SHA-256 + 版本号四重校验后才落盘。凭证走标准输入、存 Windows 凭据管理器或 macOS Keychain，不落配置文件。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 方式一：官方 Skill（把下面这句话发给你的 coding agent）
+# "请下载安装 zhihu-cli skill 并完成初始化配置"
+
+# 方式二：手动装 CLI（Windows 下 zhihu-cli，Linux 支持在路上）
+# 1. 知乎数据开放平台个人中心生成 Access Secret（实名认证后可见）
+# 2. 凭证走标准输入，不进进程参数不落 shell 历史
+printf '%s' '&lt;access-secret&gt;' | zhihu-cli auth set --secret-stdin
+zhihu-cli auth status --verify
+
+# 站内搜索示例
+zhihu-cli search zhihu --query "Agent Memory" --count 10
+# 返回结构化 JSON：ContentType/Title/AuthorName/Url，附原始链接</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">中文互联网内容对 Agent 长期是半封闭的——爬虫要自己维护反爬、签名和风控退避。官方 CLI 把这一摊变成平台责任，返回结构化字段而非 HTML。对做中文调研/选题/知识管理的 agent 工作流，知乎高赞回答是比全网搜索更硬的一手素材。热榜 <strong style="color:#07c160;">326 万热度</strong>说明需求真实。MCP 形态（官方托管四服务：搜索类走 SSE，直答走 Streamable HTTP）意味着本地零安装也能接。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color:#f0f9eb;border-left:4px solid #07c160;margin:0 0 12px 0;padding:14px 18px;border-radius:0 6px 6px 0;color:#555555;line-height:2.0;">
+  <p style="margin:0;font-size:15px;">官方文章评论区：「真的不错，比死守自家的直答，给各个 agent 提供能力才是正确的方向」（+25 回复）。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">实测文章记录了两个坑：中文 Windows 下 run.ps1 的 UTF-8 BOM 问题（PowerShell 5.1 误当 GBK 读取报解析错误，手动补 BOM 解决）；Linux 用户 Chow Anod「一运行却告诉我不支持 linux」。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">评论区还有一段关于 Access Secret 走对话链路的顾虑讨论：凭证进过对话框就进了自己无法掌控的链路，作者建议这一步在终端手动完成。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>zhuanlan.zhihu.com/p/2068355085243871946</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目6 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. MathCode（带 Lean 4 形式化引擎的数学编码 agent）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">热度：HN 63 points / 19 comments · GitHub 584 stars</span>
+</section>
+
+![mathcode-demo](./mathcode-demo.png)
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">math-ai-org 出的终端 AI 编码助手，内置数学形式化引擎。用自然语言描述数学命题，它自动转成 Lean 4 定理，尝试机器可验证的形式化证明。底层是 AUTOLEAN 项目的形式化管线，配持久化 Lean REPL：编译检查预热后约 <strong style="color:#07c160;">0.4 秒</strong>一次，传统方式约 30 秒。每证一个定理就自动命名入库，后续证明可 import 复用。对话中的临时假设可存为编译检查过的 axiom。默认后端是 Codex CLI（可换其他模型），有 Web UI（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">./run webui</code>），产出落在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">LeanFormalizations/</code> 目录。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/math-ai-org/mathcode
+cd mathcode && bash setup.sh      # 下载运行时和 Lean 工具链，装用户级 launcher
+codex auth login                 # 默认后端需要 codex CLI
+mathcode -p "prove that the square of an even number is even"
+./run webui                      # 浏览器界面</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">LLM 直接做数学的痼疾是"看着对但不可信"，形式化证明把输出变成编译器可验证的对象——要么通过要么报错，没有中间地带。MathCode 把 Lean 工具链包成 agent 工作流，定理库 + axiom 库让长证明可以跨会话积累。8-16 上 HN 首页，是「LLM + 形式化验证」方向少数可当天跑起来的成品，此前同类工具（如 AlphaProof）无开放可用版本。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color:#f0f9eb;border-left:4px solid #07c160;margin:0 0 12px 0;padding:14px 18px;border-radius:0 6px 6px 0;color:#555555;line-height:2.0;">
+  <p style="margin:0;font-size:15px;">HN 63 points / 19 comments，讨论集中在 Lean REPL 0.4 秒编译检查对 agent 循环的意义——证明步骤的试错成本直接决定探索深度。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">OpenAgentSkill 收录页给出审计分：Security 77/100、Maintenance 88/100、Install 92/100，标注 license 不清晰（官方页面要求研究引用）。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/math-ai-org/mathcode</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目7 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. DeepSeek 峰谷定价生效 48 小时：错峰实测与替代方案（8-16 首录，持续跟进）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">热度：Reddit r/DeepSeek 热帖 · 知乎「涨价后性价比」讨论 157+135 赞同</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">DeepSeek 国际 API 峰谷定价 8-16 16:00 UTC 生效。V4-Pro 输入峰值 <strong style="color:#07c160;">$1.32/M</strong>、输出峰值 <strong style="color:#07c160;">$3.96/M</strong>（原 $0.87，+355%），缓存命中项涨幅最高 <strong style="color:#07c160;">1,114%</strong>，谷价减半。知乎「AI编程实验室」给出 8-17 之后的实操账本：80% 任务错峰到谷时，每月比全高峰少花 <strong style="color:#07c160;">1,010.59 元</strong>。但比调价前仍多付 800.45 元，错峰只能止损，回不到旧价。配套开源了纯本地价格计算器 deepseek-price-scheduler：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">index.html</code> 双击即用，无需 API Key，按 token 用量、缓存命中率、错峰比例算月费。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 错峰调度原则（来自实测文章）：夜间代码索引、仓库扫描、批量生成测试、
+# 离线评测、文档摘要适合排队到谷时；线上故障排查、安全/支付/数据迁移不做错峰。
+
+# 价格计算器（浏览器本地运行，无 API Key）
+# github.com/AI-Programming-Lab/deepseek-price-scheduler （index.html 直接打开）
+
+# 免费替代（见本期第 3 条）：npm install -g freebuff</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">涨价把"模型选型"变成"时段调度"问题。V4-Pro 的输出峰值价 <strong style="color:#07c160;">$3.96/M</strong> 已经贴近 GPT-5.6 Luna 的 $2.50 档，价格优势从 6 倍缩到 1 倍以内；而 V4 Flash 维持 $0.14/$0.28 不动，官方把 Flash 定位成默认 agent 模型的意图更明显了。知乎大讨论里 <strong style="color:#07c160;">157 赞同</strong>的高赞答案直接算账："官方订阅 Pro 用户有 20X 额度，Sol 自由"，涨价后官方订阅 vs API 自付的性价比排序被重排。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color:#f0f9eb;border-left:4px solid #07c160;margin:0 0 12px 0;padding:14px 18px;border-radius:0 6px 6px 0;color:#555555;line-height:2.0;">
+  <p style="margin:0;font-size:15px;">Reddit r/DeepSeek：「DeepSeek just massively increased their API prices (effective August 16, 2026) - up to 1,114% increase for cache hits」。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">知乎「DeepSeek V4 大幅涨价后，现在谁才是你心中的大模型性价比之王」157 赞同高赞：价格敏感项目开始转向官方订阅和 GPT-5.6 Luna，Flash 留在高并发 agent 场景。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">知乎 8-14 实战文提醒：Harness 开发者预览版先隔离验证，"不要把开发者预览版直接接入关键生产链路"。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>zhuanlan.zhihu.com/p/2071731871747258113</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目8 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. Credentio（Google 开源 C2PA 内容凭证校验库）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.5/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">热度：AI/TLDR 8-16 头条 · Google Developers Blog 发布</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Google 开源的 Apache-2.0 C++ 库，在设备端校验 C2PA Content Credentials——图片/视频/文档的签名来源记录，标明是否 AI 生成。同一套代码已在近 <strong style="color:#07c160;">40 个 Google 产品</strong>内部运行。面向的是「内容凭证」生态的基础设施层：应用想告诉用户"这张图来自哪里、是不是 AI 生成的"，接入 Credentio 即可完成本地校验，凭证数据不上传服务器。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># C++ 库，从源码构建（Apache-2.0）
+# 官方仓库与集成文档见 Google Developers Blog 公告页
+git clone https://github.com/google/credentio  # 以官方公告中给出的仓库地址为准
+# 集成场景：图片上传链路中做设备端 C2PA 校验，展示"AI 生成/实拍"标签</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">C2PA 标准此前缺一个头部大厂维护的开源实现，各家要么自己写、要么用功能不全的社区库。Credentio 的差异点是 Google 内部近 40 个产品（含搜索、相册类场景）验证过的生产代码直接公开，处理规模不是 demo 级。对要上内容溯源合规的应用（欧盟 AI Act 对 AI 生成内容的标识要求 8 月 2 日已生效），这是现成的设备端组件。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color:#f0f9eb;border-left:4px solid #07c160;margin:0 0 12px 0;padding:14px 18px;border-radius:0 6px 6px 0;color:#555555;line-height:2.0;">
+  <p style="margin:0;font-size:15px;">AI/TLDR 8-16 将 Credentio 列为本日头条之一，角度是「同一套代码已在近 40 个 Google 产品内运行」的实战验证。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">公告强调 on-device 校验：凭证检查不依赖服务器，隐私面比云端校验方案小。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>buttondown.com/ai-tldr/archive/aitldr-daily-digest-august-16-2026</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目9 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. Agentao（arXiv 2608.13574：受治理的 local-first agent 运行时）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.0/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">热度：arXiv 8-17 新提交 + 代码开源</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">8-17 提交到 cs.AI 的论文，提出 Agentao：给工具调用型 LLM agent 用的「受治理、本地优先」运行时。核心主张是 agent 的工具调用在本地受控沙箱内执行，由运行时做策略治理：哪些工具可用、什么操作需要确认。模型不再拥有完整控制权。论文注明代码已公开在 GitHub（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">github.com/jin-bo/agentao</code>）。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/jin-bo/agentao
+# 论文：arxiv.org/abs/2608.13574
+# 运行方式以仓库 README 为准，定位是给 agent 工具链加治理层的运行时组件</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 工具调用失控（误删、越权 API 调用）是生产部署的头号顾虑，Claude Code 的权限模式、deepsec 的沙箱都在解决同一问题。Agentao 把"治理"做成独立运行时层，与模型和 harness 解耦，可以套在现有 agent 框架外层。作为当天 cs.AI 新提交中少数代码即开源的论文，值得放进观察列表。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color:#f0f9eb;border-left:4px solid #07c160;margin:0 0 12px 0;padding:14px 18px;border-radius:0 6px 6px 0;color:#555555;line-height:2.0;">
+  <p style="margin:0;font-size:15px;">与同期 arXiv 新提交（2608.13573 "A Year in LLM Serving"、2608.13577 "AI Evaluation Should Work With Humans"）同批，Agentao 是其中唯一标注 "code is publicly available at GitHub" 的条目。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">论文定位与 8-16 发布的 deepsec、Zhihu CLI 的凭证治理形成同题共振：agent 生态本周的主题是"给 agent 装边界"。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>arxiv.org/abs/2608.13574</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 其他值得关注 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 18px 0;padding-left:14px;border-left:3px solid #eee;">
+  <p style="margin:0 0 6px 0;font-size:17px;font-weight:bold;color:#222;">Stripe 以逾 70 亿美元收购 OpenRouter</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;">AI 模型路由层的最大一笔收购，OpenRouter 的模型聚合与 Stripe 的支付基建合并。商业新闻。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：Bloomberg 8-16，HN 208 分</p>
+</section>
+
+<section style="margin:0 0 18px 0;padding-left:14px;border-left:3px solid #eee;">
+  <p style="margin:0 0 6px 0;font-size:17px;font-weight:bold;color:#222;">Nvidia 缩减 OpenAI 数据中心融资担保</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;">原 250 亿美元担保规模下调，WSJ 首发。商业新闻。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：Reuters 8-14，HN 107 分</p>
+</section>
+
+<section style="margin:0 0 18px 0;padding-left:14px;border-left:3px solid #eee;">
+  <p style="margin:0 0 6px 0;font-size:17px;font-weight:bold;color:#222;">Models Are Getting Dumber on Purpose</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;">观点文，讨论模型为成本主动降智的观察，讨论量当日第二。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：HN 276 分 / 154 评论，w4g1.dev</p>
+</section>
+
+<section style="margin:0 0 18px 0;padding-left:14px;border-left:3px solid #eee;">
+  <p style="margin:0 0 6px 0;font-size:17px;font-weight:bold;color:#222;">The AI Credit Resale Economy</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;">拆解 token 经纪商转售市场，观点文。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：HN 229 分，vectoral.com</p>
+</section>
+
+<section style="margin:0 0 18px 0;padding-left:14px;border-left:3px solid #eee;">
+  <p style="margin:0 0 6px 0;font-size:17px;font-weight:bold;color:#222;">simonwillison 评测 Qwen 3.8 27B 过度思考</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;">实操向——怎么关 thinking、哪些任务适合开，配完整配置示例。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：HN 62 分</p>
+</section>
+
+<section style="margin:0 0 18px 0;padding-left:14px;border-left:3px solid #eee;">
+  <p style="margin:0 0 6px 0;font-size:17px;font-weight:bold;color:#222;">美团 LongCat「Beyond Final Scores」</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;">长程 AI 研究与开发 agent 的系统性评测，无开源代码。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：HF Papers 当日最高 9 票，arXiv 2608.13417</p>
+</section>
+
+<section style="margin:0 0 18px 0;padding-left:14px;border-left:3px solid #eee;">
+  <p style="margin:0 0 6px 0;font-size:17px;font-weight:bold;color:#222;">Lobsters「Why I remain a skeptic」</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;">对 AI 软件开发效果持疑的长文，123 条评论。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：73 分，vibecoding tag</p>
+</section>
+
+<section style="margin:0 0 18px 0;padding-left:14px;border-left:3px solid #eee;">
+  <p style="margin:0 0 6px 0;font-size:17px;font-weight:bold;color:#222;">OpenAI IPO S-1 进程</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;">上市文件推进中，Grok 4.6 与 GPT-5.6 的价格战背景下资本市场情绪波动。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：aitoolsrecap 8 月跟踪</p>
+</section>
+
+<section style="margin:0 0 18px 0;padding-left:14px;border-left:3px solid #eee;">
+  <p style="margin:0 0 6px 0;font-size:17px;font-weight:bold;color:#222;">GLM-5.3 安全后续</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;">开放权重前披露测试期间在 269 个开源项目中发现 2,436 个漏洞，安全评估继续。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：AI/TLDR 8-16</p>
+</section>
+
+<!-- 关键词底栏 -->
+<section style="background-color:#f5f7fa;border-radius:10px;padding:18px 20px;margin:24px 0 0 0;">
+  <p style="margin:0 0 10px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">本期关键词</p>
+  <p style="margin:0;font-size:15px;color:#555;text-align:left;">deepsec 安全扫描 · Claude 系统提示词 · FreeBuff 免费 Pro · Unsloth Desktop · Zhihu CLI · Lean 4 形式化 · DeepSeek 错峰定价 · C2PA 内容凭证</p>
+</section>
+
+</section>
