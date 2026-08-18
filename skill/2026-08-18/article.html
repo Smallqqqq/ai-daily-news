@@ -1,0 +1,122 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<!-- 用户规范：body 开头不渲染文章标题，只放品牌绿日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-18</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">你让 Claude Code 给 orders 表加个索引。它写了 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">CREATE INDEX</code>，语法没错，执行也过了。三个月后流量上来，你发现索引建在低区分度列上白占空间，缺了 WHERE 子句的部分索引，RLS 策略留了漏洞，连接池开到 200 个连接把 Postgres 的并发模型拖垮。AI 写数据库代码的老毛病：语法都对，工程上全错。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">supabase/agent-skills 填的就是这个坑。Supabase 官方把自己的工程师审生产数据库攒下的判断，打包成 Agent 能按需加载的技能文件。<strong style="color:#07c160;">2528 stars</strong>，MIT 协议，2026 年 1 月发布，官方持续维护。其中 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">postgres-best-practices</code> 这个技能不挑环境，官方原文写的是 "for Postgres running anywhere"，你用 RDS、自建还是托管云数据库，它都适用。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+![supabase/agent-skills 演示](./supabase-agent-skills-demo.png)
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>它解决什么问题</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">AI 写数据库代码有两个问题。第一，它不知道工程后果。建索引容易，但什么时候该用部分索引、什么时候 BRIN 比 B-tree 合适、低区分度索引为什么是负资产，这些判断不在模型训练数据的常见分布里，是 DBA 踩坑踩出来的。第二，它记不全生态细节。Supabase 的 Auth cookie 机制、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">getUser</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">getSession</code> 的差别、RLS 策略的测试方法、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pg_cron</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pgmq</code> 的用法，通用模型只了解个大概，写出来的集成代码细节常错。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">这套技能把官方工程判断直接喂给 agent。装完之后，agent 动任何 Postgres 对象前会先加载最佳实践参考，碰 Supabase 产品时按官方文档行事。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>核心原理</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">标准 Agent Skills 结构：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">SKILL.md</code> 带 name 和 description 的 frontmatter，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">references/</code> 目录放详细参考文件。agent 干活时按描述匹配自动加载，不需要显式调用。整个仓库就两个技能：</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;"><strong style="font-weight:bold;color:#333;">supabase：</strong>综合技能。覆盖 Database、Auth、Edge Functions、Realtime、Storage、Vectors、Cron、Queues 全部产品线，加上 supabase-js 和 @supabase/ssr 在 Next.js、SvelteKit、Astro、Remix 里的 SSR 集成模式，还带排错手册（HTTP 错误、RLS 权限意外、schema cache 过期、Edge Function 崩溃）。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;"><strong style="font-weight:bold;color:#333;">supabase-postgres-best-practices：</strong>8 大类工程规范，按影响面分级。查询性能（Critical）、连接管理（Critical）、Schema 设计（High）、并发与锁（Medium-High）、安全与 RLS（Critical）、数据访问模式（Medium）、监控诊断（Low-Medium）、高级特性（Low）。写查询、设计表、配连接池、写 RLS 之前，agent 先读对应章节。</li>
+</ul>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">分发上有个细节：仓库每次 release 把技能打成 tarball，生成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">dist/index.json</code> 发布到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">supabase.com/.well-known/agent-skills/</code>，符合 Agent Skills 规范的 .well-known 发现机制。更新走标准渠道，不是 git 裸仓库。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>安装配置</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">两条路，任选：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 方式一：skills CLI（适用 Claude Code / Copilot / Cursor 等 18+ 种 agent）
+npx skills add supabase/agent-skills                    # 装全部
+npx skills add supabase/agent-skills --skill supabase-postgres-best-practices  # 只装 PG 最佳实践
+
+# 方式二：Claude Code 插件市场
+claude plugin marketplace add supabase/agent-skills
+claude plugin install supabase@supabase-agent-skills
+claude plugin install postgres-best-practices@supabase-agent-skills</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">默认装到项目级（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.claude/skills/</code>），队友和云端 agent 共享同一套配置；想全局可用加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--global</code>。官方还提供和 Supabase MCP server 打包的一站式插件，见文档里的 Supabase Plugin for AI Coding Agents。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>使用指南</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">装完不用背命令，agent 在相关任务里自动加载。三个高频场景：</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>场景一：加列改表之前，先过 schema 规范</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">你说"给 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">users</code> 表加一个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">email_verified</code> 列"。agent 加载 best-practices 后，先确认列类型选择、要不要加约束和索引、迁移文件怎么写才可回滚，而不是直接 ALTER。按官方规范，text 类型不带长度、时间戳用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">timestamptz</code> 不用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">timestamp</code>、布尔列配部分索引。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>场景二：慢查询排查</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">线上 API 变慢，你说"帮我看看这个查询为什么慢"。agent 读 Query Performance 和 Monitoring 章节，先看 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">EXPLAIN</code> 计划、检查索引命中、判断该改写 JOIN 还是调整连接池，每条建议都带官方依据，而不是拍脑袋说"加个索引试试"。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>场景三：Next.js 接 Supabase Auth</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">在 Next.js 项目里加登录功能。agent 自动加载 supabase 技能的 SSR 集成部分：cookie 在 server/client 组件间怎么传、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">getUser</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">getSession</code> 什么时候用哪个、middleware 里怎么刷新 session，按官方模式写，而不是拼一个能跑但 session 三天两头失效的实现。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>进阶技巧</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">postgres-best-practices 是 Anywhere 的。项目没用 Supabase、只想要那套 Postgres 工程规范，用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--skill</code> 参数单独装一个就行。反过来，团队多人用不同 agent（Claude Code、Cursor、Copilot），装到项目级目录让所有人共享，规范天然一致。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>常见踩坑</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">更新很勤。官方文档原话是 "We update our agent skills frequently"，装完定期跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx skills update</code>，否则 agent 拿着半年前的规范干活。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">别把两个技能搞混。supabase 是产品集成手册，supabase-postgres-best-practices 是数据库工程规范。纯 Postgres 项目不需要前者，Supabase 项目两个都装。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">项目级安装会进 git。不想让技能文件混进业务仓库，用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--global</code>。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>同类技能对比</strong></p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;text-align:left;">supabase/agent-skills（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>npx skills / Claude 插件</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>官方维护，8 大类工程规范 + 全产品线集成</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>Supabase/Postgres 日常开发</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 2528</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">ctoth/sql-skills-plugin</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>Claude 插件</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>32 个标准 SQL 语法技能，教 SQL 本身</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>学标准 SQL、跨库移植</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 0</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">u1pns/skill-dba</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>手动 copy</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>DBA 运维向：审计、健康检查、在线 DDL</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>数据库运维排障</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 4</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">wshobson/agents 的 database-migration</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>npx skills</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>迁移模式大全，但挂在 92 插件的大合集里</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>大型迁移专项</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 38.1k（合集）</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">skill-dba 偏运维排障，sql-skills-plugin 教 SQL 语言本身，都不解决"写出来的数据库代码符不符合生产工程规范"。大合集里的 database-migration 迁移写得好，为了一个迁移技能装 92 个插件的仓库不划算。官方维护、工程规范、单仓库两个技能，这个组合目前没有替代。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 2528</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>MIT License</span>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/supabase/agent-skills</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>supabase.com/docs/guides/getting-started/ai-skills</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>今日小结</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">这套技能适合两类人：用 Supabase 的开发者，两个都装，Auth、RLS、Edge Functions 的坑官方替你填了；用 Postgres 但不满意 AI 写的数据库代码的人，单装 best-practices。安装两分钟，之后 agent 碰数据库相关代码自动加载。换来的是 schema 迁移有章法、慢查询排查有依据、Auth 集成按官方模式写。受够了 AI 写的"语法对但工程错"的 SQL，今天就装。</p>
+
+</section>

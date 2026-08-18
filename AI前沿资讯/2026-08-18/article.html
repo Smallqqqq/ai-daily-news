@@ -1,0 +1,408 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<!-- 用户规范：body 开头不渲染文章标题，只放品牌绿日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-18</p>
+
+<!-- 摘要提示卡 -->
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+  <p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;">本期覆盖 2026-08-17 至 08-18 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Lobsters / arXiv / HF Papers / 知乎 / Product Hunt / AI 实验室博客。精选 10 条按影响力评分排序。</p>
+  <p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;"><strong style="color: #1b5e20;">核心主题：</strong><strong style="color:#07c160;">agent 基础设施生态化</strong>——记忆、视觉插件、安全技能、软件 agent 化工具全线爆发，同时 <strong style="color:#07c160;">GPT-5.6 Sol 在 OpenRouter 降价 50%</strong></p>
+</section>
+
+<!-- 条目 1 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>1. Strix（usestrix/strix，开源 AI 渗透测试工具）</strong></p>
+
+![Strix 演示](./strix-demo.png)
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.9/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 今日 #3，598 stars/day，总 53,055★</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">0xallam 开发的 <strong style="font-weight:bold;color:#000;">Apache-2.0</strong> 开源 AI 渗透测试工具，2025 年 8 月创建。它把多 agent 编排成一支黑客小队：动态运行你的代码、找漏洞、再用真实 <strong style="font-weight:bold;color:#000;">PoC</strong> 验证，不像传统静态扫描器那样报一堆误报。新变化：Strix 已集成 <strong style="font-weight:bold;color:#000;">GitHub Actions</strong>，每个 PR 自动扫描，不安全的代码在进生产前被拦下。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 安装（首次运行会自动拉取沙箱 Docker 镜像）
+curl -sSL https://strix.ai/install | bash
+
+# 配置任意一家 LLM（OpenAI/Anthropic/Google 等）
+export STRIX_LLM="openai/gpt-5.4"
+export LLM_API_KEY="your-api-key"
+
+# 对本地代码目录发起一次安全评估
+strix --target ./app-directory</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;"><strong style="color:#07c160;font-size:20px;">598</strong> stars/day 排今天 GitHub 全站第三，总星从 7 月的约 42K 涨到 <strong style="color:#07c160;">53K</strong>，一个月 <strong style="color:#07c160;">+11K</strong>。它和 SAST 工具的核心差别是"验证"：跑真实 PoC 证明漏洞可利用，并直接给出补丁和合规报告。适合 bug bounty 自动化和 CI/CD 左移安全。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">X 上 AI 趋势号 @alexchen77sh 总结 8-17 热榜时写道："Agent infrastructure is turning into an ecosystem: runtime, plugins, desktop interfaces, model routing, and structured context are accelerating together." 安全 agent 正是这波生态的一环。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">GitHub Trending 描述："Autonomous AI hackers that find and fix your app's vulnerabilities"，官网注册即可接入 CI 无需自部署。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/usestrix/strix</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 2 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>2. ModLens（liustack/modlens，DeepSeek Harness 视觉插件）</strong></p>
+
+![ModLens 演示](./modlens-demo.jpg)
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">今日 +535★，总 1,898★，github.hot 榜单 #6</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">第一个 DeepSeek Harness（dsh）视觉插件，MIT 协议，作者 liustack。DeepSeek 和 GLM 的旗舰模型是纯文本的，读不了图；ModLens 让它们在聊天框里直接粘贴图片，通过原生 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">modlens_read_image</code> 工具把图片转成结构化 JSON 证据（OCR、版面、语义）。插件会自动发现所有承载 DeepSeek/GLM 纯文本模型的路由，生成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">DeepSeek-V4-Flash (modlens vision)</code> 这样的包装入口，视觉模型的原生粘贴不受影响。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 一条命令安装（版本号显式指定，避开 pnpm 对 24h 内新版本的限制）
+npx -y @deepseek-ai/dsh plugin --profile web add @liustack/modlens@3.16.7
+# 然后在 dsh 里直接粘贴图片，或选 (modlens vision) 模型入口</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">不用换模型就给纯文本模型装上眼睛。<strong style="color:#07c160;">+535★/day</strong> 的增速说明 dsh 插件生态的需求正在爆发，它与 8-16 首录的热榜 #1 元框架 cordis 属于同一生态（dsh 底层由 cordis 驱动），视觉补上后纯文本模型的可用场景大幅拓宽。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">github.hot 榜单描述："全网最强 DeepSeek Harness 外挂视觉插件，为 DeepSeek、GLM 等纯文本模型外挂视觉能力，粘贴图片即得结构化 JSON 证据。"</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">作者在 README 中特意解释为何不用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">@latest</code> 标签安装：pnpm 11 会扣留 24 小时内新发布的版本，导致装到昨天的旧包。这类细节说明插件已经过了真实用户的踩坑期。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/liustack/modlens</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 3 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>3. CLI-Anything（HKUDS/CLI-Anything，让所有软件 agent 化）</strong></p>
+
+![CLI-Anything 演示](./cli-anything-demo.png)
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.2/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">今日 +411★，总 47,697★</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">香港大学 HKUDS 实验室（LightRAG 团队）出品，<strong style="font-weight:bold;color:#000;">Apache-2.0</strong>，2026 年 3 月创建。口号 <strong style="font-weight:bold;color:#000;">"Making ALL Software Agent-Native"</strong>：为任意软件生成 CLI 封装，让 Pi、OpenClaw、nanobot、Cursor、Claude Code 等 agent 能直接操作 CAD、3D 场景、图表、游戏、字幕等工具。社区共建的 CLI-Hub 提供安装与管理入口，想支持某个软件可以提交 PR 或 wishlist。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 安装 Hub 并浏览/安装社区 CLI
+pip install cli-anything-hub
+cli-hub install &lt;软件名&gt;
+
+# 为团队自研软件生成 CLI：参照 CONTRIBUTING.md 提交 PR
+git clone https://github.com/HKUDS/CLI-Anything</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;"><strong style="color:#07c160;font-size:20px;">47.7K</strong> 总星、今日 <strong style="color:#07c160;">+411</strong>。它把 agent 的能力边界从"写代码"扩展到"操作世界上所有的软件"，Demo 覆盖 CAD 构建、3D 场景、图表、游戏、字幕等真实产出物，是目前"软件 agent 化"方向最大的社区工程。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">README 定位语："Today's Software Serves Humans. Tomorrow's Users will be Agents." agent 是软件的下一批用户，这个判断在 8-17 的 X 热榜总结里同样被强调。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">CLI-Hub 采用 PR 即上线的机制，社区贡献节奏以天计。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/HKUDS/CLI-Anything</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 4 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>4. ai-memory（akitaonrails/ai-memory，跨厂商 agent 记忆与交接）</strong></p>
+
+![ai-memory 演示](./ai-memory-demo.png)
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">今日 207★，总 2,078★</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;"><strong style="font-weight:bold;color:#000;">Rust</strong> 编写的 agent 长期记忆方案，作者 Fabio Akita（巴西知名开发者），MIT 协议，2026 年 5 月创建。解决的真实痛点：在 Claude Code 里做了一半的任务，换成 OpenAI Codex 在同一目录继续，不用重新解释架构、失败方案和未决问题。实现方式是 MCP 配置 + 生命周期 hook 捕获会话，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">SessionStart</code> 时注入上次的交接记录。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 从 Releases 下载对应平台二进制（macOS aarch64/x86_64 原生包、Windows x64 zip、Linux Docker 镜像）
+# 安装后初始化 MCP 与生命周期 hook：
+ai-memory install-mcp --session-aware
+# 可选：捕获 assistant 最终回合（需服务端 double opt-in）
+ai-memory finalize-session</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;"><strong style="color:#07c160;">207★/day</strong>、5 月创建至今 2.1K★。支持矩阵覆盖 Claude Code、Codex、Devin CLI 等主流 coding agent，连各平台的 hook 事件差异都做了适配（Codex 无 session-end hook，需手动 finalize）。跨厂商 agent 切换是真实高频场景，这块能力正成为 agent 基础设施的标配层。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">Trending 描述："Solution for long term memory for agent coding CLIs and to facilitate handoff between different agent vendors."</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">与 8-17 日报收录的 Agentao（受治理的本地 agent 运行时）呼应：记忆与治理正在同时成为 agent 基础设施的两条主线。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/akitaonrails/ai-memory</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 5 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>5. llmfit（AlexsJones/llmfit，一键找出能跑在你硬件上的模型）</strong></p>
+
+![llmfit 演示](./llmfit-demo.gif)
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.9/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">今日 198★，总 31,445★</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">AlexsJones（CNCF 大使）的 Rust 终端工具，MIT 协议。它检测本机 RAM/CPU/GPU，对几百个模型按质量、速度、适配度、上下文四个维度打分，直接告诉你哪些模型真能在你的机器上跑。自带交互式 TUI 和 CLI 两种模式，支持 Ollama、llama.cpp、MLX、Docker Model Runner、LM Studio。新功能 benchmark &amp; share：本机实测 tok/s，从 TUI 里直接提 PR 回馈社区，实测数据替换估算值。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Windows
+scoop install llmfit
+# macOS / Linux
+brew install AlexsJones/llmfit/llmfit
+# 启动 TUI
+llmfit</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;"><strong style="color:#07c160;">198★/day</strong>。1.0 版本的核心变化是"数字可验证"：每条 benchmark 都来自社区真机实测，同硬件用户会直接看到 ✓ 实测标记，而不是厂商标注的理论吞吐。在本地模型爆发的 2026 年，选型成本从"翻文档"降到"一条命令"。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">README 的 1.0 公告标题就是卖点："llmfit 1.0 — the release where the numbers became verifiable"。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">从 TUI 直接发 PR 无需 gh CLI，社区实测数据随每次 release 合入。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/AlexsJones/llmfit</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 6 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>6. MoneyPrinterTurbo（harry0703/MoneyPrinterTurbo，AI 短视频一键生成）</strong></p>
+
+![MoneyPrinterTurbo 演示](./moneyprinterturbo-demo.jpg)
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.6/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">今日 1,189★（GitHub Trending #1），总 105,819★</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">给一个主题或关键词，自动生成视频脚本、匹配素材、加字幕和背景音乐，合成高清短视频，WebUI 和 API 双入口，MIT 协议。项目创建于 2024 年 3 月，本轮是热度回潮：Moonshot 的 <strong style="font-weight:bold;color:#000;">Kimi K3</strong> 已官方赞助接入，负责文案撰写和素材关键词提炼，火山引擎提供豆包、Seedream 等模型。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/harry0703/MoneyPrinterTurbo.git
+cd MoneyPrinterTurbo
+docker compose up
+# 浏览器打开 http://localhost:8501，按 WebUI 配置视频主题与模型 API Key</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;"><strong style="color:#07c160;font-size:20px;">1,189★/day</strong> 排今天 GitHub 全站第一，是第二名 cordis（957）的 1.2 倍。<strong style="color:#07c160;">105.8K</strong> 总星的 2024 年老项目被重新点燃：AI 短视频批量生产的需求在 8 月再度升温，且这次有 K3 这类 3T 级模型直接驱动内容质量。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">GitHub Trending 今日 #1（1,189★/day），Python 生态下载量持续放大。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">README 特别感谢区显示 Kimi K3 与火山引擎两家赞助接入，商业模型方开始用赞助开源项目的方式争夺视频生成工作流入口。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/harry0703/MoneyPrinterTurbo</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 7 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>7. Anthropic-Cybersecurity-Skills（mukul975/Anthropic-Cybersecurity-Skills，817 个安全技能库）</strong></p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.4/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">今日 198★，总 27,942★</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">目前最大的开源 AI agent 安全技能库，Apache-2.0：<strong style="color:#07c160;">817</strong> 个结构化 skills，覆盖 <strong style="color:#07c160;">29</strong> 个安全域，映射 6 大框架（MITRE ATT&amp;CK、NIST CSF 2.0、MITRE ATLAS、D3FEND、NIST AI RMF、MITRE F3 反欺诈），遵循 agentskills.io 标准，兼容 Claude Code、GitHub Copilot、Codex CLI、Cursor、Gemini CLI 等 26+ 平台。渗透测试、威胁狩猎、恶意软件分析、事件响应，装一次全都有。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/mukul975/Anthropic-Cybersecurity-Skills.git
+# skills 按 agentskills.io 标准组织（SKILL.md 格式），
+# 将所需域名的 skills 目录复制到你的 agent 技能目录即可：
+# Claude Code: ~/.claude/skills/ ；Cursor: .cursor/skills/ ；Codex: ~/.codex/skills/</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;"><strong style="color:#07c160;">198★/day</strong>。把安全团队的方法论变成 agent 可调用的结构化技能，比散装 prompt 集合多了一层框架映射（每条技能标注对应 MITRE ATT&amp;CK 技法或 NIST 控制项），审计和合规场景可以直接引用。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">Trending 描述本身就是热度证据："817 structured cybersecurity skills · 6 frameworks · 26+ platforms · 29 security domains"。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">与今日第 1 条 Strix 形成"安全 agent"主题共振：一个负责攻击验证，一个负责防御技能，8-17/18 两天的热榜同时给安全让了两个位置。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/mukul975/Anthropic-Cybersecurity-Skills</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 8 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>8. GPT-5.6 Sol 降价 50%（OpenRouter 上线，重大新闻）</strong></p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.2/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 两帖 138 + 303 points</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">OpenAI 7 月 9 日发布的 GPT-5.6 Sol 在 OpenRouter 上线并标注 50% off：输入 <strong style="color:#07c160;">$2.50</strong>、输出 <strong style="color:#07c160;">$15</strong> 每百万 token（原价 $5/$30，缓存读从 $0.50 降到 $0.25）。同一天 Roboflow 发布实测长文，称 GPT-5.6 Sol 是 OpenAI 发布过的最强视觉模型，两个话题同时占据 HN 首页。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># OpenRouter API（OpenAI 兼容格式）
+curl https://openrouter.ai/api/v1/chat/completions \
+  -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-5.6-sol",
+    "messages": [{"role":"user","content":"总结这张图里的信息"}]
+  }'
+# 视觉输入在 message 中用 image_url 字段传图（URL 或 base64 data URL）</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">价格对半砍发生在 8-17 DeepSeek 全线峰谷定价生效的同一天，闭源旗舰的降价压力直接来自开源端。视觉任务成本同步减半，配合 Roboflow 的 benchmark 证据（303 points / 154 评论），图生文、UI 理解类应用的成本模型要重算。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">HN 降价帖 138 points / 63 评论，视觉评测帖 303 points / 154 评论，双帖同屏。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">Roboflow 的结论直白：vision 能力不再只是多模态模型的附赠功能，Sol 在这条线上达到了 OpenAI 自家历史最佳。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://openrouter.ai/openai/gpt-5.6-sol</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://blog.roboflow.com/openai-gpt-5-6/</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 9 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>9. Omni by xpander（把 agent 从笔记本搬上云）</strong></p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.0/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 8-17 当日第一</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">8-17 Product Hunt 当日冠军，定位 <strong style="font-weight:bold;color:#000;">"Stop babysitting your AI agents"</strong>。今天的 AI 工作流还活在本地 Claude 里：合上盖子就停，只有你自己能用。Omni 让你描述需求或带上现有构建，它接好工具和 skills，用 mock 数据测试，交付一个可调度、长时运行、可共享的云端 agent，之后还负责运维：优化 system prompt、对比模型、调试失败运行。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">注册制产品，入口在官网（PH 页面 "Visit website"）：<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">https://www.producthunt.com/products/omni-by-xpander</code></p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">PH daily #1 + <strong style="color:#07c160;">387</strong> 个早期关注者。它切的痛点是 agent 工作流从个人玩具到团队基础设施的这一步：调度、共享、健康监控这三件事在本地 agent 生态里目前都是手工活。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">PH 简介文案："Describe what you want, or bring what you've built, and Omni wires the tools and skills, tests on mock data, and hands you a running cloud agent."</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">Launch of the Day（8-17），xpander 系在 agent 托管方向连续发产品。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/products/omni-by-xpander/awards</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 10 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>10. career-ops（santifer/career-ops，在你的 coding CLI 里跑 AI 求职）</strong></p>
+
+![career-ops 演示](./career-ops-demo.jpg)
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 6.8/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">今日 218★，总 63,961★</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">开源 AI 求职系统，MIT 协议，2026 年 4 月创建。扫描招聘网站、用结构化 A-F 评分标准给每个岗位打 1.0-5.0 分、定制 CV、跟踪申请进度，全程在你自己的 AI coding CLI（Claude Code、Codex、OpenCode、Antigravity）里本地运行。作者自述："公司用 AI 筛候选人，我给候选人 AI 来挑公司。"已评估 <strong style="color:#07c160;">740+</strong> 岗位、产出 <strong style="color:#07c160;">100+</strong> 定制 CV。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/santifer/career-ops
+cd career-ops
+# 在 Claude Code / Codex 等 coding CLI 中打开该目录，按 README 引导配置求职信息</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;"><strong style="color:#07c160;">218★/day</strong>。求职者侧自动化此前多是闭源 SaaS（收费、简历数据上云），career-ops 把它变成本地开源工具，数据不出机器，还能挂在你已经在用的 agent 上跑。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">Trending 描述："Open-source AI job search: scan job portals, evaluate listings with a structured A-F rubric into a 1.0-5.0 score, tailor your CV, track applications."</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">README 首页数字：740+ 岗位评估、100+ 定制 CV、1 个 dream role landed。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/santifer/career-ops</span></code>
+</p>
+
+<!-- 装饰性分隔线：进入快讯区块 -->
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<!-- 其他值得关注 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>其他值得关注</strong></p>
+
+<section style="margin:0 0 12px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;"><strong>Wiz：Copilot Autofix 生成的"修复"代码导致 Snowflake 的 Jira 被攻破</strong><span style="font-size:13px;color:#999;font-weight:normal;">（HN 318 points / 125 评论）</span></p>
+  <p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">Wiz Red Agent 报告 GitHub Copilot Autofix 的修复建议引入了可利用缺陷，攻击者借此进入 Snowflake 的 Jira。AI 代码修复工具供应链风险的首个高知名度案例。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">https://www.wiz.io/blog/red-agent-snowflake-copilot-cicd-bug</code></p>
+</section>
+
+<section style="margin:0 0 12px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;"><strong>Stripe 拟以逾 70 亿美元收购 OpenRouter</strong><span style="font-size:13px;color:#999;font-weight:normal;">（X 上 8-17 AI 雷达早报）</span></p>
+  <p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">模型路由与价格战进入整合期，OpenRouter 正是本期第 8 条 GPT-5.6 Sol 降价的入口。</p>
+</section>
+
+<section style="margin:0 0 12px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;"><strong>Mistral Shieldstral 1.0 3B</strong><span style="font-size:13px;color:#999;font-weight:normal;">（X/Marktechpost 8-17）</span></p>
+  <p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">开源策略自适应多模态安全分类器，3B 参数匹敌 7 倍体量的护栏模型。多数护栏模型把固定伤害分类烧进权重，它支持策略重定向。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">https://x.com/Marktechpost</code></p>
+</section>
+
+<section style="margin:0 0 12px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;"><strong>TencentDB Agent Memory v2.0</strong><span style="font-size:13px;color:#999;font-weight:normal;">（X 8-17）</span></p>
+  <p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">腾讯云开源，MIT 自托管团队级 agent 记忆中心，四类可复用记忆资产取代聊天日志。</p>
+</section>
+
+<section style="margin:0 0 12px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;"><strong>Speko (YC S26)</strong><span style="font-size:13px;color:#999;font-weight:normal;">（Launch HN 92 points）</span></p>
+  <p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">"语音 AI 的 OpenRouter"，聚合多家语音模型统一路由。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">https://speko.ai/</code></p>
+</section>
+
+<section style="margin:0 0 12px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;"><strong>cactus-compute/needle</strong><span style="font-size:13px;color:#999;font-weight:normal;">（今日 +452★，总 6.9K）</span></p>
+  <p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">14MB 端侧基础模型，面向手机、可穿戴、智能家居和机器人。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">https://github.com/cactus-compute/needle</code></p>
+</section>
+
+<!-- 关键词底栏 -->
+<section style="background-color:#f5f7fa;border-radius:10px;padding:16px 20px;margin:28px 0 0 0;">
+  <p style="margin:0 0 10px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">本期关键词</p>
+  <p style="margin:0;font-size:15px;color:#555;text-align:left;">agent 基础设施 · 记忆与交接 · DeepSeek Harness 插件 · 安全技能库 · 模型降价</p>
+</section>
+
+</section>
