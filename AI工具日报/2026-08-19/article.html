@@ -1,0 +1,213 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<!-- 用户规范：body 开头不渲染文章标题，只放品牌绿日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-19</p>
+
+![今日概览](./summary.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">今天三条线都指向同一件事：让 Agent 干活之前，先把它的手脚和护栏装好。GitHub 把 Agent 塞进了自家 CI 平台，add-mcp 管的是 MCP 服务器装进 16 个客户端的重复劳动，aurl 让 Agent 调任意 REST API 不用再配一个 MCP 服务器。</p>
+
+<!-- 工具一：GitHub Agentic Workflows -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>GitHub Agentic Workflows — GitHub 官方把编码 Agent 请进 Actions，Markdown 即工作流</strong></p>
+
+![gh-aw 演示](./gh-aw-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">传统 GitHub Actions 的问题是它只会执行，不会判断。写一个 "分析 CI 失败日志并回复 issue" 的自动化，靠 shell 脚本和 grep 撑不起来，得人盯着。GitHub Agentic Workflows（<strong style="font-weight:bold;color:#000;">gh-aw</strong>）从 6 月 11 日起进入公开预览，做法是把编码 Agent 放进 Actions 的执行环境里跑：工作流用 Markdown 加 YAML frontmatter 描述——目标是什么、允许做什么、输出什么——gh CLI 扩展把它编译成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.lock.yml</code>，由 GitHub Actions 调度执行。底层引擎可选 Copilot CLI、Claude Code 或 OpenAI Codex，GitHub Next 的 Don Syme 和 Peli de Halleux 在 2 月的技术预览介绍里把它定位成"带护栏的仓库自动化"。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">安全模型是这套东西和"在 CI 里跑一个 agent 脚本"的本质区别。Agent 步骤默认只读；写操作必须声明为 <strong style="font-weight:bold;color:#000;">safe outputs</strong>——评论、建 issue、开 PR 各自跑在独立 job 里，拿的是受限写 token，Agent 本身从头到尾不持有写权限。外面再套三层：Agent Workflow Firewall 做域名白名单，只有显式允许的外部地址能访问；threat detection job 在写操作落地前用 AI 扫一遍提议内容，拦 prompt 注入和凭据泄露；staged mode 可以先跑一遍只出预览不动真格。输出有上限约束（比如评论最多 3 条、PR 最多 1 个），跑飞了也跑不远。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">官方文档给的典型场景：issue 自动分类、CI 失败原因分析、依赖更新、过期文档修正、死代码清理，以及每日仓库报告——截图里就是一条由工作流生成的 "Daily Repo Report" issue，把发布数、提交数、PR 总量汇总成一条。更狠的用法在官方周更里能看到：gh-aw 自己的仓库用 PureLock 每周自动给核心编译函数补纯函数测试，三周跑三次、每次 15 到 22 分钟、约 <strong style="color:#07c160;">6 万 token</strong>，全程只读直到最后开一个 PR。Carvana 和 Marks &amp; Spencer 已经在用：后者把 issue 分诊、依赖维护、漏洞修复做成跨仓库复用的工作流目录，官方 changelog 里 CTO 的原话是"过去要几小时的工程工作现在几分钟自动完成"。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">公开预览 6 月至今保持每周 1-2 个版本（8 月 10 日周更时是 v0.86.1），社区讨论区活跃。它不免费给承诺，KDnuggets 的入门实测提醒了几点：预览期 API 会变、token 消耗要自己盯、复杂工作流的 prompt 调试成本不低。但对已经在 GitHub 上的团队，这是目前把 Agent 自动化接进既有 CI 治理体系最短的一条路。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 安装 gh CLI 扩展（需要已安装 gh 并登录）
+gh extension install github/gh-aw
+
+# 之后按官方 quickstart 建第一个工作流：写 Markdown + YAML frontmatter，
+# 扩展编译成 .lock.yml 交给 GitHub Actions 执行；现成模板在 githubnext/agentics</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>同类工具对比</strong></p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;text-align:left;">GitHub Agentic Workflows（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">形态：</strong>GitHub CLI 扩展</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>Markdown 定义工作流，只读默认 + safe outputs 分层护栏</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">价格：</strong>预览期免费</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>官方产品</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">n8n AI Assistant</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">形态：</strong>自托管平台</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>通用自动化，400+ 集成，自然语言搭流程</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">价格：</strong>社区版免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 196K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">Mastra Factory</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">形态：</strong>npm CLI</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>npm create factory，issue 到生产的 Agent 流水线</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">价格：</strong>开源</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>8 月 1 日已推荐</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">传统 Actions + 脚本</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">形态：</strong>平台原生</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>确定性执行，无推理能力</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">价格：</strong>免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">n8n 是通用自动化平台，Agent 只是它的一个节点；Mastra 的流水线跑在你自己机器上，不进 GitHub 治理体系。gh-aw 是唯一把编码 Agent 作为 GitHub Actions 的一等公民对待的方案——沿用仓库权限模型、Environment 保护规则可以直接套在写操作 job 上、输出走平台审计。想在组织层面让 Agent 碰仓库，先看它。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>🏪 GitHub 官方</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>Public Preview（2026-06-11）</span>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.github.com/gh-aw/</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/github/gh-aw</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 工具二：add-mcp -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>add-mcp — 一条命令给 16 个编码客户端装上同一个 MCP 服务器</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">MCP 服务器的安装是纯手工活：找到包名、确定启动参数、再往每个客户端各自的配置文件里塞 JSON。Claude Code 写在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.claude.json</code>，Cursor 写在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.cursor/mcp.json</code>，Codex 写在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.codex/config.toml</code>，格式还不一样。装三个服务器、用两个客户端，就是六份手抄配置。add-mcp 把这个过程压成一条命令：传 URL 或包名，它自动检测你机器上装过哪些编码客户端，把配置写进各自正确的位置。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">支持面是目前同类里最宽的：<strong style="color:#07c160;">16 个客户端</strong>，包括 Claude Code、Codex、Cursor、VS Code、Gemini CLI、GitHub Copilot CLI、Cline、Zed、Windsurf、Grok Build 等，每个都有项目级（提交进仓库给团队共享）和全局两种安装范围。传输层三种都吃：streamable HTTP 远程服务器、SSE、本地 stdio。远程服务器还能带 OAuth scopes 和自定义 header，token 走交互授权不落配置文件。除了装，还有配套命令：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">find</code> 搜注册表、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">list</code> 看现状、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">remove</code> 卸载、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">sync</code> 把服务器名跨客户端对齐——你给同一个服务器在 Cursor 里叫 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">github</code>、在 Claude Code 里叫 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">gh</code>，sync 能统一。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">对多客户端混用的人（Claude Code 写代码、Cursor 看 diff、Codex 跑批量任务），这东西省的是每周都会发生的 15 分钟。团队场景更值：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx add-mcp &lt;server&gt; -y</code> 写进项目的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.mcp.json</code>，新同事 clone 下来就是全套工具。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 远程 HTTP 服务器，URL 直接装
+npx add-mcp https://mcp.example.com/mcp
+
+# 按包名装 stdio 服务器，同时写给 Claude Code 和 Cursor
+npx add-mcp "npx -y @modelcontextprotocol/server-github" -a claude-code -a cursor
+
+# 搜注册表、交互式挑选
+npx add-mcp find vercel
+
+# 全局安装、跳过确认、连同 auto-approve（支持的客户端）
+npx add-mcp "executor mcp" --name executor -g -a codex -a claude-code -y --auto-approve</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>同类工具对比</strong></p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;text-align:left;">add-mcp（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>npx add-mcp</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">覆盖客户端：</strong>16 个</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>三种传输 + OAuth + 注册表搜索</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>npm 活跃发布</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">mcp-get</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>pip install mcp-get</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">覆盖客户端：</strong>9 个</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>内置 26 个服务器预设，交互式配置</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 2</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">mcpsync-cli</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>npm i -g mcpsync-cli</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">覆盖客户端：</strong>7 个</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>单一 YAML 配置推送到各客户端</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>小</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">Toolbx</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>npx @toolbx/cli setup</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">覆盖客户端：</strong>3 个</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>本地 MCP 网关，上游服务器集中管理</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>小</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">mcp-get 的思路是"内置常用服务器预设"，适合只装官方那几个服务器的人；Toolbx 是网关架构，客户端只连 Toolbx 一个点，代价是多个进程和一层代理。add-mcp 直接操作各客户端原生配置，不引入运行时依赖，装完就是客户端自己的服务器，出问题排查路径最短。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>🏪 npm registry</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>MIT</span>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>npmjs.com/package/add-mcp</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>add-mcp.com/registry</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 工具三：aurl -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>aurl — 把任意 OpenAPI 变成 Agent 随手可调的 CLI，不装 MCP 服务器</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">MCP 是让 Agent 调 API 的主流解法，但它有两个代价：写服务器或找现成的，以及把整个工具目录塞进每轮对话的上下文。aurl 走另一条路——Agent 本来就会用 CLI，给它一个能按需发现端点的 CLI 就够了。注册 API 时 aurl 解析 OpenAPI 3.0/3.1、Swagger 2.0 或 GraphQL 的 spec，自动识别认证方式，之后 Agent 用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--help</code> 看端点清单、用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">describe</code> 查参数类型、直接发经过校验的请求，全程不读原始 API 文档。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">关键是按需拉取：spec 存在本地（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.config/aurl/</code>），解析是懒加载的，只在执行对应命令时才读。一个 <strong style="color:#07c160;">1080 个端点</strong> 的 GitHub spec，Agent 也只看到它问的那几条，而不是把整个工具目录灌进上下文。认证处理也省心：spec 里的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">securitySchemes</code> 在注册时自动识别——apiKey 探测 header 名、bearer 提示输 token、basic 提示用户名密码——凭据存在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.config/aurl/auth/</code> 且权限 0600。作者还做了配套技能，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx skills add ShawnPana/aurl</code> 一条命令教会 Claude Code、Cursor、Codex、Copilot 等 40+ 客户端怎么用它。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">一个具体的对照：接 GitHub API，MCP 方案是配 github-mcp-server、管 token、每轮背着几十个工具 schema；aurl 方案是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">aurl add github &lt;spec-url&gt;</code> 一条命令，之后 Agent 自己 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">aurl github --help</code> 找端点、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">aurl github GET /repos/org/repo</code> 发请求。对偶尔要调外部 API 的场景，后者轻一个数量级。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 安装（Go 或 Homebrew 二选一）
+go install github.com/shawnpana/aurl@latest
+# brew install shawnpana/tap/aurl
+
+# 注册一个 REST API
+aurl add petstore https://petstore3.swagger.io/api/v3/openapi.json
+
+# 注册 GraphQL API
+aurl add --graphql linear https://api.linear.app/graphql
+
+# 看可用端点
+aurl petstore --help
+
+# 发请求
+aurl petstore GET /pet/1
+
+# 给 Claude Code / Cursor 等 40+ 客户端装配套技能
+npx skills add ShawnPana/aurl</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>同类工具对比</strong></p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;text-align:left;">aurl（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">形态：</strong>Go CLI + 技能</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>OpenAPI/GraphQL → 按需发现式 CLI，自动鉴权</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 159</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">openapi-cli4ai</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">形态：</strong>Python CLI（uvx）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>同思路的 pull-based 发现</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 13</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">apifable</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">形态：</strong>MCP server</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>OpenAPI 浏览 + TypeScript 类型生成</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 9</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">mcpify</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">形态：</strong>CLI</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>OpenAPI → 生产级 MCP server（7 月 27 日已推荐）</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>已推荐</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">aurl 和 mcpify 正好相反：mcpify 把 spec 变成 MCP 服务器，aurl 把 spec 变成 CLI。选哪个看客户端——如果你的 Agent 环境已经深度绑定 MCP（Claude Desktop 这类只能吃 MCP 的宿主），走 mcpify；如果 Agent 有 shell 执行权（Claude Code、Cursor、Codex CLI），aurl 少一层协议转换，出问题直接 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">curl</code> 对照排查。openapi-cli4ai 思路相同但热度差一个数量级，apifable 面向 TypeScript 前端项目的类型生成，定位更窄。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 159</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>MIT</span>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/ShawnPana/aurl</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>skills.sh</span></code>
+</p>
+
+</section>

@@ -1,0 +1,403 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<!-- 用户规范：body 开头不渲染文章标题，只放品牌绿日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-19</p>
+
+<!-- 摘要提示卡 -->
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+  <p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;">本期覆盖 2026-08-18 至 08-19 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Lobsters / arXiv / HF Papers / 知乎 / Product Hunt。精选 10 条按影响力评分排序。</p>
+  <p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;"><strong style="color: #1b5e20;">核心主题：</strong><strong style="color:#07c160;">agent 基础设施继续吃下热榜</strong>——Cursor 上线内置 git forge，Mac 本地推理服务器 omlx、本地多 agent 办公桌 munder-difflin、火山引擎 OpenViking 记忆库同日上榜，向量搜索迎来 TurboQuant 免训练量化。</p>
+</section>
+
+<!-- 条目 1 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>1. Cursor Origin（Cursor 内置 git forge，agent 时代的代码托管）</strong></p>
+
+![Cursor Origin 演示](./cursor-origin-demo.png)
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.0/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 480 points / 365 comments（8-19 首页最高 AI 帖）· Lobsters 关联讨论 80 分</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">Anysphere（Cursor）8 月 17 日起在付费计划（Pro $20/月、Teams、Enterprise）滚动上线 early beta 的 git forge。仓库、代码浏览与搜索收进新的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Codebase tab</code>，git remote 挂在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">origin.cursor.com</code>，PR 带 timeline、commits、checks、文件 diff，和 GitHub 双向同步（PR 评论双向互通），首发集成 Vercel、Depot、Buildkite。6 月 Compile 大会 demo 过 <strong style="color:#07c160;">22.6 commits/s</strong> 的单仓库 agent 写入吞吐。这是 SpaceX 8-14 以 <strong style="color:#07c160;font-size:20px;">600 亿美元</strong> 收购 Cursor 后的第一个大产品，changelog 明确说 agent-native 特性"ship soon"、不在本轮。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 付费 Cursor 用户：cursor.com/codebase → Sync from GitHub 导入已有仓库
+# 标准 git 操作即可推送（Origin CLI 自带 credential helper）
+git remote add origin https://origin.cursor.com/your-org/your-repo
+git push origin main
+# Enterprise 管理员可在 dashboard 关闭 Origin（默认 opt-out 而非 opt-in）</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">设计的对标物是 agent 并行吞吐，不是人速协作：Compile demo 的 <strong style="color:#07c160;">22.6 commits/s</strong> 意味着多个 agent 同时往一个仓库推码时，GitHub 的 rate limit 和 PR UX 是瓶颈，Origin 把这个循环收进 IDE 内。功能上还差 GitHub 一截：没有 draft PR、suggested changes、merge queue。发布窗口恰好撞上 GitHub 8-17 宕机，社区玩梗玩了一整天，也让"是否需要 GitHub 替代品"从假设问题变成实操问题。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">HN 评论 jjcm 提醒命名冲突："'hey can you push to origin main?' now has two separate meanings. A LLM may inadvertently push your code to a new provider without you knowing."</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">HN 上 xvilka 的观点是另一条路线："Instead of creating one more centralized alternative, it's best to invest all effort into a decentralized solution, like Radicle or federated Forgejo."</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">cryo32 带出所有权顾虑（SpaceX 收购背景）："GitHub is a mess so lets throw our code into a Musk owned enterprise, famously a different shade of mess?"</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://cursor.com/changelog/origin-code-hosting</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://cursor-origin.dev</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 2 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>2. omlx（Apple Silicon 本地 LLM 推理服务器，菜单栏一键管理）</strong></p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.6/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 今日 +370★，总 19,437★ · Lobsters 讨论帖</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">Jun Kim 开发的 MLX 推理服务器，2026 年 2 月创建，<strong style="font-weight:bold;color:#000;">Apache-2.0</strong>。核心是两级 KV cache：热层驻内存、冷层分页持久化到 SSD，对话上下文切换后旧前缀的 KV 块直接从磁盘恢复，不用重算。支持 continuous batching 并发、LLM/VLM/embedding/reranker 多模型同服（LRU 淘汰 + 手动 pinning），原生 macOS 菜单栏 app（PyObjC 写的，不是 Electron）+ Web 管理台，OpenAI/Anthropic 兼容 API 可直接当 Claude Code、OpenClaw、Cursor 的后端。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 方式一：GitHub Releases 下载 .dmg 拖进 Applications（内置自动更新）
+# 方式二：Homebrew
+brew tap jundot/omlx https://github.com/jundot/omlx
+brew install jundot/omlx/omlx
+omlx start          # 后台服务，崩溃自动重启
+# 可选 MCP 支持
+/opt/homebrew/opt/omlx/libexec/bin/pip install mcp
+# 要求 macOS 15+、Apple Silicon（M1–M4）</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">它解决的问题很具体：coding agent 几十次请求的 prompt 前缀一直在变，普通 MLX server 每次前缀变化都作废整个 KV cache 重算，几轮之后每个响应等 30-90 秒。omlx 的 SSD 分页缓存把长上下文的 TTFT 打到 <strong style="color:#07c160;font-size:20px;">1-3 秒</strong>。实测数据：M2 MacBook Pro 上跑 Qwen 3.6 35B 4-bit，<strong style="color:#07c160;font-size:20px;">89%</strong> cache 命中率、<strong style="color:#07c160;">47 tok/s</strong>。对比 LM Studio（偏推理无训练）和 Ollama（无训练），omlx 是第一个按 agent 工作流的 cache 命中率来设计的。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">Lobsters 上 msangi："MLX is definitely the model variant you want on a Mac. I've been using oMLX for a while and I'm generally happy with it." 同时指出竞品（zig/Swift 写的）支持 Gemma drafter 模型，omlx 还没有。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">README 引语直说是被逼出来的："Every LLM server I tried made me choose between convenience and control."</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/jundot/omlx</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 3 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>3. Munder Difflin（把你已装的 agent CLI 变成一支办公室团队）</strong></p>
+
+![Munder Difflin 演示](./munder-difflin-demo.png)
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.4/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 今日 +306★，总 2,093★</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">Electron/React/TypeScript 桌面 app（v0.4.4，MIT），把终端里已装的 agent CLI——Claude Code、Antigravity、Codex、xAI Grok、Kimi Code、Qwen、OpenCode、Crush、pi.dev、GitHub Copilot——包装成自带身份、邮箱、长期记忆的 agent 团队。2D 办公室（Pixi.js 渲染）里每个 agent 有一个工位，你的克隆 Michael 做协调路由，你只跟 Michael 对话。本地优先，clone 间通信端到端加密，BYO key，不另收订阅费。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 从 GitHub Releases 下载对应平台的桌面安装包（macOS/Windows/Linux）
+# 前提：至少一个 agent CLI 在 PATH 上（claude/codex/grok/kimi/qwen/opencode/crush/pi/copilot）
+# 缺失的 CLI 会自愈：harness 在终端里跑安装器继续
+# 启动后跟 Michael 对话，任务会自动路由到各 agent 工位</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">多 agent 协调此前是编排脚本的活，Munder Difflin 把它做成可视化办公室，跨厂商混编（Claude + Grok + Kimi 组队）是它区别于 Claude Code 原生 subagent 的关键——用你已有的各家订阅组队，而不是锁死一个模型生态。与 8-18 上榜的 ai-memory 共享同一个前提：agent 已经多到需要组织形态了。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">Instagram 热评（几万播放）："This might be the most fun way to run a multi-agent coding setup. You literally see the agents moving around a 2D office as they work."</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">awesome-agent-harness 收录描述："Desktop multi-agent harness that wraps terminal-agent CLIs with hive mailboxes, shared memory, an orchestrator, approvals, worktrees, and telemetry."</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/chaitanyagiri/munder-difflin</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 4 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>4. Turbovec（Rust 向量索引：10M 向量 31GB → 4GB，搜索比 FAISS 快）</strong></p>
+
+![Turbovec 演示](./turbovec-demo.png)
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.2/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 211 points / 27 comments（8-18/19 首页）· 3,500+ stars</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">Ryan Codrai 用 Rust 写的向量索引，带 Python 绑定，实现了 Google Research 的 TurboQuant 算法（ICLR 2026 论文，arXiv 2504.19874）。TurboQuant 是 data-oblivious 量化：向量归一化后做随机旋转，每个坐标就服从已知分布，量化直接按数学推导做，不需要训练集、不需要 codebook、语料变了也不用重建索引。MIT 协议，LangChain/LlamaIndex/Haystack 都有集成。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>pip install turbovec        # Rust 侧：cargo add turbovec</code></pre>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>from turbovec import TurboQuantIndex
+index = TurboQuantIndex(dim=1536, bit_width=4)   # 无需训练
+index.add(vectors)                                # 直接加向量开搜
+scores, ids = index.search(query, k=10)
+index.write("my_index.tq")                        # 落盘，之后 load 复用</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">浮点 32 位存 1000 万条 1536 维向量要 <strong style="color:#07c160;font-size:20px;">31GB</strong> 内存，turbovec 4-bit 压到 <strong style="color:#07c160;font-size:20px;">4GB</strong>。搜索速度不是"接近"而是更快：ARM 上比 FAISS FastScan 平均快 <strong style="color:#07c160;">3.5 倍</strong>（4-bit）、x86 AVX-512 快 <strong style="color:#07c160;">3.4 倍</strong>。对照 FAISS 的 Product Quantization：PQ 要先跑 k-means 训练 codebook，语料漂移要重训重建；TurboQuant 免训练免重建，本地和私有化 RAG 的运维负担直接归零。Qdrant 社区已经开 issue 请求原生集成。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">HN 首页 211 分，评论集中在免训练量化的运维收益：没有重训流程意味着索引可以随数据增删即时更新。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">explainx 的分析结论："The past five years of AI progress have been measured in parameters. The next five may be measured in efficiency."</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/RyanCodrai/turbovec</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 5 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>5. OpenViking（火山引擎自进化上下文数据库：LoCoMo 记忆准确率 24% → 82%）</strong></p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 今日 +213★，总 29,447★</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">字节跳动火山引擎 Viking 团队开源的 agent 上下文数据库。用文件系统范式（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">viking://</code> 虚拟协议）把 agent 的记忆、知识 RAG、技能统一组织成层级目录，替代平铺的向量存储。三层上下文加载 L0（摘要）/L1（概览）/L2（全文）控制 token 消耗，目录感知的语义搜索递归细化，会话结束后自动抽取记忆自进化。主项目 AGPLv3，CLI 和示例 Apache 2.0。支持 OpenAI、豆包及 OpenAI 兼容 API，也有在线版 OpenViking Studio 免安装体验。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>pip install openviking --upgrade
+# 在线体验（无需安装）：OpenViking Studio
+# 接入 agent 框架后，记忆检索走 viking:// 层级路径而非平铺向量</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">它公开的 benchmark 是同类里最硬的一档。LoCoMo 用户记忆准确率：OpenClaw 原生 <strong style="color:#07c160;">24.20%</strong> → <strong style="color:#07c160;font-size:20px;">82.08%</strong>，Hermes 33.38% → 82.86%，Claude Code 57.21% → 80.32%，同时输入 token 降 34.3-91.0%、查询延迟降 58.45-66.10%。tau2-bench 任务成功率：Retail +6.87pp、Airline +11.87pp。和 8-18 收录的 ai-memory（跨厂商交接）构成记忆方向的两条路线：一个文件系统范式全托管，一个 MCP 轻量交接。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">Threads/LinkedIn 转发的共识是"agent 记忆从聊天日志升级为结构化数据库"这一步迟早要发生，OpenViking 是字节第一次在这个方向给出可自托管的开源方案。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">与 8-18 热榜的 ai-memory（648★/day）、8-16 的 Agentao 同频：记忆与治理正在成为 agent 基础设施的两根支柱。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/volcengine/OpenViking</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 6 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>6. MoneyPrinterTurbo（持续火爆：2,304★/day 再夺热榜第一，8-18 首录）</strong></p>
+
+![MoneyPrinterTurbo 演示](./moneyprinterturbo-demo.jpg)
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending #1 · 2,304★/day（8-18 首录时为 1,189★/day）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">AI 短视频一键生成（8-18 日报第 6 条已详述）：主题或关键词进，视频脚本、素材匹配、字幕、背景音乐自动合成，WebUI 和 API 双入口，MIT 协议。Moonshot 的 Kimi K3 官方赞助负责文案和素材关键词，火山引擎接入豆包、Seedream 等模型。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/harry0703/MoneyPrinterTurbo.git
+cd MoneyPrinterTurbo
+docker compose up
+# 浏览器打开 http://localhost:8501 配置视频主题与模型 API Key</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">今天 <strong style="color:#07c160;font-size:20px;">2,304★/day</strong> 是昨天 1,189 的 <strong style="color:#07c160;">1.9 倍</strong>，连续第二天 GitHub 全站第一，总星 <strong style="color:#07c160;">108.7K</strong>。热度翻倍说明 AI 短视频批量生产的需求在真实放大，且这次由 K3 这类 3T 级开源模型驱动内容质量，成本模型已经跑通。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">连续两日 Trending #1 本身就是讨论热度：GitHub 上 8 月 18、19 两天的增量超过 3,400★。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">README 赞助区显示 Kimi K3 与火山引擎继续追加投入，商业模型方把开源视频工作流当分发入口的打法在延续。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/harry0703/MoneyPrinterTurbo</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 7 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>7. machine0（YC S26：一条命令给 agent 一台持久 GPU VM）</strong></p>
+
+![machine0 演示](./machine0-demo.jpg)
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.5/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Launch HN 52 points / 33 comments（8-19 发布 6 小时）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">Barnaby 做的 agent 计算 CLI：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">machine0 new mybox</code> 创建一台持久云 VM，按分钟计费，1 vCPU/1GB 从 $0.013/hr 起，最高 60 vCPU/240GB，GPU 从 RTX 4000 Ada 到 8×H200。带静态 IP 和 HTTPS endpoint，99.99% 可用性。支持挂起（停计费）、快照、克隆成舰队，块存储 10GB-16TB。NixOS 或 Ubuntu 镜像，CLI 全命令带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--json</code>，远程 MCP server 让 agent 直接程序化驱动。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>curl -LsSf https://machine0.io/install.sh | sh
+machine0 new mybox              # SSH-ready VM，静态 IP + HTTPS
+machine0 skills install         # 给 Claude Code 装 /create-machine skill
+claude -p "/create-machine a server that auto-starts claude code in tmux on boot"
+machine0 ssh mybox              # 进入，工作</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">切的是 agent 工作负载从临时到常驻的迁移：coding agent 跑 6-8 小时、训练和 RL 跑数天、OpenClaw/Hermes 24/7 挂着。AWS 给 agent 开台机器要过账号配置、security group、SSH key 五道关，machine0 一条命令交付。按分钟计费 + 挂起停费，对"agent 只在干活时用机器"的账单结构是直接优化。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">HN 评论区有人问 "What stops just mentioning AWS/Azure/GCP CLI tools to agents?"，作者的回答是产品定位本身："one command gives the agent a VM with SSH, file sync, browser, GPU ready to go. Instead of dealing with cloud account setup, security groups, SSH keys, and other shenanigans."</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">前代 Show HN（NixOS 版）已拿过 96 分，这轮 YC S26 Launch 是 GPU 化后的再发布。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=49348136</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://machine0.io</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 8 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>8. Taku AI（把别人调好的 AI setup 变成你能跑的桌面 app）</strong></p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.3/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 8-18 daily #1 + Launch of the Day · 216 followers</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">Austin Z（前 Sapient Intelligence 联创，种子轮 2,200 万美元）做的桌面平台，8-18 在 Product Hunt 登顶。市场里借用专家调好的 AI app、agent、workflow，本地运行、随意改，不用 clone GitHub 仓库配环境；创作者用 Stax 格式把 setup 打包发布，别人每次运行都能分成。官网数据：<strong style="color:#07c160;">12,000</strong> apps &amp; skills、3,400+ creators、<strong style="color:#07c160;">120 万</strong> runs/月。Mac app 已可下载，Windows 在路上。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 下载 Mac app：https://taku.ai （免费档起步）
+# 借用：Marketplace 里挑一个 app 直接运行/remix
+# 发布：把配置写成 Stax
+# stax "Brand voice" { input draft: text; style tone: "warm"; return rewrite(draft, tone) }</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">skills 生态的最后一公里问题：GitHub 上几万个 skills 躺在 README 里，要 clone、要配 key、要适配 agent 版本才能跑。Taku 把"借用-运行-remix-分成"做成一条完整链条，和 Zapier/n8n 的对比定位很清楚：那些是搭工作流的，Taku 是跑别人调好的成品。<strong style="color:#07c160;">1.2M runs/月</strong> 说明借用行为已经起量。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">PH 作者开场白："Taku is changing how people discover and use AI, the way TikTok changed how we watch video."</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">团队背景：创始人从前沿实验室（Anthropic、DeepMind、DeepSeek）组队，切入点是 skill 创作者"作品难被发现、更难变现"。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/products/taku-ai</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://taku.ai</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 9 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>9. ElevenLabs MCP in Claude（在 Claude 里管语音 agent，PH 8-18 #5）</strong></p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.0/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 8-18 daily #5 · 213 followers</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">ElevenLabs 官方 MCP，把语音 agent 的管理面搬进 Claude：在聊天里查找工作区已有的语音 agent、查看配置、改 prompt 和声音、复制或删除。不用再切到 ElevenLabs 控制台。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 在 Claude 的 MCP 配置中添加 ElevenLabs 官方 MCP（产品页 "Visit website" 获取接入地址）
+# 然后在对话里直接说：
+# "列出我工作区的语音 agent，把客服 agent 的声音换成 Amelie，prompt 加一句品牌问候"</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">语音 agent 正成为客服和销售团队的常驻员工，管理动作（调 prompt、换声音、复制部署）是高频操作。MCP 化后这些操作并进 coding agent 的工作流，多 agent 管理的切换成本降到一次对话。MCP 生态从个人工具开始进入 SaaS 官方管理面的信号。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">PH 定位语："Create and manage ElevenLabs voice agents in your chat"——语音 agent 的"基础设施即对话"。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">与同日 Taku、Hubble 一起上榜，8-18 的 PH 前五里有四个是"让 AI 能力可被使用/管理"的接入层产品。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/products/elevenlabs-mcp-2</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 10 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>10. Hubble（医疗记录统一 API：给 AI agent 开的后门，PH 8-18 #4）</strong></p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 6.9/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 8-18 daily #4 · 212 followers</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>是什么：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">面向 AI agent 的医疗记录 API。医疗记录散在传真、电话语音树、没人记得密码的门户后面，Hubble 的做法是患者验一次身份，平台从各家医疗服务方把记录汇总回来，经一个统一 API 返回给 agent 使用。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>怎么用：</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 产品页申请接入（Visit website 注册）
+# 核心交互：患者授权一次 → Hubble 聚合 → 你的 agent 走统一 API 读记录</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>为什么重要：</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">医疗是 agent 应用最硬的数据门槛：记录格式乱、合规严、渠道旧。Hubble 把合规和聚合收敛成一个 API，agent 团队不用自己对接几十家机构的导出流程。"Retrieve medical records other APIs can't" 是它的原话。垂直数据接入层（医疗/金融/法务）正在成为 agent 时代的稀缺品。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>讨论现场：</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">PH 简介："A patient verifies their identity once, and Hubble assembles their records from across their providers and returns them through one API, for your AI agent to use."</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;text-align:left;">与同日 ElevenLabs MCP、Taku 同榜：把原本手工、割裂的接入流程收敛成 agent 可调用的单一接口，是 8-18 PH 榜单的共性。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/products/hubble-11</span></code>
+</p>
+
+<!-- 装饰性分隔线：进入快讯区块 -->
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<!-- 其他值得关注 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>其他值得关注</strong></p>
+
+<section style="margin:0 0 12px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;"><strong>Mojo ModCon 2026</strong><span style="font-size:13px;color:#999;font-weight:normal;">（8-18 旧金山举行，Lobsters "Mojo is now open source" 39 分）</span></p>
+  <p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">Mojo 1.0 于 8-11 发布，标准库 Apache 2.0（1,100+ 社区 PR），编译器承诺 fall 2026 开源；Qualcomm 收购后独立性质疑是社区焦点。</p>
+</section>
+
+<section style="margin:0 0 12px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;"><strong>GLM-5.3 编码能力归因讨论</strong><span style="font-size:13px;color:#999;font-weight:normal;">（HN 84 分 / 39 评论，TheNewStack 8-18 长文）</span></p>
+  <p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">8-14 发布的 GLM-5.3 没改底座模型，编码提升来自后训练，文章拆解具体来源。</p>
+</section>
+
+<section style="margin:0 0 12px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;"><strong>Anthropic 年化营收超 650 亿美元</strong><span style="font-size:13px;color:#999;font-weight:normal;">（机器之心 8-18）</span></p>
+  <p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">IPO 前披露，估值预期 2 万亿美元，OpenAI 同期约 400 亿美元运行率。商业新闻。</p>
+</section>
+
+<section style="margin:0 0 12px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;"><strong>OpenAI 暂停 Astra 模型</strong></p>
+  <p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">Preparedness Framework 下的安全控制加强。商业/安全新闻。</p>
+</section>
+
+<section style="margin:0 0 12px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;"><strong>闪极 loomos L1 AI 眼镜</strong><span style="font-size:13px;color:#999;font-weight:normal;">（8-18 发布）</span></p>
+  <p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">光学形态 + 主动记忆定位，可换电架构。硬件发布。</p>
+</section>
+
+<section style="margin:0 0 12px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;"><strong>Gemini API Managed Agents 讨论回潮</strong><span style="font-size:13px;color:#999;font-weight:normal;">（X 8-18/19 被重新推热）</span></p>
+  <p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">background 异步执行、remote MCP 等功能 7 月已发布，本次是生产化讨论的第二波。</p>
+</section>
+
+<!-- 关键词底栏 -->
+<section style="background-color:#f5f7fa;border-radius:10px;padding:16px 20px;margin:28px 0 0 0;">
+  <p style="margin:0 0 10px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">本期关键词</p>
+  <p style="margin:0;font-size:15px;color:#555;text-align:left;">Cursor Origin · Mac 本地推理 · 多 agent 办公桌 · 免训练量化 · 上下文数据库 · agent 计算基础设施</p>
+</section>
+
+</section>

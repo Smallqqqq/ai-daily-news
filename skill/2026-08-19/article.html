@@ -1,0 +1,162 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<!-- 用户规范：body 开头不渲染文章标题，只放品牌绿日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-19</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">给你的 Claude Code 或 Codex 装上 <strong style="color:#07c160;">7 个 Google 官方技能</strong>，它就能独立完成从脚手架、代码、评测到部署的 Agent 全生命周期。Google 官方出品，Apache 2.0，今天值得花 10 分钟配好。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+![agents-cli 演示](./agents-cli-demo.png)
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>它解决什么问题</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">通用编程助手写 Python 没问题，但它不知道 ADK 的 agent 类怎么组织、eval 数据集怎么设计、部署到托管运行时该传哪些 flag。它只能靠训练数据猜，而猜一个快速迭代的平台，很快就会过时。agents-cli 把 Google 官方对 ADK、评测、部署的全部工程判断打包成技能，让任何支持 skills 的 agent 在构建 AI agents 这件事上达到官方专家水平。你自己用它的 CLI 也完全可行，每条命令都能脱离 agent 单独跑。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>核心原理</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">agents-cli 是一个 CLI 加一套技能。技能负责教你的编程助手在每个阶段做正确决策，CLI 负责执行。它的生命周期分成 8 个阶段，每个阶段对应一个技能：</p>
+
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #e8e8e8;">
+  <thead>
+    <tr>
+      <th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">阶段</th>
+      <th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">干什么</th>
+      <th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">对应技能</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">0 Spec</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">写 .agents-cli-spec.md，描述 agent 的目标、工具、约束</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">google-agents-cli-workflow</td>
+    </tr>
+    <tr style="background-color:#ffffff;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">1 Scaffold</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">一条命令生成约 72 个文件的工程骨架</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">google-agents-cli-scaffold</td>
+    </tr>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">2 Build</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">写 agent 本体：模型、指令、工具、App 包装</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">google-agents-cli-adk-code</td>
+    </tr>
+    <tr style="background-color:#ffffff;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">3 Orchestrate</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">单个 agent 长成团队时的组合编排</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">google-agents-cli-adk-code</td>
+    </tr>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">4 Evaluate</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">数据集跑分、LLM 裁判打分、失败聚类</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">google-agents-cli-eval</td>
+    </tr>
+    <tr style="background-color:#ffffff;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">5 Deploy</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">部署到 Agent Runtime、Cloud Run 或 GKE</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">google-agents-cli-deploy</td>
+    </tr>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">6 Publish</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">注册进 Gemini Enterprise 目录</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">google-agents-cli-publish</td>
+    </tr>
+    <tr style="background-color:#ffffff;">
+      <td style="padding:12px 16px;color:#333;line-height:1.7;">7 Observe</td>
+      <td style="padding:12px 16px;color:#333;line-height:1.7;">Cloud Trace 链路 + BigQuery 离线分析</td>
+      <td style="padding:12px 16px;color:#333;line-height:1.7;">google-agents-cli-observability</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">所有阶段从同一份 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.agents-cli-spec.md</code> 派生。脚手架 flag、eval 评分标准、安全护栏、生产环境的 trace 属性都从这份规格读，你只需要写一次目标。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>安装配置</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">前提：Python 3.11+、uv、Node.js。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 完整安装：CLI + 技能自动装进检测到的编程助手
+uvx google-agents-cli setup
+
+# 只装技能（推荐给已有 CLI 的场景）
+npx skills add google/agents-cli
+
+# 认证：已有 gcloud 配置则自动沿用 ADC；
+# 否则去 aistudio.google.com/apikey 拿 Gemini API key
+agents-cli login</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">本地开发（create、run、eval）不需要 Google Cloud 账号，AI Studio key 就能跑。部署和云功能才需要 GCP。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>使用指南</strong></p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>场景一：一句话生成一个可运行的 agent</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">触发条件：脑子里有个 agent 想法，想先看它跑起来。对 Claude Code 说："Build me a caveman compressor agent." 助手会先问你部署目标和安全约束，把答案写进 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.agents-cli-spec.md</code>，然后执行 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agents-cli create caveman-agent --prototype --yes</code> 生成工程，再改 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">app/agent.py</code> 里的 30 行 agent 本体，最后 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agents-cli run</code> 起本地 playground。预期结果：<strong style="color:#07c160;">5 分钟</strong>内一个能在 http://localhost:8080 对话的原型。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>场景二：用 eval 迭代把 agent 调到能交付</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">触发条件：agent 行为不稳定，想有量化标准。说："Write evals and run them." 助手会按 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">google-agents-cli-eval</code> 技能创建评测集（覆盖压缩质量、术语保留、语气），执行 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agents-cli eval generate</code> 跑推理、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agents-cli eval grade</code> 用 LLM 裁判按 rubric 打分，分数不达标就调 instruction 重跑。预期结果：一个站得住脚的分数。官方建议预期 <strong style="color:#07c160;">5 到 10 轮</strong>迭代。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>场景三：部署上线并接入企业目录</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">触发条件：评测过了阈值，要上生产。说："Deploy this to Cloud Run." 助手会先 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agents-cli scaffold enhance --deployment-target cloud_run</code> 补部署配置，再 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agents-cli deploy</code>。输出里带 Cloud Run 服务 URL。如果需要分发，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agents-cli publish gemini-enterprise</code> 把 agent 注册进 Gemini Enterprise，同事在统一入口就能找到它。部署时可以加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--agent-identity</code> 让 agent 用自己的 IAM 身份跑，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--iap</code> 把内部 agent 挡在企业 SSO 后面。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>进阶技巧</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">评测冷启动没有数据集时，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agents-cli eval dataset synthesize --count 10</code> 可以直接合成多轮对话用例，跑起来再人工精修。另一个狠招是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agents-cli eval optimize</code>，用 GEPA 框架拿评测数据自动调 prompt，只对 prompt 导致的失败生效，改完还会验证对基线无回归。把官方文档站里的 Developer Knowledge MCP 一起装上，agent 查的是平台最新文档而不是训练数据，这个组合是 Google Cloud Blog 教程里推荐的标准配置。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>常见踩坑</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">在 Windows 上装 uv 后需要重开终端，否则 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">uvx</code> 找不到命令。认证方面，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agents-cli login --status</code> 会告诉你当前用的是 ADC 还是 API key，部署阶段 ADC 更省事。代码执行沙箱目前只有 us-central1 区域，Google 官方教程里特意提醒全程锁这个区域，跨区域部署会报错。eval 分数上不去别急着改 prompt，先跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agents-cli eval analyze</code> 做失败聚类，很多问题出在工具调用质量上。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>同类技能对比</strong></p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;text-align:left;">agents-cli（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>uvx google-agents-cli setup</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>8 阶段生命周期，eval 门禁 + 三种部署目标</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>构建/评测/部署生产级 agent</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 5672</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">google/skills</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>npx skills add google/skills</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>104 个 GCP 基础技能：BigQuery、GKE、Firebase</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>已有 agent 需要 GCP 产品知识</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 高</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">MicrosoftDocs/Agent-Skills</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>按仓库说明</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>微软与 Azure 官方指导打包</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>Azure 生态的 agent</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 中</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">cc-devops-skills</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>见往期 08-05 推荐</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>31 个技能让 AI 写传统 DevOps 配置</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>Docker/K8s/CI 配置</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 中</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">agents-cli 与 08-05 推荐的 cc-devops-skills 解决的是不同问题：后者教 AI 写传统基础设施的 DevOps 配置，前者管的是 AI agent 本身的工程生命周期，从脚手架到评测到部署发布，属于"用 AI 造 AI"的赛道，两者可以叠加使用。google/skills 适合需要零散 GCP 知识的场景，agents-cli 适合想要一条完整流水线的场景。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 8.4</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>v 持续更新</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>Apache 2.0</span>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/google/agents-cli</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>google.github.io/agents-cli/</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>今日小结</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">适合正在做或准备做 AI agent 的人：有 GCP 环境能立刻用全套，没有也能本地跑原型和评测。配好约 10 分钟，换来的是你的编程助手从"会写 Python"变成"懂 agent 工程全流程"，eval 门禁让交付有了可量化的标准。Google 官方维护，文档和教程质量有保障。</p>
+
+</section>
