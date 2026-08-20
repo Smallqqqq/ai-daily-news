@@ -1,0 +1,134 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<!-- 用户规范：body 开头不渲染文章标题，只放品牌绿日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-20</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">一次 Playwright 快照 56KB，二十条 GitHub Issue 59KB，一段访问日志 45KB。MCP 时代每个工具调用都往 200K 上下文窗口里倒原始数据，半小时烧掉 40%。context-mode 用一个沙盒 MCP 服务器把这些数据拦在窗口之外：<strong style="color:#07c160;">315KB 变成 5.4KB</strong>，会话寿命从半小时拉到三小时。GitHub 19.7K star，昨天还在更新，一个命令就能装。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+![context-mode 演示](./context-mode-demo.png)
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>它解决什么问题</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">上下文窗口是 AI 编程助手的硬通货，而工具输出是最大的挥霍者。读一个文件、跑一条命令、抓一个页面，原始数据整块进窗口，模型只需要其中几行。用过的 25K tokens（Claude Code 的截断上限）就永远占着窗口，直到 compaction 一刀切掉。切完之后模型忘了自己在改哪个文件、任务做到哪一步。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">作者 mksglu 给自己的 Claude Code 会话装完这套东西后，工作 <strong style="color:#07c160;">6 倍时长</strong>才开始退化，于是开源。2 月上线，两个 Show HN 帖子，其中一个拿到 570+ 分冲到 HN 榜首。现在 <strong style="color:#07c160;">19.7K star</strong>、1.4K fork，支持 17 种 agent 平台。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>核心原理</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">context-mode 是一个 MCP 服务器加一组 hooks，全部机制不调一次 LLM，纯算法。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">第一层，沙盒执行。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute</code> 在独立子进程里跑代码（12 种语言运行时），只把 stdout 送回上下文。原始数据（日志、API 响应、快照）留在沙盒里。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute_file</code> 处理文件同理，45KB 的文件只回 155 字节摘要。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">第二层，全文索引。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_index</code> 按标题切块（代码块保持完整）存入 SQLite FTS5 虚表，搜索走 BM25 相关度排序，索引时做 Porter 词干化，running 和 ran 命中同一个词干。需要细节时 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_search</code> 按需取回，原始页面永不进窗口。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_fetch_and_index</code> 把 URL 抓取、转 markdown、切块、索引连成一条流水线，24 小时 TTL 缓存。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">第三层，会话续命。每次文件编辑、git 操作、任务、错误、用户决策都记进项目级 SQLite。compaction 发生时不是把旧数据倒回窗口，而是 FTS5 索引加 BM25 检索只取相关部分。配合 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--continue</code> 参数跨会话续接；不加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--continue</code>，上一个会话的数据立即删除。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">第四层，PreToolUse hook 自动路由。钩子匹配 Bash、Read、Grep、Glob、WebFetch 等内置工具，把"读文件数行数"这类操作自动改道 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute</code>。README 里的对比：47 次 Read 700KB，1 次 ctx_execute 3.6KB。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>安装配置</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">Claude Code 全自动方式（插件市场，带 hooks 和 slash 命令）：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>/plugin marketplace add mksglu/claude-context-mode
+/plugin install context-mode@claude-context-mode</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">只想先试试工具、不要自动路由：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>claude mcp add context-mode -- npx -y context-mode</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">Codex CLI 同样一条命令：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>codex mcp add context-mode -- npx -y context-mode</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">插件版额外注册 7 个 slash 命令：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/context-mode:ctx-stats</code> 看省了多少 token，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx-doctor</code> 诊断环境，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx-index</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx-search</code> 管理索引，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx-upgrade</code> 升级，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx-purge</code> 清空，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx-insight</code> 打开团队分析面板。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>使用指南</strong></p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>场景一：长会话里分析日志和构建输出</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">触发条件：agent 要读 error.log、构建输出、测试报告这类大文件。操作：不直接 Read，改用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute_file</code> 处理，让它 grep 关键错误、统计出现次数，只回结果。预期：45KB 日志只占 155 字节窗口，剩下的地方留给真正的工作。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>场景二：大代码库的统计型审计</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">触发条件："统计每个文件的函数数""找出所有 TODO""分析依赖树"。操作：让模型写一段脚本交给 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute</code> 跑。模型在这里是代码生成器，不是数据处理器，50 次 Read 换成 1 次执行。官方示例：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>ctx_execute("javascript", `
+  const files = fs.readdirSync('src').filter(f =&gt; f.endsWith('.ts'));
+  files.forEach(f =&gt; console.log(f + ': ' + fs.readFileSync('src/'+f,'utf8').split('\n').length + ' lines'));
+`);</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">预期：700KB 的读取压成 3.6KB 的结果输出。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0; text-align:left;"><strong>场景三：调研外部资料</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">触发条件：要读官方文档、HN 帖子、GitHub Issue 列表做技术调研。操作：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_fetch_and_index</code> 抓取并索引（可并发 1-8 个 URL），然后 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_search</code> 多查询一次取回。预期：原始页面零入窗，索引只占 40 字节，需要哪段搜哪段。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>进阶技巧</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">批量执行并发：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_batch_execute</code> 一次跑多条命令加多组搜索，可选 concurrency 1-8 并发 I/O 密集任务，实测 <strong style="color:#07c160;">986KB 压到 62KB</strong>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">Playwright 组合技：浏览器快照先落盘（browser_snapshot 带 filename 参数），再交给 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute_file</code> 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_index</code> 处理。快照这种 56KB 的大户最值得改道。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">statusline 集成：装完在 Claude Code 状态栏显示"本次会话已省 $X · 累计 $Y · 效率 Z%"，省钱看得见。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>常见踩坑</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">第三方 MCP 工具的输出拦不住。PreToolUse 钩子只匹配 Bash、Read、Grep、Glob、WebFetch、WebSearch 这类内置工具；MCP 响应走 JSON-RPC 直达模型，没有 hook 能在入窗前压缩它。98% 的节省只对内置工具和 CLI 包装生效。自建 MCP 时把思路搬到服务端：返回紧凑摘要，加可查询的全量存储。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">短任务反而更贵。有用户拿自己的 SaaS 项目做了三组对照实测（naramalkoht.com 有完整数据）：上下文窗口确实省了 37K tokens，但 plan 用量反而上涨。MCP 工具定义全程常驻窗口，每次调用还有往返开销，一次大审计光工具调用就吃掉 86K tokens。结论：单文件小改别开，多文件、长会话、大代码库才是主场。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">路径必须绝对。早期版本索引按相对路径解析，踩过"索引 8.1KB 只留住 0.5KB"的坑。传绝对路径；升级插件后该问题已修复，习惯保留。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>同类技能对比</strong></p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;text-align:left;">context-mode（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>/plugin install</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>沙盒拦截工具输出 + SQLite 索引续命，不碰模型输出风格</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>长会话、大代码库、重工具调用</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 19.7K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">caveman</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>/plugin install</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>压缩模型说话方式，省 65% 输出 token</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>想省输出 token 的场景</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 98.9K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">Cloudflare Code Mode</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>官方插件</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>压缩 MCP 工具定义的 schema，管输入侧</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>装了多个 MCP 的场景</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 高</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;text-align:left;">claude-mem / pmb</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>/plugin install</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>跨会话记忆，文件或数据库存储</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>换会话不丢上下文</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 中</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">和之前推过的 caveman 放在一起看最清楚：caveman 管模型怎么说话，context-mode 管数据流往哪走。作者明确反对用激进简洁提示压缩输出，理由是 Moonshot AI 对 kimi-k2.5 的测试显示这会让编码和推理基准分下降。两者管上下文的两端，不冲突，可以同装。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 9.5</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>最近更新 2026-08-19</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>License ELv2</span>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/mksglu/context-mode</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>context-mode.com</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;text-align:left;"><strong>今日小结</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;text-align:left;">适合每天和 Claude Code 打交道的重度用户，尤其是动不动就开长会话、跑大工具输出的人。配置时间三分钟，一条 /plugin install 命令。换来的东西很具体：30 分钟的窗口寿命变 3 小时，一次大审计少烧 37K 上下文 token。短任务先关掉，长会话再开，状态栏里省的美元数会告诉你值不值。</p>
+
+</section>
