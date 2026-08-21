@@ -1,0 +1,262 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-21</p>
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+<p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;"><strong style="color: #1b5e20;">摘要</strong></p>
+<p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;">本期覆盖 2026-08-20 至 08-21 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / arXiv / HF Papers / 知乎 / Product Hunt，精选 10 条按影响力排序。</p>
+<p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;">核心主题：<strong style="color:#07c160;">Mojo 编译器全开源引爆 HN</strong>、<strong style="color:#07c160;">Liquid AI 发布 DSpark 投机解码 draft 模型</strong>、<strong style="color:#07c160;">Claude 输出治理成为社区热议话题</strong></p>
+</section>
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. Mojo 编译器全开源（Apache 2.0 + LLVM exceptions）</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 首页 349 points / 78 comments（08-20~21）</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">modular/modular 268 stars/day</span>
+</section>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Modular 于 8 月 18 日 ModCon 2026 上把 Mojo 语言的编译器、工具链整体开源，托管在 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">modular/modular</code> 仓库，采用 Apache 2.0 加 LLVM exceptions 许可。Mojo 是 Chris Lattner（LLVM、Swift 之父）带队设计的系统编程语言，语法接近 Python，编译产物面向 GPU 与 AI 加速器。此前四年社区只能参与标准库，编译器闭源；8 月 11 日 Mojo 1.0 发布（语法锁定、标准库已有 1,100+ 社区 PR），一周后编译器代码全部放出。背景是 Qualcomm 于 7 月 29 日以 39 亿美元完成对 Modular 的收购。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/modular/modular.git
+cd modular
+# 一条命令从源码构建编译器并运行 Mojo 文件
+./bazelw run --config=build-mojo KGEN:mojo -- run hello.mojo
+# 改标准库后跑全量测试
+./bazelw test --config=build-mojo mojo/stdlib/test/...
+# 不开发编译器本身，用 prebuilt 配置
+./bazelw run --config=prebuilt-mojo KGEN:mojo -- run hello.mojo</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">HN 首页 <strong style="color:#07c160;">349 分</strong>，当日开发者工具类最高帖之一。Mojo 是少数从诞生起就锁定 AI 硬件赛道的语言：MAX 推理框架和 Mojo 内核共用一套 MLIR 工具链，Python 生态可双向调用。社区此前最大的顾虑是"语言开源但编译器闭源，跑路即弃坑"，Qualcomm 收购让这个顾虑达到顶点，开源公告直接回应了它。编译器的外部贡献流程承诺年底前开放，Windows 版也在开发中。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Phoronix 作者 Michael Larabel 的评论点出时机："Following the recent Qualcomm acquisition I didn't expect to see much on the open-sourcing side given Qualcomm's mixed history"，开源本身成了收购后的最大反转。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Threads 上 @gattyworks 复盘了 8 月 11 日 1.0 发布时的质疑："Stable language, closed toolchain, new owner"，三天后质疑被开源公告消化。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.modular.com/blog/mojo-open-source</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/modular/modular</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.phoronix.com/news/Modular-Mojo-Open-Source</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. RollTab：125M 参数模型在 iPhone 上实时续写钢琴（免费 iOS App）</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.6/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Show HN 434 points / 99 comments（08-20 发帖）</span>
+</section>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Simon Edwardsson 用 125M 参数的 Transformer 训练了钢琴 MIDI 续写模型，封装成免费 iOS 应用 RollTab。玩法类似 GitHub Copilot：在 MIDI 键盘上弹几个音，模型在设备端实时续写后续旋律，iPhone 15 上生成速度约 <strong style="color:#07c160;">108 音符/秒</strong>。技术路线经过 14 次实验迭代：note-level 分词（音符间相对音高关系）、激进的数据清洗与增强、DPO 对齐续写偏好，最后用 Core ML 部署到端侧，全程离线、零延迟、无隐私上传。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># App Store 搜索 RollTab，免费下载
+# 连接 MIDI 键盘 → 弹奏几个音符 → 模型实时续写
+# 模型与训练细节：https://simedw.com/2026/08/20/midi-autocomplete-piano/</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#07c160;">434 points</strong> 是当日 Show HN 最高分。它把"小模型 + 端侧部署"这条路线从语音、OCR 延伸到音乐生成：125M 参数在手机上跑到 108 notes/s，不需要任何云推理。作者同期作品还包括 9M 参数的中文发音纠正模型（300 小时语音、纯端侧），一整套"小而专"的端侧模型方法论在博客里完整公开，可直接照搬。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 高赞评论引出古典作曲训练的类比："This sort of 'autocomplete' is actually fundamental to how classical composers were trained"，并推荐 Robert Gjerdingen 的 Gebrauchs-Formulas 一文，认为续写不是玩具功能，是作曲训练本身。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">评论区技术追问集中在音高相对编码、力度（velocity）与踏板等元素如何入模，作者逐条作答。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://simedw.com/2026/08/20/midi-autocomplete-piano/</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=49373456</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. Liquid AI 发布 LFM2.5-DSpark：投机解码提速 3.18x，输出不变</p>
+![Liquid AI DSpark 演示](./liquid-dspark-demo.gif)
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">X @liquidai 官方发布 3h 内多线程讨论</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Reddit r/machinelearningnews（08-20）</span>
+</section>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Liquid AI 于 8 月 20 日发布 LFM2.5 系列三个 draft 模型（配 1.2B-Instruct、2.6B、8B-A1B 目标模型），用 DSpark 投机解码给自家模型加速。约 300M 参数的 drafter 一次提出 9 个候选 token 的块，目标模型单次前向验证整块。DSpark 三件套：并行骨干一次算出整块隐状态、轻量序列头建模相邻 token 依赖、置信度调度器按硬件容量剪掉低置信后缀。greedy 解码下输出与目标模型逐 token 一致，benchmark 分数不变。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># llama.cpp 已主线支持（PR #25173），GGUF 侧车文件直接配对
+llama-server -m LFM2.5-2.6B-F16.gguf \
+  -md LFM2.5-2.6B-DSpark-Draft-v1-F16.gguf \
+  --spec-type draft-dspark --spec-draft-n-max 10 \
+  -fa on -ngl 99
+# SGLang（PR #31041）
+python -m sglang.launch_server --model-path LiquidAI/LFM2.5-8B-A1B \
+  --speculative-algorithm DSPARK \
+  --speculative-draft-model-path LiquidAI/LFM2.5-8B-A1B-DSpark \
+  --speculative-draft-attention-backend flashinfer \
+  --disable-radix-cache --mem-fraction-static 0.75 --port 30000</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">H100 上 LFM2.5-8B-A1B 跑 MATH500 从 428 提到 <strong style="color:#07c160;">1362 tok/s（3.18x）</strong>；M4 Max 上 1.2B-Instruct 从 136 提到 389 tok/s（2.87x）。代价是 drafter 内存：BF16 侧车 655MB，Q4_K_M 压到 191MB 且接受长度只降 3%。这轮发布的信号是"模型架构与投机解码协同设计"：draft 接受率依赖目标模型特征，Liquid 直接自己训 drafter，比第三方通用方案适配更深。8B-A1B 在 M4 Max 上只有 1.18x，官方归因于 MoE 在 Metal 上的 llama.cpp 实现，边界说得很清楚。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">X @liquidai 官方跟帖主动解释最差案例："The speedup varies by architecture. LFM2.5-8B-A1B is the strongest case on the H100 and the weakest on device, at 1.18x mean on the M4 Max"，并指向 llama.cpp 的 MoE Metal 后端。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">OrcaRouter 评测提醒：速度数据为厂商自测，尚未独立复现，但仓库、格式、框架支持都可直接验证。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.liquid.ai/blog/lfm2.5-dspark</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://huggingface.co/LiquidAI/LFM2.5-2.6B-DSpark-GGUF</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. Vomit：用本地 LLM 重写 Claude 5 的啰嗦输出</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.2/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 195 points / 209 comments（08-21 发帖 5 小时）</span>
+</section>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">zachahn 写的 Go CLI（GPLv3），挂在 Claude Code 的 MessageDisplay hook 上：缓冲 Claude 的输出，转发给本地 LLM（作者用 GPT-OSS 20B，经 Llama.app 或 Ollama），重写后再显示。全部本地、无遥测、无外部依赖。另有非侵入模式 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">vomit list</code> / <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">vomit tail</code>，在侧边翻译 Claude 的原始输出而不拦截。作者博客里的对比样例：Claude 原始 6 段带验证清单的长回复，经 20B 模型重写成 4 句直白陈述。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>go install github.com/zachahn/vomit@latest
+vomit init   # 配置本地 LLM 连接（Llama.app / Ollama / 任意 OpenAI 兼容 API）
+# 非侵入模式
+vomit list           # 列出 Claude 会话
+vomit tail &lt;session&gt; # 跟随并翻译最新会话输出</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#07c160;">209 条评论</strong>远超 195 的票数，讨论密度说明痛点之痛。项目戳中的事实：Claude 5 系模型的输出膨胀已经严重到开发者要再挂一层 LLM 来压缩。它和 caveman、deslop 等"输出治理"工具构成同一波潮流，区别在于 Vomit 不依赖模型自觉遵守 system prompt，而是在显示层做兜底。代价也明确：本地小模型只看得到 Claude 想说的话，偶尔丢信息。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 trefoiled："I've been grappling with this for weeks, not just in Claude but in Codex as well... AGENTS.md does very little, agents will consistently violate the communication preferences"，工具需求是跨模型的。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 bmurphy1976 分享了自己的同类方案：一个叫 "deslop" 的 skill，规则更细，包括"对象不应发出动作动词""删除元评论句子"。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/zachahn/vomit</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://zachahn.com/posts/1787191554</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=49375996</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. caveman 2：让 Agent 少说 65%、少读 33% 的 token</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.1/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 258 stars/day（08-21），总星 99K+</span>
+</section>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">JuliusBrussee 的 Claude Code skill（MIT，Go），让 agent 用原始人式短句回答，砍掉客套、铺垫、hedging，代码块和命令逐字节不变。8 月 20 日更新的 Caveman 2 把压缩方向从输出扩展到输入：pinned Claude Code benchmark 上 provider 报告的输入 token 再减 <strong style="color:#07c160;">33.2%</strong>。README 附 10 个任务的实测表：平均输出 1214 token 降到 294，省 65%，单项最高 87%（React error boundary 3454→456）。作者还发布过 cavegemma（把压缩风格 LoRA 进 Gemma 4 权重）和 cavemem（跨 agent 共享记忆）。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 通用安装（30+ agents 兼容）
+npx skills add JuliusBrussee/caveman
+# Claude Code 插件
+claude plugin marketplace add JuliusBrussee/caveman &amp;&amp; claude plugin install caveman@caveman
+# 用 /caveman 切换，/normal 切回</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#07c160;">258 stars/day</strong> 是在 99K 总星基础上继续涨，说明需求没被满足完。Caveman 2 的"输入压缩"瞄准的是 skills/AGENTS.md 越堆越大的上下文开销，和输出压缩拼成完整闭环。同类里它是数据最扎实的一个：实测表覆盖 10 类真实开发任务，省 token 比例随任务波动（22%~87%）也照实列出，不是营销数字。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Hermes 生态的安全扫描对仓库 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">benchmarks/run.py</code> 与 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">CONTRIBUTING.md</code> 给出 caution 判定并开 issue（#528），社区在"省 token"与"供应链安全"之间开始较真。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">社区衍生生态已成型：日文版 genshijin、乌克兰语版 cavemenko、Copilot 版 caveman-copilot，说明压缩风格是跨语言跨 agent 的普适需求。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/JuliusBrussee/caveman</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. cursor/plugins：Cursor 官方插件规范与市场仓库</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.9/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 449 stars/day（08-21），3.9K 总星</span>
+</section>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Cursor 官方开源仓库（MIT），包含插件规范与官方插件市场。每个插件是一个目录：<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">.cursor-plugin/plugin.json</code> 清单 + <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">skills/</code>（SKILL.md）+ <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">rules/</code>（.mdc）+ <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">mcp.json</code> + 文档。首批官方插件包括：thermos（"热核"分支审查：安全审计、代码质量 rubric、并行子代理）、continual-learning（把会话纪要增量写入 AGENTS.md）、cursor-team-kit（团队 CI/评审/发布工作流）、teaching，以及 github、salesforce、gong、playwright、google-calendar 等集成插件。底层兼容 8 月 11 日发布的 Agent Plugins v1.0.0 开放规范（agent-plugins.org，OpenAI/AWS/Cursor/GitHub 共建）。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/cursor/plugins
+# 或 Cursor Settings → Plugins 中搜索安装（需 Cursor v2.6.0+）
+# 团队市场：fork 后改 .cursor-plugin/marketplace.json 指向自己的仓库</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#07c160;">449 stars/day</strong> 说明 Cursor 生态从"rules 文件分享"升级到"带清单、带版本、带 MCP 配置的插件包"。thermos 这类官方插件直接暴露了 Cursor 团队内部的代码审查方法。对开发者来说，插件打包格式同时是 skills + rules + MCP 的通用分发格式，一套内容可以跨 Cursor、Codex 等支持 Agent Plugins 规范的客户端复用。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">explainx 的规范解读提醒：Agent Plugins 的可移植格式与 Codex 原生 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">.codex-plugin/plugin.json</code> 并不相同，勿直接改名互转，要按各客户端引导迁移。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">社区模板仓库（如 fieldsphere/cursor-team-marketplace-template）已出现，把"公司基线插件"作为新入职默认配置分发。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/cursor/plugins</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://cursor.com/docs/plugins</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. Huzzah：写伪代码、编辑器同步出真代码</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Show HN 225 points / 132 comments（08-21）</span>
+</section>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个交互范式实验编辑器（目前 POC）：开发者用自己顺手的写法写伪代码，保存时编辑器同步生成真实源码，伪代码作为"意图记录"与生成代码并存并建立 source map。代码库长大之后，任何一段代码都能反查到当初的人类意图。作者的原话是"想回去写代码，但不想回到纯手工时代"，在纯手工与 vibe coding 之间找第三条路。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># POC 阶段，安装说明在 README（Show HN 帖内链接）
+# 核心交互：写伪代码 → 保存 → 同步为真实代码 → 伪代码持久化为意图记录
+# 演示视频见 Show HN 帖：https://news.ycombinator.com/item?id=49378768</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#07c160;">132 条评论</strong>讨论的实质是 prompt 的归宿问题：vibe coding 里 prompt 用完即弃，代码三个月后就说不清为什么写成这样。Huzzah 把 prompt 变成代码的一等公民，留在仓库里。这个方向与 AGENTS.md、spec-driven development 同源，但落点更小：只解决"意图记录"这一件事。作者明确说"不适用于所有场景"，POC 定位诚实。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 讨论焦点是伪代码粒度与代码漂移：伪代码更新后生成代码怎么跟随、生成代码手改后 source map 怎么维护，作者表示这正是需要探索的部分。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">评论区普遍认可"intent 持久化"的价值，分歧在实现路径（注释、spec 文件、还是编辑器层同步）。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=49378768</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. Grok 4.6：xAI 面向长时运行 Agent 的旗舰模型（$2/$6）</p>
+![Grok 4.6 演示](./grok46-demo.png)
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.6/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 08-20 daily #3 · X 多语言转发讨论</span>
+</section>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">xAI 于 8 月 12 日发布 Grok 4.6（8 月 20 日 Product Hunt 正式 Launch），定位"长时运行 Agent 的旗舰模型"：500K token 上下文、文本+图像输入、新增 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">reasoning_effort</code> xhigh 档、自带 web/X 搜索与代码执行工具。价格维持 Grok 4.5 的 $2/$6 每百万 token（&lt;200K prompt），可通过 xAI API、Cursor、Grok Build、OpenRouter、Vercel、Cloudflare 调用。注意 200K 阈值：prompt ≥200K 时整个请求按 $4/$12 计费，cached 输入也从 $0.30 涨到 $0.50。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># xAI API（Responses + Chat Completions 均支持）
+curl https://api.x.ai/v1/chat/completions \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -d '{"model": "grok-4.6", "messages": [{"role": "user", "content": "review this repo"}], "reasoning_effort": "xhigh"}'</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">厂商数据里 4.6 的涨幅集中在长轨迹任务：DeepSWE v1.1 从 54.0% 到 <strong style="color:#07c160;">65.9%</strong>，Terminal-Bench v3.0 从 15.7% 到 26.0%，CursorBench 69.9%。价格不变、长上下文翻倍计价，是"agent 时长换钱"的定价试验。对预算敏感的开发者，缓存输入涨价 <strong style="color:#07c160;">67%</strong> 直接推高长会话成本，社区测算建议盯 cache 命中率与上下文压缩，而不是只看 $2/$6 的门面价。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">LinkedIn 上 AI Builders Hub 的分析被广泛转发：cached input $0.30→$0.50（+67%）对长 agentic 会话是实际涨价，200K 之上的"整请求翻倍"规则意味着 250K prompt 全部按高费率计。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">社区共识是先用非关键 agentic 负载实测延迟与可靠性，等独立 benchmark 再进生产。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://x.ai/news/grok-4-6</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://llm-stats.com/blog/research/grok-4.6-launch</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. Checksum AI：给你的 coding agent 配一个测试搭子</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.4/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 08-20 Launch of the Day + daily #2，457 followers</span>
+</section>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AI 原生持续测试平台（旧金山，2024 年成立）：每个 PR 自动生成并执行 E2E 与 API 测试，产出标准 Playwright 代码存在你自己的仓库里。三个专职 agent 分工：End-to-end Agent 生成并自动修复 Playwright 测试、CI Agent 每 PR 产出 50-200 条针对变更的测试、API Agent 数天内覆盖数千 endpoint。测试失败时先判定"真 bug 还是过期测试"，假失败自动修复。8 月 4 日发布的 Continuous Quality Loop 已接入 GitHub、CI 与 MCP。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 官网注册后连接 GitHub 仓库：https://checksum.ai
+# 授权 Checksum GitHub App → 选择仓库 → CI 配置注入
+# 测试以标准 Playwright 代码生成在你的 repo 中，可审可改</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方数据：<strong style="color:#07c160;">70%</strong> 测试失败无需工程师干预即可修复；客户 Counterpart 用不足一名离岸工程师半薪的成本获得 <strong style="color:#07c160;">10 倍</strong> QA 产出，且零生产事故。它的切入点是行业刚需：Checksum 自家调研显示 <strong style="color:#07c160;">61%</strong> 工程负责人过去 90 天经历过由 AI 生成代码导致的生产事故，其中大多已通过 review 与单测。coding agent 把"生成"这半圈转快了，"验证"这半圈由它补上。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">PH 创始人开场白："AI coding tools solved generation... they didn't solve verification; every PR still needs to be tested and trusted before it ships."</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">定价按维护的工作流数量计，无席位费、无运行次数费，社区评价这比按测试条数计费更适合 agent 时代的测试量级。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://checksum.ai</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/products/checksum-ai</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">10. career-ops 持续火爆：198 → 816 stars/day（08-20 首录）</p>
+![career-ops 演示](./career-ops-demo.gif)
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.2/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">816 stars/day（08-21）</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">较首录日 198 暴涨 4 倍，65.9K 总星</span>
+</section>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">开源 AI 求职流水线（08-20 日报第 10 条首录）：扫描 100+ 公司门户、A-F 评分卡打分、生成 ATS 定制 CV、追踪投递，人审不自动投递。今日热度突然翻 4 倍，登上 GitHub Trending 前排。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx @santifer/career-ops init
+cd career-ops &amp;&amp; npm run doctor
+cp config/profile.example.yml config/profile.yml</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">从 <strong style="color:#07c160;">198 跳到 816 stars/day</strong>，说明昨日的收录窗口外还有大量讨论在发酵，很可能有新的转发源（社区帖/视频）引爆。求职工具的需求季节性叠加招聘季，65.9K 总星与 12.7K forks 的体量让"agent 技能包 + 真实工作流"模式继续被验证。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">首录时作者自述数据（740+ 岗位评估、100+ 定制 CV、最终拿到 Head of Applied AI）仍是社区转发时引用最多的段落。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">今日暴涨的具体引爆源尚未定位，热度数字来自 GitHub Trending 官方榜。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/santifer/career-ops</span></code></p>
+<p style="text-align:center;margin:32px 0;color:#07c160;letter-spacing:8px;font-size:12px;">· · · ◆ · · ·</p>
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+<section style="margin-bottom:16px;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;">Tencent/AI-Infra-Guard</p>
+<p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;text-align:left;">（50 stars/day 压线，4.5K 总星）腾讯朱雀实验室的 AI 红队平台，Apache 2.0。ClawScan（OpenClaw 安全检查）、Agent-Scan、MCP/技能扫描、AI 基础设施漏洞扫描（130 组件、1,888 条漏洞规则）、越狱评估，Docker 一键起。</p>
+<p style="margin:0;font-size:13px;color:#999;text-align:left;">https://github.com/Tencent/AI-Infra-Guard</p>
+</section>
+<section style="margin-bottom:16px;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;">akitaonrails/ai-memory</p>
+<p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;text-align:left;">（332 stars/day，较昨日 606 回落）Rust 写的 coding CLI 长期记忆与跨厂商交接方案，3.3K 总星。</p>
+</section>
+<section style="margin-bottom:16px;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;">usestrix/strix</p>
+<p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;text-align:left;">（08-20 593 stars/day，55.8K 总星）开源 AI 渗透测试工具，自动找应用漏洞并验证修复。</p>
+</section>
+<section style="margin-bottom:16px;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;">GPT-5.6 Sol 半价折扣</p>
+<p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;text-align:left;">（知乎 08-21）OpenRouter 与 Vercel AI Gateway 上 OpenAI 提供商 8 月 17 日至 9 月 18 日折扣，模型 ID 保持 openai/gpt-5.6-sol，输入输出、缓存读写与各服务层级全覆盖。</p>
+</section>
+<section style="margin-bottom:16px;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;">OpenAI 暂停 Astra 训练系误读</p>
+<p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;text-align:left;">（知乎 08-21 澄清帖）小批量训练与评测仍在进行，目的是攒对齐证据、验证安全栅栏后再决定是否跑大 run。</p>
+</section>
+<section style="margin-bottom:16px;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;">EnvHarness: Awakening Static Worlds for Agent Learning</p>
+<p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;text-align:left;">（HF Papers 08-21，18 upvotes）把静态世界环境唤醒用于 agent 学习的框架。</p>
+</section>
+<section style="background-color:#f5f7fa;border-radius:8px;padding:16px 18px;margin:24px 0 0 0;">
+<p style="margin:0 0 8px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">本期关键词</p>
+<p style="margin:0;font-size:15px;color:#555;text-align:left;">Mojo 开源 · 投机解码 · Claude 输出治理 · Cursor 插件市场 · 端侧小模型</p>
+</section>
+</section>

@@ -1,0 +1,113 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-21</p>
+![今日概览](./summary.png)
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:16px 0 1.4em 0;text-indent:2em;">今天两个都是"别人收钱做、他们开源做"的路数：OpenCursor 把 Cursor 的 agent 体验拆成可完全离线跑的开源扩展，语义搜索都本地化；货拉拉把内部用了很久的 Figma 转码管线开成 MCP 服务，设计稿到代码这条路多了一个高保真的开源选项。</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">OpenCursor — 6K stars 的开源 Cursor 替代品，语义搜索也不上云</p>
+<p style="margin:0 0 14px 0;font-size:15px;color:#666;text-align:left;">🏪 VS Code Marketplace · 发布者 pkrd · MIT License</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Cursor 好用的部分基本都收在订阅墙里，代码语义索引也绑在云端。OpenCursor 做的事很直接：一个 VS Code 扩展，提供 agent 聊天、代码编辑、终端操作、语义搜索全套，模型来源随你选：Claude、ChatGPT、Gemini 的订阅登录直接可用，贴 API key 走任意兼容端点也行，装个 Ollama 或 llama.cpp 就完全离线，代码不出机器。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它的语义搜索是纯本地的。问一句"auth token 在哪里刷新"，扩展靠本地 embedding 索引按语义找代码，索引自动构建、增量更新，存在本地，不想用本地模型也可以指向任何 OpenAI 兼容的 embedding 端点。这个能力在同类开源扩展里不多见，多数要么没做语义搜索，要么要求云端。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 侧给了 25 个内置工具：读写编辑、shell、grep/glob、网页搜索抓取、notebook、todo、子 agent、MCP，加上 11 个生命周期 hooks，和 Cursor、Claude Code 的 hook 约定兼容。权限控制按动作分 allow/ask/review/deny 四档，带风险启发式，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">rm -rf</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">sudo</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">.env</code>、密钥文件这类操作默认拦下来问。每次 agent 改完代码，每个 hunk 上都有 CodeLens 的 Keep/Undo 按钮，不依赖 git 就能逐块验收。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">8 天前推过的 Local AI Pilot 解决本地补全，OpenCursor 补的是完整 agent 这一层：Ask/Plan/Debug/Multitask 多种模式，@-mention 文件、分支 diff、终端、过往会话都能塞进上下文，截图和 PDF 可以直接贴进对话。Roo Code 今年 5 月关停之后，开源 agent 扩展的格局基本是 Cline、Kilo Code、Continue 三家，OpenCursor 以 5,999 stars 挤进了第一梯队。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># VS Code 扩展市场搜索 "OpenCursor" 安装（发布者 pkrd）
+# 或者从 Releases 下载 .vsix 离线安装：
+code --install-extension opencursor-0.x.x.vsix
+
+# 想完全离线：先装 Ollama，侧边栏 Provider 选 Local 即可，无需任何 API key
+# 从源码构建：
+git clone https://github.com/PawanOsman/OpenCursor.git
+cd OpenCursor &amp;&amp; pnpm install &amp;&amp; pnpm run compile</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">OpenCursor（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code 市场（pkrd）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>本地语义搜索、本地补全、逐 hunk 审查、细粒度审批</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 6.0K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Cline</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code 市场</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>生态和插件市场大，多编辑器覆盖，可选托管计费</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费 + 可选 $10-39/月</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>主流</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Kilo Code</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code 市场</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Cline/Roo 混合体，Roo 关停后用户主要去处</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费 + 可选托管</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>主流</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Continue</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>市场 / CLI / JetBrains</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>补全 + agent 全能型</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 35.6K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Roo Code</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>已关停</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>2026 年 5 月停止维护</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>—</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>已归档</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">选 OpenCursor 的原因：Continue 虽然 35.6K stars，但仓库已转为只读归档；Cline 和 Kilo Code 都没有内置补全，得另装补全工具；OpenCursor 是补全、agent、语义搜索三件套齐全还全免费的唯一选项，审批粒度也更细。要我来选，一个扩展把三样全包了，比装两个插件省心。</p>
+<p style="font-size:14px;color:#999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">⭐ 5,999 · MIT License · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>github.com/PawanOsman/OpenCursor</span></code> · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>marketplace.visualstudio.com/items?itemName=pkrd.ocursor</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Huolala Figma MCP — 货拉拉把内部 Figma 转码管线开源，八步清洗出高保真代码</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">设计稿转码是前端绕不开的活，市面上的方案要么闭源，要么在复杂页面上保真度崩掉。货拉拉（Huolala）6 月把内部自用的 Figma 转码 MCP 服务开源了，Apache 2.0，用 FastMCP 构建，直接对接 Cursor 这类 AI 客户端。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">核心是 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">figma_to_code_package</code> 一个工具：传入 Figma 设计 URL，服务端跑完一整条管线后返回 ZIP 包，里面有 index.html、切片图片、字体、dsl.json 和设计截图，LLM 再按目标平台二次转换成 React、Vue、React Native、iOS、Android 代码。管线分八步：DSL 树构建（记录交叉重叠、溢出、包含、层级）、系统栏和 Home Bar 移除、可选的 VLM 列表检测、红点徽章识别与层级调整、图标检测合并、隐形透明图层清洗、布局计算（投影切分、列表布局、文字宽高去除、容器自动尺寸）、资产打包（图片去重、字体导出）。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这几步解决的正是普通方案翻车的点。设计稿里叠了一堆透明占位图层，直接转出来的代码全是冗余节点；状态栏、红点徽章、列表重复项，规则引擎识别出来单独处理，而不是交给模型猜。管线本身可扩展：DSL 处理走 processor registry + priority pipeline，步骤可以按需开关，还支持 Custom Skills 定制 LLM 工作流。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">典型用法：Cursor 里调 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">figma_to_code_package</code>，拿到 ZIP 后用仓库自带的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">ui2code_with_skills</code> 提示词模板，按目标平台加载对应 Skill 生成代码；只改局部样式时用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">get_figma_property</code> 提取文字和样式。仓库 README 里给了和其他方案的对比实测：Figma Context MCP 在重复组件分组上处理差，Figma 官方 MCP 在复杂页面上保真度不行，货拉拉这套用 CV 清洗加自研图标识别，保真度排最高档。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 要求 Python 3.11+，克隆后按 README 配置 Figma Token 并注册到 MCP 客户端
+git clone https://github.com/HuolalaTech/huolala-figma-mcp
+cd huolala-figma-mcp
+# 提示词模板在 assets/prompts/ 下，README_CN.md 有中文文档</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Huolala Figma MCP（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">形态：</strong>MCP 服务</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>八步清洗管线、红点/系统栏识别、DSL 可扩展、Custom Skills</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">协议/价格：</strong>Apache-2.0 免费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 76</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Figma Context MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">形态：</strong>MCP 服务</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>RESTful API 提取关键信息后交给 LLM 转码</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">协议/价格：</strong>开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>高</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Figma 官方 MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">形态：</strong>MCP 服务</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>设计 JSON + 截图 + 多模态 LLM 融合</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">协议/价格：</strong>闭源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>高</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">VibeFigma</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">形态：</strong>CLI / 网页</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Figma URL 转 React + Tailwind，云版免安装</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">协议/价格：</strong>AGPL-3.0</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 763</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">选货拉拉这套的理由：VibeFigma 热度高一个量级，但 AGPL 商用受限，最近一次提交停在 5 月；官方 MCP 闭源且复杂页面保真差；Huolala 是唯一把"清洗、切片、布局计算"做成可扩展开源管线的方案，Apache 2.0 无商用顾虑，背后还有货拉拉内部的生产实践。</p>
+<p style="font-size:14px;color:#999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">⭐ 76 · Apache-2.0 · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>github.com/HuolalaTech/huolala-figma-mcp</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+<section style="margin-bottom:16px;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;">VibeFigma</p>
+<p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;text-align:left;">（763 stars）不介意 AGPL 的话，它是最省事的 Figma 转 React CLI，贴 URL 出组件，云版连安装都省了</p>
+</section>
+<section style="margin-bottom:16px;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;">Clarify</p>
+<p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:1.9;text-align:left;">（636 stars）MDX + OpenAPI 的文档站生成器，本地构建、自带 Pagefind 搜索和 llms.txt 输出，文档站想自己掌控部署的可以看</p>
+</section>
+</section>

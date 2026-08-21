@@ -1,0 +1,136 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-21</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">sonner 作者 Emil Kowalski 把十年设计工程经验打包成了 9 个 Agent Skill，30.6k stars，本月暴涨 2 万。装完后，你的 AI 写动画不再瞎用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">ease-in</code>，做 UI 审查会给出 Before/After/Why 表格，而不是"整体感觉还行"。</p>
+![emil skills 演示](./emil-skills-demo.jpg)
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">它解决什么问题</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AI 写的界面"能用但不好看"是普遍现象。功能都写对了，细节全错：进入动画用了 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">ease-in</code>（应该用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">ease-out</code>）、按钮没有 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">:active</code> 反馈、弹窗从屏幕中心长出来而不是从触发点、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">transition: all 300ms</code> 拖慢渲染。这些错误单独看都是小事，堆在一起就成了"一眼 AI"的界面。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Emil Kowalski 是 sonner、vaul、use-sound 的作者。他在 Vercel 和 Linear 工作过，现在运营 animations.dev。他把动画选择、设计决策这些隐性知识写成了技能，让 agent 动手前有判断依据。按他自己的说法："Agents don't have great taste"——这些技能就是给 agent 补品味用的。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">核心原理</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这套技能把设计决策流程固化了下来。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">以主技能 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">emil-design-eng</code> 为例，它内置了一个<strong style="font-weight:bold;color:#000;">动画决策框架</strong>，agent 写任何动画前必须先回答一个问题：这个动画用户多久看到一次？</p>
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #e8e8e8;">
+<thead>
+<tr>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">使用频率</th>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">决策</th>
+</tr>
+</thead>
+<tbody>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">100+ 次/天（快捷键、命令面板开关）</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">不动画，永远不</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">每天几十次（hover、列表导航）</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">删掉或大幅缩短</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">偶尔（弹窗、抽屉、toast）</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">标准动画</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">罕见/首次（onboarding、庆祝反馈）</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">可以做得更有表现力</td>
+</tr>
+</tbody>
+</table>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这个频率框架背后是一条硬道理：高频交互的动画每多 100ms，一天就偷走用户几分钟。大多数 AI 写代码时不会想这个，技能强制它想。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">审查输出也有硬性格式要求：review UI 代码时必须输出 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">| Before | After | Why |</code> 三列 Markdown 表格，一行一个问题。比如：</p>
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #e8e8e8;">
+<thead>
+<tr>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">Before</th>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">After</th>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">Why</th>
+</tr>
+</thead>
+<tbody>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">transition: all 300ms</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">transition: transform 200ms ease-out</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">明确列出属性，禁用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">all</code></td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">transform: scale(0)</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">transform: scale(0.95); opacity: 0</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">真实世界里没有东西从无中出现</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">下拉菜单 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">ease-in</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">ease-out</code> 自定义曲线</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">ease-in</code> 进入显得拖沓，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">ease-out</code> 即时反馈</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">按钮无 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">:active</code> 状态</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">:active</code> 时 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">scale(0.97)</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">按钮按下必须有响应感</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">popover <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">transform-origin: center</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">transform-origin: var(--transform-origin)</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">弹窗应从触发器处生长（modal 例外，保持居中）</td>
+</tr>
+</tbody>
+</table>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">表格格式逼着 agent 给出具体行号和可执行改法，杜绝"感觉有点生硬"这种废话。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">安装配置</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 一键安装（支持 Claude Code、Cursor、Codex 等 70+ agent）
+npx skills@latest add emilkowalski/skills
+
+# 只装主技能
+npx skills@latest add emilkowalski/skills --skill emil-design-eng</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Windows 注意：<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">npx skills</code> 需要较新的 Node（建议 20+）。若默认 Node 太旧，先 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">nvm use 24.9.0</code>。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装完即用。9 个技能按需触发，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">emil-design-eng</code> 是主入口，其余是专用工具：<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">animate</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">review-animations</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">improve-animations</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">find-animation-opportunities</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">prototype</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">animation-vocabulary</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">apple-design</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">pick-ui-library</code>。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">使用指南</p>
+<p style="font-size:17px;font-weight:bold;color:#333;margin:20px 0 10px 0;text-align:left;">场景一：AI 刚写完一个带动画的组件，你不想逐行检查</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：agent 交付了含动画的 UI 代码。操作：直接说"用 review-animations 技能审查这段代码的动画"。预期结果：得到一张 Before/After/Why 表格，每个问题一行，附具体理由，可直接复制进代码。</p>
+<p style="font-size:17px;font-weight:bold;color:#333;margin:20px 0 10px 0;text-align:left;">场景二：从零做一个新动画</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：需要一个 hover、抽屉或 toast 动画，但不想让 AI 自由发挥。操作：说"用 animate 技能给这个下拉菜单做进入动画"。预期结果：agent 会先选曲线（进入用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">ease-out</code>，按需求选 custom cubic-bezier）、再定时长（一般 150-250ms）、只动 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">transform</code> 和 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">opacity</code> 这类合成器友好属性，最后给出带注释的代码，而不是一行 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">transition: all .3s</code>。</p>
+<p style="font-size:17px;font-weight:bold;color:#333;margin:20px 0 10px 0;text-align:left;">场景三：整个代码库动效体检</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：老项目里动画七零八落，不知道从哪改起。操作：说"用 improve-animations 审计整个项目的动画"。预期结果：得到一份按优先级排序的修复计划，每项都是独立可执行的小任务，agent 可以一项项干完，不用重构整个代码库。</p>
+<p style="font-size:17px;font-weight:bold;color:#333;margin:20px 0 10px 0;text-align:left;">场景四：形容不出来想要什么动效</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：心里有画面但说不清，AI 做出来总差一点。操作：说"用 animation-vocabulary 帮我描述这个动效"。预期结果：技能教你用对的词汇下单——<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">spring</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">smooth fade</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">scale from origin</code>，让 AI 一次做对，而不是来回返工。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">进阶技巧</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">把 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">review-animations</code> 接进你的审查流程：任何 PR 涉及前端改动时，让 agent 在常规 code review 之外单独跑一遍动画审查。它的检查项和功能审查正交——功能正确的代码照样可能动画全错。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">另一个组合技是 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">prototype</code>：对一个拿不准的 UI 片段，让 agent 一次生成三四个风格差异明显的版本，再通过可视化选择器翻看定稿。设计决策不用靠嘴争，看实物。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">常见踩坑</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">高频交互别加动画。</strong>快捷键、命令面板这类一天触发上百次的交互，任何动画都是负资产。如果你发现自己把 hover 动画加在了列表的每一项上，技能会直接叫停——这是框架里最常被忽略的一条。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;"><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">ease-in</code> 用于进入动画是最常见的错误之一。</strong>直觉上"慢慢加速进来"很自然，实际观感是拖沓。进入用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">ease-out</code>（快速进入、缓停），退出才用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">ease-in</code>。装技能前可以观察一下自己项目里有多少处用反了。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Node 版本导致的安装失败。</strong>我在 Windows 上装时就卡在这：默认 Node 14 跑 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">npx skills</code> 直接报错，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">nvm use 24.9.0</code> 切过去才装成。装完如果技能没生效，重启 agent 会话即可。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类技能对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">emilkowalski/skills（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">npx skills add</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>动画决策框架 + 设计工程哲学，9 技能分工明确</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>动画、动效审查、UI 品味</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 30.6k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">StyleSeed</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>插件</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>74 条通用设计规则，防"一眼 AI"的 UI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>整体视觉规范、防 AI 味</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 数百</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Nutlope/hallmark</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>skill 文件</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>anti-AI-slop，偏文案与产品气质</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>产品文案、整体调性</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 21.9k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Anthropic frontend-design</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>官方插件</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>官方出品的视觉方向指导</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>从零搭新界面</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 官方</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">上个月推荐过的 StyleSeed 解决的是"通用 UI 规则"，这次 emil 的强项在动画工程和设计决策——子问题不同，且 30.6k stars 的热度说明市场认这个方向。如果你只装一个设计类技能，装它。</p>
+<p style="font-size:14px;color:#999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">⭐ 9.4 · v1.x · MIT License · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>github.com/emilkowalski/skills</span></code> · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>emilkowal.ski/skill</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">适合所有让 AI 写前端的人，尤其经常产出"功能对但不好看"界面的场景。安装一分钟，之后每个涉及动画和 UI 的任务都会自动套上设计工程的标准。30.6k stars 和作者 sonner/vaul 的履历，意味着里面的每一条规则都有真实产品验证过——花一分钟装上，往后每次 AI 写界面都在帮你省返工时间。</p>
+</section>
