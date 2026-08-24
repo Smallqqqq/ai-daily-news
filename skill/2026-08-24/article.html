@@ -1,0 +1,81 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-24</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你用 Mermaid 画架构图，光语法就调了二十分钟：箭头方向、子图嵌套、theme 配置，最后导出的 PNG 还发糊。你让 Claude Code 帮你画，它倒是秒出，可你敢信吗？节点有没有漏、连线是不是编的、这张图和三个月前的版本到底差在哪，没人说得清。archify 填的就是这个坑：描述一句系统，或者干脆丢给它一个仓库，agent 生成一张能点、能搜、能验证、能导出 4 倍分辨率的自包含 HTML 架构图。<strong style="color:#07c160;">15,038 stars</strong>，MIT 协议，v2.15.0 上周刚发布。</p>
+![archify 产品预览](./archify-demo-1.png)
+<p style="font-size:14px;color:#999;margin:0 0 1.4em 0;line-height:1.8;text-align:left;">（archify 产品预览：从代码库或系统描述生成的自包含 HTML 交互图）</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">它解决什么问题</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">架构图是团队沟通的硬通货，但现状是三种画法都难受。手写 Mermaid：语法陡峭，导出靠截图，一张图改十次。让 AI 直接生成：快，但 LLM 吐出来的节点关系没有验证，它可能把不存在的服务连在一起，你还看不出来。用 draw.io 这类工具：能拖能改，可 agent 操作不了画布，得人自己点。archify 的思路是把"生成"和"验证"绑在一起：agent 产出的不是一张图，而是一份经过确定性检查的中间表示，然后再渲染成图。图里的每一个节点、每一条边都来自这份被校验过的数据，不是模型即兴发挥的 SVG。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">核心原理</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">archify 的管线分三层。第一层，agent 从你的描述或代码库提取组件与关系，写成 typed JSON IR（中间表示），这一步就是普通的 LLM 生成。第二层，内置的确定性检查跑在这份 JSON 上，<strong style="color:#07c160;">9 项校验全过</strong>才算数，官方画廊里 11 个样例都挂着验证回执。第三层，渲染器把 JSON 变成单个 HTML 文件：零依赖、无服务器，浏览器打开即用。因为是数据驱动，同一张图可以切五种视图、四种视觉预设、暗亮双主题，还能导出 PNG/JPEG/WebP（最高 4 倍原生分辨率）、双主题 SVG、动效 WebM，或直接复制 PNG 到剪贴板贴进 Slack 和 PR 评论。七个组件类型（前端、后端、数据库、云服务、安全、消息总线、外部）有各自的语义配色，暗亮主题一键切换。图还是可交互的：搜索节点、追踪某条路径的上游下游、比较两个角色的真实流量、播放预设的讲解动线。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">安装配置</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 全局安装（Claude Code / OpenCode / Codex 通用）
+npx skills add tt-a1i/archify -g
+
+# Cursor 显式非交互安装（Windows 上 --copy 避免 symlink 权限问题）
+npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
+
+# 不安装直接试用（以 Codex 运行）
+npx skills use tt-a1i/archify@archify --agent codex</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装完后对 agent 说一句 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">Use archify to map this repository's runtime architecture.</code> 即可触发。Raven 用户手动解压 archify.zip 到 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">~/.raven/workspace/skills</code>，DeepSeek Harness 用户走社区插件 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0</code>。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">使用指南</p>
+<p style="font-size:17px;font-weight:bold;color:#333;margin:20px 0 10px 0;text-align:left;">场景一：接手一个没有文档的仓库</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：新人 onboarding，或者你自己三个月没碰的旧项目，README 只有三行。操作：装好 skill 后，让 agent 先分析仓库，再生成运行时架构图，限定范围：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>Analyze this repository, then use archify to create a high-level runtime architecture diagram.
+Show 8–12 core components, one primary path, external dependencies, and trust boundaries.
+Put supporting detail in cards instead of adding more edges.</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：一张可交互的 HTML 图，组件按语义着色，点开节点能看到详情卡片。官方用公开仓库 mco-org/mco 的 9f1a1cf commit 跑过完整案例，生成的图连带类型化源数据和验证回执一起归档，链接可以发给全组。</p>
+![真实案例](./archify-demo-2.png)
+<p style="font-size:14px;color:#999;margin:0 0 1.4em 0;line-height:1.8;text-align:left;">（真实案例：从 mco-org/mco 仓库追踪生成的运行时架构图分享卡，1200×630）</p>
+<p style="font-size:17px;font-weight:bold;color:#333;margin:20px 0 10px 0;text-align:left;">场景二：设计评审时画一条调用链</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：需求评审会上要讲清登录流程或缓存穿透路径，白板画了擦、擦了画。操作：直接用自然语言描述链路，限定主路径：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>Use archify to draw this login flow: Browser -&gt; Web App -&gt; API -&gt; JWT validation -&gt;
+Redis session lookup -&gt; PostgreSQL fallback. Keep the cache-miss path secondary.</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：一张 Sequence 图，主路径高亮，缓存未命中作为次要分支保留在图上。评审时按 F 进演示舞台、按 R 追踪最短路径，边讲边动，比静态截图有说服力。会后用导出菜单出 1200×630 分享卡，直接贴会议纪要。</p>
+<p style="font-size:17px;font-weight:bold;color:#333;margin:20px 0 10px 0;text-align:left;">场景三：合入前审查架构变更</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：一个 PR 动了三个服务的依赖关系，diff 一眼看不出架构影响。操作：对改动前后的代码库各生成一张图，用 archify 的对比功能把两个快照并排：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>Generate architecture snapshots before and after this branch, then compare them.</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：Before / Delta / After 三栏对比，精确列出新增、删除、变更、移动和重连的关系。评审人不需要人肉 diff 两张图，变更事实一条条摆出来，基于事实讨论而不是基于印象。</p>
+![双主题切换](./archify-demo-3.png)
+<p style="font-size:14px;color:#999;margin:0 0 1.4em 0;line-height:1.8;text-align:left;">（同一张图双主题：暗色用于演示、亮色用于文档，一键切换）</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">进阶技巧</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Story 分享稳定视角：</strong>每张图可以录制讲解动线（Story），把某一个节点 pin 住复制链接，同事打开的是同一个视角、同一个暂停位置。远程演示不用再"你往左一点、再放大一点"。<strong style="font-weight:bold;color:#000;">Route Journey</strong> 则相反：它把整条被追踪的路径保留在视野里，同时允许你逐个检查路径上的每个节点和它唯一的传入关系，讲清"这条路为什么这么走"。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">常见踩坑</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">一次要太多：</strong>让 agent "把整个系统画出来"，结果一张图塞了 60 个节点，谁看谁晕。官方给的姿势是 bounded view：8–12 个核心组件加一条主路径，其余细节放进卡片而不是画成边。图乱了不是工具的锅，是范围没约束。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">生成内容信不过：</strong>如果你怀疑 agent 编了节点，去 Proof Lab 看每个样例的 JSON 源数据和 9/9 校验回执，理解"可验证"具体验了什么，再决定要不要让自己的输出也走这套检查。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类技能对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">archify（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">npx skills add tt-a1i/archify -g</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>对话生成 + 9 项确定性校验 + 交互式 HTML + 4 倍导出</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>团队沟通、变更审查、演示</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 15.0k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Mermaid</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>无（手写语法）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>文本渲染，图随代码走</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>静态文档嵌入</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 76k+</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">draw.io 类 MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>MCP 配置 + 编辑器</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>画布自由度高，agent 无法操作</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>人工精修图</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 47k+</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">C4-PlantUML</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>手写 DSL</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>结构化视图分层</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>长期维护的架构文档</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 10k+</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">前三者都不是 Agent Skill：Mermaid 语法是门槛，draw.io 是给人用的编辑器，PlantUML 是文档 DSL。archify 是同类里唯一让 agent 端到端产出交互式图、还带验证回执的方案。如果你只需要图嵌进 README，导出菜单里的双主题 SVG 会跟随读者深浅色自动切换，效果不输手写 Mermaid。</p>
+<p style="font-size:14px;color:#999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">⭐ 15038 · v2.15.0 · MIT · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>github.com/tt-a1i/archify</span></code> · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>tt-a1i.github.io/archify</span></code> · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>tt-a1i.github.io/archify/gallery.html</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">适合经常要做架构沟通的人：要带新人的 tech lead、要写设计文档的工程师、要在评审会上讲清方案的任何人。安装一条命令，配置零依赖，十分钟能出第一张可交互的图。换来的东西很具体：AI 画的架构图从"看起来对"变成"验得过"，团队沟通从贴截图变成发链接。88/100。</p>
+</section>

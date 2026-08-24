@@ -1,0 +1,119 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-24</p>
+![今日概览](./summary.png)
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:16px 0 1.4em 0;text-indent:2em;">今天两个工具都站在「AI 与外部系统之间的那条线」上。n8n-mcp 解决的是 AI 搭 n8n 工作流时瞎编节点参数的问题——2,541 个节点的属性、操作、示例全部索引成可检索的知识库，模型先查再写。ngrok AI Gateway 解决的是多模型接入的钥匙管理问题——应用只拿一把 access key，真正的供应商密钥留在服务端。</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">n8n-mcp — 22.7K stars 的 n8n 工作流构建器，AI 不再瞎编节点参数</p>
+![n8n-mcp 演示](./n8n-mcp-demo.png)
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让 AI 搭 n8n 工作流，最常见的失败模式是幻觉节点：模型训练数据里没有 n8n 的节点目录，于是发明出不存在的参数名，或者把社区节点的属性安到核心节点上。n8n-mcp 的做法是把 n8n 的整个节点生态做成一个可检索的知识库，通过 MCP 协议喂给任何 AI 客户端。索引规模：2,541 个节点（832 个核心 + 1,709 个社区，其中 1,441 个经过验证），节点属性覆盖 99%，操作覆盖 66.5%，官方文档覆盖 86%，另外还有 156 个从热门模板提取的真实配置示例和 2,352 个工作流模板。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">工作方式分两层。第一层不需要任何密钥：<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">search_nodes</code> 全文搜节点、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">get_node</code> 查单个节点的属性 schema 和操作、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">validate_node</code> 与 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">validate_workflow</code> 在动手跑之前按 n8n 的规则校验配置，Agent 先查证再生成，幻觉从源头被掐掉。第二层接上 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">N8N_API_URL</code> 和 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">N8N_API_KEY</code> 之后，16 个管理工具接管实例操作：创建、更新（支持 diff 式局部修改）、删除工作流，验证、自动修复、版本历史与回滚、凭据 CRUD、实例安全审计。官方 README 的安全警告很直白：别让 AI 直接改生产工作流，先复制、先在开发环境测试。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它对 n8n 官方内置 MCP server 的优势有实测数据。仓库的竞争分析文档记录：官方 server 的 create 路径要求 LLM 写 TypeScript SDK 代码，n8n-mcp 直接产出 JSON；对 Code 节点里大字段的局部编辑，n8n-mcp 的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">patchNodeField</code> 一次调用 220 字符，官方 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">setNodeParameter</code> 要重发整个字段值 1,174 字符，<strong style="color:#07c160;">5.3 倍差距</strong>。验证深度也差一档：官方的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">validate_workflow</code> 对五个故意破坏的配置探测全部返回 valid:true，n8n-mcp 的四个验证 profile（minimal / runtime / ai-friendly / strict）能把这些全拦住，还带 13 种修复类型的 autofix。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 免费托管版：dashboard.n8n-mcp.com 注册拿 API key，免费额度 100 次工具调用/天
+# 自托管（Claude Code）：
+claude mcp add n8n-mcp -- npx n8n-mcp
+# 接自己的 n8n 实例（启用工作流管理工具）：
+claude mcp add n8n-mcp -e N8N_API_URL=https://your-n8n.example.com -e N8N_API_KEY=n8n_api_xxx -- npx n8n-mcp
+
+# Docker 部署：ghcr.io/czlonkowski/n8n-mcp
+# 也可装配套的 Claude Skills（n8n-skills 仓库），教 AI 按生产标准建工作流</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">n8n-mcp（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">npx n8n-mcp</code> 或托管 dashboard</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>2,541 节点知识库、JSON 直建工作流、4 档验证 + autofix、模板 2,352 个</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费 tier 100 次/天</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 22.7K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">n8n 官方内置 MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>n8n 2.18+ 内置</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>官方维护，SDK 代码方式建工作流，草稿发布流程</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>随 n8n 版本</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>官方</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">automatelab/n8n-mcp</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>专注调试：n8n_explain_execution 定位 item 在哪一步丢失</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>社区</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">FlowGent</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 13px;">flowgent gen</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>纯 CLI 生成工作流 JSON，无实例管理能力</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 176</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Zapier MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>官方远程 MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>9,000+ 应用但闭源平台锁定</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅制</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>商业</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">选它的理由在知识库深度和验证的可信度。官方 server 胜在原生集成，但验证会放过坏配置，等于把错误留给运行时报错；automatelab 的强项在事后调试，和它互补——一个建、一个查。它不算优势的地方是安装体验：官方内置 server 在 n8n 2.18 以上开箱即用，n8n-mcp 要自己配 API key。配图是它的 Claude Skills 安装页，教 Agent 按「先查模板、再建、再验证」的顺序来。</p>
+<p style="font-size:14px;color:#999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">⭐ 22,764 · MIT · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>github.com/czlonkowski/n8n-mcp</span></code> · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>dashboard.n8n-mcp.com</span></code> · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>www.n8n-mcp.com</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">ngrok AI Gateway — 一个 URL 接所有模型，五美分一百万的固定路由费</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">多模型接入的钥匙管理是后端团队绕不开的烂账：每个供应商一把 key，散落在各处的环境变量里；想按应用、按团队分权限，只能一把万能 key 到处传；供应商挂了要写自己的重试和降级逻辑。ngrok 8 月 5 日上线的 AI Gateway 把这件事收成一个产品：所有模型调用指向同一个 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">https://gateway.ngrok.ai</code>，接入成本是改 SDK 的 baseURL 加换一把 key。OpenAI、Anthropic、Google、Groq、DeepSeek、OpenRouter 等内置供应商之外，还能把 Ollama、vLLM 这类自建端点注册成 custom provider。本地模型和云端模型走同一个 URL，靠 ngrok 的隧道老本行在私网内连通，不用暴露公网端口。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">密钥模型是这个产品的核心设计。应用侧拿的是 access key（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">ng-</code> 前缀），每个应用、每个开发者、每个环境可以各发一把，每把可以 scope 到指定的供应商和模型，吊销一把不影响其他；真正的供应商密钥存在服务端，客户端代码永远接触不到。这对「把 OpenAI key 打进移动端安装包」这类事故是结构性的预防。容错也内建了：请求里直接列多个模型 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">models: ["gpt-5.4", "claude-opus-4-6"]</code>，主模型失败自动切下一个，供应商或 key 挂了自动换路，代码里不用写任何重试。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">定价是它对竞品的差异化：自带供应商 key 时，网关只收 <strong style="color:#07c160;">$0.05/百万 token</strong> 的固定处理费（按输入输出 token 合计），供应商账单照旧直连，没有订阅费、没有百分比抽成。对照 OpenRouter 的 5.5% 平台费：月耗 $6,000 的团队在那里每月付 $330，在 ngrok 这里处理费只跟 token 量走，上下文越长的请求越划算。免费计划含 $5 一次性额度、3 个端点、每月 2 万请求，足够试。缺点也摆在明面上：没有自托管选项，数据一定过它的服务器；没有语义缓存（LiteLLM、Portkey 有）；没有 per-key 速率限制；成本归因要靠给每个应用发独立 key 自己推算，报表还没做出来。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 不用装新依赖。以 OpenAI SDK 为例，只改两行：
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://gateway.ngrok.ai",          // 原来指向 api.openai.com
+  apiKey: process.env.NGROK_AI_ACCESS_KEY,     // app.ngrok.ai 里创建的 ng- 前缀 key
+});
+
+const completion = await client.chat.completions.create({
+  model: "unsloth/Qwen3.5-1228-A10B-GGUF",      // 先路由到自建模型
+  models: ["gpt-5.4", "claude-opus-4-6"],       // 失败自动降级到云端
+  messages: [{ role: "user", content: "Hello!" }],
+});
+
+# 注册 app.ngrok.ai 即送 $5 额度；Anthropic SDK、Vercel AI SDK 同理只改 baseURL</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">ngrok AI Gateway（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>改 baseURL 两行接入</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>双密钥模型、多模型 failover、私网接本地模型</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>$0.05/百万 token 固定费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 PH #4 · 356 upvotes</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">OpenRouter</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>改 baseURL</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>模型最全的聚合路由</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>0% 加价 + 5.5% 平台费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>主流</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">LiteLLM</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>pip / Docker 自托管</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>开源代理，100+ provider，Redis 语义缓存</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费 + API 费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 26K+</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Portkey</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>托管或自托管</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>可观测性最强，成本归因报表成熟</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅 + 用量费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>商业</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Cloudflare AI Gateway</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>免费层起步</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>自带缓存和日志，CF 生态绑定</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费起步</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>商业</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">选它而不是 LiteLLM 或 OpenRouter 的场景很具体：不想维护自托管代理（LiteLLM）、又对百分比抽成敏感（OpenRouter）、还要把本地 Ollama 和云端模型放进同一条路由链。它拿隧道能力解决本地模型私网接入，这一点是竞品都没有的。反过来说，需要数据主权或成熟成本报表的团队，LiteLLM 和 Portkey 依然是对的选择。</p>
+<p style="font-size:14px;color:#999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">🏪 Product Hunt · 8 月 5 日上线 · 当日 #4 · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>ngrok.ai</span></code> · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>ngrok.com/docs/ai-gateway/overview</span></code></p>
+</section>
