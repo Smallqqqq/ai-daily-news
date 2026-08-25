@@ -1,0 +1,341 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<!-- body 开头不渲染文章标题，只放日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-25</p>
+
+<!-- 摘要提示卡：P1 覆盖范围+数据来源+排序说明，P2 核心主题 -->
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+  <p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;">本期覆盖 2026-08-24 至 08-25 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Lobsters / arXiv / HF Papers / 知乎 / Product Hunt / AI 实验室博客，精选 10 条按影响力排序。</p>
+  <p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;">核心主题：<strong style="color: #1b5e20;">Agent 技能生态集中爆发</strong>——技能市场、CLI 记忆、多 agent 蜂巢、插件分发一天内多路开花，<strong style="color: #1b5e20;">GPT-Image2 提示词引擎</strong>以 2,449 stars/day 登顶。</p>
+</section>
+
+<!-- 条目 1 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">1. awesome-gpt-image-2（GPT-Image2 工业级提示词引擎与模板库）</strong></p>
+<!-- 标签栏：只显示影响力，删除可操作性与热度 -->
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.0/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">是什么</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">freestylefly 维护的 GPT-Image2 提示词资产库，思路是"Prompt as Code"：把 532 个社区案例逆向工程成结构化提示词，加上 20+ 套工业级模板，按 12 个类别归档（海报排版 86 例、摄影写实 77 例、UI 界面 73 例、图表信息图 52 例等）。提示词被拆成主体、光照、材质、布局、视觉细节等可组合的原子 schema，配套一个 Agent Skill（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">gpt-image-2-style-library</code>），供 Claude Code、Codex、Cursor 等 agent 选风格、套模板。另有可视化网站 gpt-image2.canghe.ai 可浏览画廊、复制提示词，Google 登录后直接生成。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">怎么用</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 方式一：Agent Skill 安装（Claude Code / Codex）
+npx skills add freestylefly/awesome-gpt-image-2 --skill gpt-image-2-style-library --agent claude-code codex --global --yes --copy
+
+# 方式二：npm CLI 全局安装
+npm install -g gpt-image-2-style-library
+gpt-image-2-style-library install all
+
+# 方式三：克隆仓库自己翻案例
+git clone https://github.com/freestylefly/awesome-gpt-image-2.git</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">为什么重要</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">图像模型的能力边界在 2026 年已经从"会不会画"移到"能不能稳定执行长指令"。这个库解决的是 GPT-Image2 提示词的组织问题：官方只有散文式 prompt，社区案例散落各处，agent 无法程序化调用。<strong style="color:#07c160;">532 个案例</strong> + 原子化 schema 意味着批量生成、模板系统、生产工作流可以直接落地。<strong style="color:#07c160;">15.7k stars</strong> 用一周多时间积累，<strong style="color:#07c160;">+2,449/day</strong> 的单日增量在今天全部 GitHub 仓库中排第一。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">讨论现场</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">Trendshift 实时榜将它排第 1，简介被社区概括为"Prompt as Code | 工业级提示词引擎与模板库，530+ 个案例逆向工程"。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">中文社区（知乎 AI 图像话题）同期讨论"图像生成里的思维链：DPO 与 GRPO 对比"等选题，提示词工程正在从手工经验变成可交易的资产。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/freestylefly/awesome-gpt-image-2</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 2 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">2. OpenViking（字节跳动开源自进化 Agent 上下文数据库）</strong></p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.6/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">是什么</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">字节跳动 volcengine 团队维护的 Agent 基础设施项目，把 Agent 的记忆（Memory）、知识 RAG 和技能（Skills）统一进一个"自进化上下文数据库"。核心卖点是上下文随使用自我演化：agent 每轮交互的结论会被结构化沉淀，下次检索时自动召回，不依赖人工整理知识库。Python 实现，面向 Claude Code、Codex 等多 agent 运行环境。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">怎么用</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/volcengine/OpenViking.git
+cd OpenViking
+pip install -r requirements.txt
+# 以 MCP server 方式挂到 Claude Code / Codex
+python -m openviking serve --mcp</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">为什么重要</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 的长期记忆是当前编码 agent 的最大短板：换一个会话就失忆，跨厂商切换（Claude Code → Codex）时上下文全部作废。OpenViking 的定位是厂商无关的上下文层。<strong style="color:#07c160;">30.6k stars</strong> 说明"记忆基础设施"赛道的需求真实存在，同期竞品 Mem0 约 52k stars，OpenViking 的差异化在字节系工程能力和自进化机制。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">讨论现场</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">5 月 21 日首次收录时社区建议将其与 Anthropic-Cybersecurity-Skills 等工具整合，本周它以 +804/day 重新进入 Trending，说明跨 agent 记忆在暑假档再次成为热点。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">GitHub Trending 页今日同时出现 akitaonrails/ai-memory（+606/day，见"其他值得关注"），两条独立项目同天爆发，记忆层是本期最集中的赛道。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/volcengine/OpenViking</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 3 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">3. munder-difflin（本地多 agent 蜂巢：一屋子你的克隆体）</strong></p>
+![](./munder-difflin-demo.png)
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.4/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">是什么</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">chaitanyagiri 用 Electron + React + TypeScript + Pixi.js 写的本地多智能体调度台，口号是 "Agent harness to run an office of your clones"。它把你已付费的终端编码 CLI（Claude Code、Codex、Gemini CLI、Cursor、Kimi Code 等 12 家）包装成真实进程中的 agent，放进一个共享"蜂巢"协作。用户只和核心编排者 GOD agent（Michael）对话，由它把任务路由给其他 agent，花费、范围、破坏性操作可设人工门禁，支持三级熔断（steer → constrain → stop）和 per-agent git worktree 隔离。每个 agent 在 Pixi.js 地板上是一个像素角色，带记忆、文件邮箱、共享黑板和只追加事件日志。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">怎么用</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/chaitanyagiri/munder-difflin.git
+cd munder-difflin
+npm install        # postinstall 会针对 Electron ABI 重建 node-pty
+npm run dev        # 启动 Electron 应用（Windows/macOS 亦有安装包，见 releases）</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">为什么重要</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">多 agent 协作此前多走云端编排（如 Orca、Cloud Mode），munder-difflin 把整件事拉回本地：复用你已有的各家订阅额度，不新增模型账单，token 预算和真实成本有 OTel 遥测。<strong style="color:#07c160;">4.1k stars</strong> 的小仓库拿下 <strong style="color:#07c160;">+795/day</strong>，说明"用我自己的额度跑一支 agent 小队"切中了订阅疲劳的开发者。技术栈上有两个细节：node-pty 让终端 agent 是真实进程而非 API 模拟；只追加事件日志 + 单提交者 git 让多 agent 并行写文件不冲突。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">讨论现场</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">Trending 页面的社区描述收敛为 "local multi-agent harness"，与同日上榜的 amadeusprotocol/node（+1,397/day，Rust）并列为本周本地 agent 基础设施的两个新面孔。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">仓库 README 的 ASCII 架构图展示了双平面设计：Renderer（React + Pixi 地板 + 终端）经 IPC 与 Event/Terminal 两个 plane 通信，再落到 CLI 进程。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/chaitanyagiri/munder-difflin</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 4 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">4. awesome-agent-skills（VoltAgent 出品：1000+ Agent Skills 精选合集）</strong></p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">是什么</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">VoltAgent 组织维护的 Agent 技能合集，收录 1000+ 个来自官方团队和社区的 skills，兼容 Claude Code、Codex、Gemini CLI、Cursor 等 20+ 平台。skills 是 2026 年代理工作流的资产单位（一个 skill = 一套工作流 + 质量门槛 + 领域知识），这个仓库相当于技能分发目录，按用途分类、带来源标注，解决"该装哪个 skill"的发现成本。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">怎么用</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/VoltAgent/awesome-agent-skills.git
+# 浏览目录后按需复制到各 agent 的 skills 目录
+cp -r awesome-agent-skills/&lt;分类&gt;/&lt;技能名&gt; ~/.claude/skills/</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">为什么重要</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">技能分发正在重复 npm 早期的故事：官方有 marketplace，但发现和精选靠社区。<strong style="color:#07c160;">31.9k stars</strong> 的合集证明 skill 消费需求远大于供给——同期 multica-ai/andrej-karpathy-skills（+588/day，20.6 万★）和 VoltAgent 自家的 awesome-design-md（7 月 10 日收录）都指向同一个趋势：开发者要的是"已验证可直接装的技能"，教程类内容已过剩。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">讨论现场</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">Trendshift 收录该仓库时的社区简介为 "A curated collection of 1000+ agent skills from official dev teams and the community, compatible with Claude Code, Codex, Gemini CLI, Cursor, and more"。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">与 anthropics/claude-plugins-community（本期第 7 条）形成互补：一个管社区精选，一个管官方审核分发。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/VoltAgent/awesome-agent-skills</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 5 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">5. andrej-karpathy-skills（Karpathy 编码心法蒸馏成的 CLAUDE.md，20.6 万星）</strong></p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">是什么</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">multica-ai 把 Karpathy 关于 LLM 编码问题的公开观察蒸馏成一个 CLAUDE.md 文件。最初的版本是 4 条规则（不写多余代码、先读再改、小步提交、测试先行），6 月底扩展到 10 条规则并加入 self-check 协议。放进项目根目录即对 Claude Code 生效，是"零安装成本"的编码纪律注入。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">怎么用</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/multica-ai/andrej-karpathy-skills.git
+cp andrej-karpathy-skills/CLAUDE.md /path/to/your/project/CLAUDE.md
+# 或作为插件安装
+claude plugins install andrej-karpathy-skills</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">为什么重要</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#07c160;">20.6 万星</strong> 让它进入 GitHub 历史最高星仓库的行列（5 月 19 日收录时约 15.6 万，两个月涨 5 万）。它流行的原因简单：一个文本文件，覆盖 agent 编码最常见的翻车模式（过度工程、不看代码就改、一次改太多）。<strong style="color:#07c160;">+588/day</strong> 的持续性说明它已经是基础设施，不是一次性爆款。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">讨论现场</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">6 月 12 日的日报记录过社区对比：Karpathy 的 4 条规则是"约束"，superpowers 技能包是"赋能"，两者互补。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">6 月 28 日 TechTimes 报道其扩展为 10 条规则 + 新增 self-check 协议，防止 agent 在编码循环里自我放飞。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/multica-ai/andrej-karpathy-skills</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 6 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">6. OpenHuman（本地优先个人 AI 助手回归 Trending）</strong></p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.6/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">是什么</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">tinyhumansai 用 Rust + TypeScript + Tauri 构建的本地优先个人 AI 助手，5 月曾连续三天登顶 GitHub Trending（单日最高 +3,973）。三件套能力：Memory Tree（≤3K token 的 Markdown 分块记忆）、TokenJuice（token 压缩，声称降 80% 成本）、118+ OAuth 集成（Gmail、Notion、GitHub、Slack、Stripe）。每 20 分钟自动从连接的服务拉数据，内置 Obsidian 兼容知识库。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">怎么用</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Windows
+irm https://raw.githubusercontent.com/tinyhumansai/openhuman/main/scripts/install.ps1 | iex
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/tinyhumansai/openhuman/main/scripts/install.sh | bash</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">为什么重要</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">5 月爆发后 OpenHuman 稳在 <strong style="color:#07c160;">37k+ stars</strong>，本轮 <strong style="color:#07c160;">+515/day</strong> 说明"本地优先"叙事在订阅费普涨的 8 月又回来了。5 月 19 日的分析至今成立：Google 给的是免费但云绑定的 IDE，OpenHuman 给的是数据在自己盘上的本地 agent。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">讨论现场</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">5 月的 HN 热评至今被反复引用："Google gives you a free IDE that owns your data. OpenHuman gives you a local AI that you own."</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">8 月 18 日同赛道竞品 apache/maka 进 Apache 孵化器（本期第 8 条），本地 agent workspace 的阵营从个人项目扩大到基金会项目。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/tinyhumansai/openhuman</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 7 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">7. claude-plugins-community（Anthropic 社区插件市场镜像）</strong></p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">是什么</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Anthropic 官方组织下的社区插件市场只读镜像，服务 Claude Cowork 和 Claude Code。核心文件 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">.claude-plugin/marketplace.json</code> 列出所有通过审核的社区插件，每晚从 Anthropic 内部审核管线同步。所有上架插件必须经过 claude.ai 提交 → 自动化安全扫描 → 发行批准三步，对仓库直接开 PR 会被自动关闭。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">怎么用</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 添加社区 marketplace
+claude plugin marketplace add anthropics/claude-plugins-community
+# 安装指定插件
+claude plugin install &lt;plugin-name&gt;@claude-community</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">为什么重要</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这是 Claude 插件生态从"官方几个插件"走向"有审核的分发市场"的标志。仓库 <strong style="color:#07c160;">1.4k stars</strong> 总盘子很小但 <strong style="color:#07c160;">+489/day</strong> 起量极快，说明开发者等这个分发渠道等了一段时间。与 anthropics/claude-plugins-official（官方插件）和 anthropics/knowledge-work-plugins（知识工作插件）构成三层体系，marketplace 标识区分安装来源（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">@claude-community</code>）。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">讨论现场</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">当前仓库中可见的社区插件包括 eli5（简化解释）、quickdesign（快速设计）、testdino（测试）等，2,289 次提交全部来自内部同步管线。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">社区在讨论其与 VoltAgent/awesome-agent-skills 的分工：一个管审核与安全，一个管精选与发现。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/anthropics/claude-plugins-community</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 8 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">8. Maka（Apache 孵化器的 local-first AI Agent 工作区）</strong></p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.5/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">是什么</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Apache 软件基金会孵化的本地优先 AI agent 工作区。它在本机检查项目，工具调用跑在沙箱边界内，模型消息、工具调用、权限决策、终止事件全部记录为只追加日志（append-only log）——UI 和后续模型调用只是这份日志的视图。会话数据默认留本机，模型可自选云端 API、本地模型或兼容网关。入口有三类：Electron 桌面端、TUI/CLI（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">maka</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">maka run</code>）、可复现评测（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">maka eval run &lt;spec&gt;</code>）。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">怎么用</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/apache/maka.git
+cd maka
+npm ci        # 需要 Node.js 22.19+、Git、ripgrep
+npm run dev   # 启动 Electron；桌面端目前只支持 Apple Silicon Mac，Windows 为未签名预览版</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">为什么重要</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Apache 基金会下场做 agent workspace，把"执行可恢复"做成了设计核心：崩溃后可恢复、可中断续跑（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">MAKA_RUNTIME_SAFE_BOUNDARY_RESUME=1</code>）、短上下文下可省略旧工具输出而不丢证据。这些特性直指生产环境 agent 的可靠性问题。<strong style="color:#07c160;">2.9k stars</strong> 尚小，但 Apache 的治理背书让它在企业场景有独立赛道。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">讨论现场</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">Trendshift 描述其为 "Maka — local-first AI desktop assistant"，与 OpenHuman 并列为本地 agent 桌面端的两条路线。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">社区关注点集中在追加式日志设计：对比 git 工作流，"执行事实"不可变、视图可重建的思路被拿来与事件溯源（event sourcing）类比。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/apache/maka</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 9 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">9. claude-obsidian（Obsidian + Claude Code 自组织第二大脑）</strong></p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.4/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">是什么</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AgriciDaniel 开发的 Claude Code 插件 + 15 个 Agent Skills 组成的知识库系统，把 Obsidian vault 变成 Claude Code 的自组织第二大脑。设计遵循 Karpathy 的 LLM Wiki 模式，以 kepano/obsidian-skills 为基座。工作流是：捕获来源 → 保存不可变副本 → 生成带引用的笔记 → 链接/索引/MOC → 复用查询。每次写入是一次可恢复事务：先读目标记录 SHA-256，工人只返回草稿，编排者单次合并，冲突绝不静默覆盖。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">怎么用</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/AgriciDaniel/claude-obsidian.git
+cd claude-obsidian
+# 初始化 vault（先出计划，人工审核后再 --apply）
+python3 scripts/claude-obsidian.py init "$HOME/Documents/MyKnowledgeVault" --apply
+# 从 vault 目录启动，插件生效
+cd "$HOME/Documents/MyKnowledgeVault"
+claude --plugin-dir /absolute/path/to/claude-obsidian</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">为什么重要</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Obsidian 用户群体和编码 agent 用户群体高度重合，这个项目把"让 agent 长期维护你的笔记库"从演示变成了有事务保证的工程方案。<strong style="color:#07c160;">11.9k stars</strong> 的体量在 Obsidian 生态插件里少见，<strong style="color:#07c160;">+310/day</strong> 保持稳定。信任架构是最大亮点：工人（worker）只产出草稿，编排者（orchestrator）单点合并，配合 SHA-256 校验，杜绝 agent 悄悄覆盖你的笔记。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">讨论现场</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">README 明确声明能力边界：PDF/EPUB 只做元数据不提取正文，图片仅取哈希与尺寸，高风险声明要求两个独立来源——这种"诚实的边界"在社区评价里被反复提到。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">15 个技能中 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">wiki-lint</code>（死链/孤立页/元数据检查）、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">wiki-mode</code>（Generic/LYT/PARA/Zettelkasten 归档模式）最受 Obsidian 用户关注。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/AgriciDaniel/claude-obsidian</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- 条目 10 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">10. SenseNova U1.5 Lite（商汤 8B-MoT 统一多模态模型正式开源）</strong></p>
+![](./sensenova-demo.png)
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.3/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">是什么</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">商汤 2026-08-24 正式开源的轻量级原生统一多模态模型，NEO-Unify 架构去掉了 VAE，在像素层面端到端联合建模语言、视觉语义与像素生成。8B-MoT 规模原生支持 4K 输出、3-4k 字符超长指令遵循（多数开源模型超过 1k 字符指令就会漏细节）、中英文排版、Bounding Box / Visual Marker 精细编辑，以及多轮迭代修改不跑偏。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">怎么用</strong></p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/OpenSenseNova/SenseNova-U1.git
+cd SenseNova-U1
+uv sync
+source .venv/bin/activate
+# 文生图（HF 权重 sensenova/SenseNova-U1.5-8B-MoT，推荐 16GB 显存）
+python examples/t2i/inference.py --model_path sensenova/SenseNova-U1.5-8B-MoT \
+  --prompt "A cinematic mountain lake at sunrise, realistic photography." \
+  --width 2048 --height 2048 --device_map auto --output output.png
+# 编辑模式
+python examples/editing/inference.py --model_path sensenova/SenseNova-U1.5-8B-MoT \
+  --image input.png --prompt "Change the jacket to cobalt blue." --output edited.png</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">为什么重要</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">相较上一代 U1，U1.5 Lite 在 Qwen-Image-Bench 上从 <strong style="color:#07c160;">47.14</strong> 提升到 <strong style="color:#07c160;">55.20</strong>（with Prompt Enhance），ImgEdit-Bench 从 3.90 到 4.37，GEdit-Bench 英文项 7.47→8.17、中文项 7.42→8.05。这些数字的意义是：8B 轻量模型首次在编辑一致性和长指令遵循上接近商用闭源模型，本地部署（16GB 显存）即可跑通"生成→修改→交付"的完整流程。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">讨论现场</strong></p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">知乎评论区最高频的问题："能生成透明图不？"（@magicjava），反映设计师对 PNG 透明通道的实际需求。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">更早的 U1 发布时 HF 社区讨论集中在"能否在单张 RTX 5090 上运行"，U1.5 的 8B-MoT 规格正是对这个问题的回应。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/OpenSenseNova/SenseNova-U1</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://huggingface.co/sensenova/SenseNova-U1.5-8B-MoT</span></code>
+</p>
+
+<!-- 场景切换装饰分隔线 -->
+<p style="text-align:center;margin:32px 0;color:#07c160;letter-spacing:8px;font-size:12px;">··· ◆ ···</p>
+
+<!-- 其他值得关注 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">其他值得关注</strong></p>
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;"><strong style="font-weight:bold;">MoneyPrinterTurbo</strong></p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:2.0;text-align:left;">AI 大模型一键生成高清短视频，中文社区矩阵运营标配。</p>
+  <p style="margin:0;font-size:13px;color:#999;text-align:left;">+2,221 stars/day，总 112k★，8-18 日报首次收录后持续火爆</p>
+</section>
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;"><strong style="font-weight:bold;">free-claude-code</strong></p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:2.0;text-align:left;">反向代理把 Claude Code 工作流接到 DeepSeek/Gemini 等免费模型，成本降一个数量级。</p>
+  <p style="margin:0;font-size:13px;color:#999;text-align:left;">+891 stars/day，8-24 日报收录</p>
+</section>
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;"><strong style="font-weight:bold;">ai-memory</strong></p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:2.0;text-align:left;">akitaonrails 的 Rust 跨厂商 agent 记忆与交接工具，与 OpenViking 同日爆发，记忆层赛道本周双响。</p>
+  <p style="margin:0;font-size:13px;color:#999;text-align:left;">+606 stars/day，8-18 日报收录</p>
+</section>
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;"><strong style="font-weight:bold;">GPT-5.6 Sol 降价延续讨论</strong></p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:2.0;text-align:left;">OpenAI 宣布 Sol 降价至少持续到 11 月 21 日，HN 讨论聚焦 API 账单重算与长期定价策略。</p>
+  <p style="margin:0;font-size:13px;color:#999;text-align:left;">HN 298 points / 270 评论，8-18 首次收录</p>
+</section>
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;"><strong style="font-weight:bold;">HiPHI 人体运动数据集</strong></p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:2.0;text-align:left;">617.5 小时高精度光学动捕数据，含 245.7 小时人—物交互，已部署宇树 G1 实机，面向具身智能训练。</p>
+  <p style="margin:0;font-size:13px;color:#999;text-align:left;">诺亦腾，8-24 上线 Hugging Face</p>
+</section>
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;"><strong style="font-weight:bold;">Manus 限免至 8-25</strong></p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:2.0;text-align:left;">两个 Agent 全免费 + Plan Mode 上线，赶在限免结束前体验窗口今天关闭。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;"><strong style="font-weight:bold;">Hugging Face 探索出售</strong></p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:2.0;text-align:left;">开源 AI 托管生态的走向牵动整个社区，纯商业新闻未入 Top 10。</p>
+  <p style="margin:0;font-size:13px;color:#999;text-align:left;">估值约 130 亿美元</p>
+</section>
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;text-align:left;"><strong style="font-weight:bold;">Codex 额度重置</strong></p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:2.0;text-align:left;">Codex 团队修复图片上下文压缩、计算机历史高用量等三个计费问题，并为全部订阅用户重置额度。</p>
+  <p style="margin:0;font-size:13px;color:#999;text-align:left;">8-26 生效</p>
+</section>
+
+<!-- 关键词底栏 -->
+<section style="background-color:#f5f7fa;border-radius:8px;padding:16px 20px;margin:28px 0 0 0;">
+  <p style="margin:0 0 10px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;"><strong style="font-weight:bold;">本期关键词</strong></p>
+  <p style="margin:0;font-size:15px;color:#555;text-align:left;">Agent 技能生态 · 多 agent 蜂巢 · 本地优先 · 上下文记忆 · 开源图像模型</p>
+</section>
+
+</section>

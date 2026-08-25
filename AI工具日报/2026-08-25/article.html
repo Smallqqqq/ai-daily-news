@@ -1,0 +1,86 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<!-- body 开头不渲染文章标题，只放日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-25</p>
+
+![](./summary.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天只有一条，但它属于那种装完就回不去的：23 万星的技能集，把资深工程师的四条工作纪律装进 Claude Code，动手前先问清楚、说话用领域语言、写代码走红绿循环、架构每天加固。</p>
+
+<!-- H2 章节标题：p+strong 22px 加粗 + 左侧 5px 绿色边框 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">mattpocock/skills — 235K stars 的工程纪律技能集，治编码 Agent 的四个老毛病</strong></p>
+
+<!-- 元信息行：外部安装链接转可见纯文本 -->
+<p style="font-size:15px;color:#666;margin:0 0 16px 0;text-align:left;">🏪 Claude Code 官方 Marketplace · ⭐ 235,379 · v2.x · 安装：<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">claude.com/plugins/mattpocock-skills</code></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">用 Claude Code 这类编码 agent 的人，撞上的失败模式高度集中。Matt Pocock 把它们归纳成四个：你和它没说清要什么，它就先动手了（misalignment）；它说话啰嗦，20 个词表达 1 个意思（verbosity）；它写的代码跑不起来（no feedback loop）；几个月后代码库变成泥球（ball of mud）。这个仓库就是把这四种病各配一组药——21 个技能，全部来自他本人日常使用的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">.agents</code> 目录，直接开源。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">设计哲学和 GSD、BMAD、Spec-Kit 那类"流程拥有者"框架正好相反。那些框架接管整个开发流程，好处是省心，代价是流程本身出 bug 时你查不动。这里的每个技能是一个独立的 SKILL.md 指令文件，小而可组合，装一个用一个，不装也不影响其他。21 个技能分两类：用户显式调用的（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/grill-me</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/tdd</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/code-review</code>），和模型按场景自动触发的（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/grilling</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/writing-for-agents</code>）。装完在每个仓库跑一次 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/setup-matt-pocock-skills</code>，回答三个问题——用什么 issue tracker、triage 用什么标签、文档存哪里——就算配好。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">最出名的是 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/grill-me</code>，干的是反着来的事：动手写代码之前，agent 反过来采访你，把设计树上每个分支问到没有岔路为止。配套的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/grill-with-docs</code> 更进一层，采访的同时帮你建 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">CONTEXT.md</code>——项目共享语言文档，把"课程里某个 lesson 变成 real 时出问题"这种绕口的说法收敛成"materialization cascade"这样的领域术语。术语统一了，变量函数命名跟着统一，代码库导航变容易，agent 每轮会话花在理解上的 token 也往下走。另一块硬通货是 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/tdd</code>，强制红-绿-重构循环：先写失败测试、确认失败原因、最小实现、再重构，agent 跳不过"先红"这一步。<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/code-review</code> 做双轴审查——Standards（合不合仓库编码规范加 Fowler 坏味道基线）和 Spec（有没有忠实实现原始 issue），两个子代理并行跑，互不污染对方的结论。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据摆在那里：<strong style="color:#07c160;">235,379 stars</strong>、20,053 forks，60,000 多人订阅他的 newsletter 跟踪技能更新。作者 Matt Pocock 是 TypeScript 教育者，Total TypeScript 创始人，前 Vercel 和 Stately 工程师。社区反馈里 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/caveman</code> 被单独拎出来夸过——把输出压缩约 75% 的 token，只留技术信息。</p>
+
+<!-- 代码块：One Dark 主题，内容顶格不缩进 -->
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code（官方 marketplace，无需先添加市场）
+claude plugins install mattpocock-skills
+# 会话内安装：/plugin install mattpocock-skills
+
+# Codex 等其他 agent（安装时可自选技能子集）
+npx skills@latest add mattpocock/skills
+
+# 每个仓库跑一次，配置 issue tracker 和文档路径
+# 会话内：/setup-matt-pocock-skills</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">同类工具对比</strong></p>
+
+<!-- 5 列对比表转卡片：主推条目绿色卡片，其余灰色卡片 -->
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">mattpocock/skills（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">claude plugins install mattpocock-skills</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>21 个独立可组合技能，不接管流程</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 235K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Superpowers</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>官方 marketplace</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>全流程工作流（brainstorm→plan→TDD→review）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">价格：</strong>开源</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>1.0M installs</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">GStack（Garry Tan）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>clone + 安装脚本</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>按团队角色分技能的完整工作流</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">价格：</strong>开源</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ ~110K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Spec-Kit</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>GitHub 官方</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>规格驱动开发全流程</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">价格：</strong>开源</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>官方出品</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">opencode-power-pack</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong>npx 安装</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>54 个技能、8 个 profile 可选</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">价格：</strong>开源</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>中小热度</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Superpowers 和 GStack 卖的是整套流程，装上就得整体接受；Spec-Kit 同理，规格先行对小型改动偏重。mattpocock/skills 的每个技能独立可用，团队只装 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/tdd</code> 和 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/grill-me</code> 也能上路，剩下的按需加。框架接管流程带来的调试困难在这里不存在——技能是普通 Markdown 文件，不满意直接改。</p>
+
+<!-- 末尾来源行：URL 用 code+span 包裹，分隔符 &nbsp;·&nbsp;，左对齐 -->
+<p style="font-size:14px;color:#999999;margin:24px 0 0 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 235K · MIT · GitHub：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/mattpocock/skills</span></code>
+  <span>&nbsp;·&nbsp;官方插件页：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>claude.com/plugins/mattpocock-skills</span></code>
+</p>
+
+</section>

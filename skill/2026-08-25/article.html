@@ -1,0 +1,133 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<!-- body 开头不渲染文章标题，只放日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-25</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">上下文堆到 70%，Claude Code 每答一句都在变贵变笨；<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">/clear</code> 一下，任务状态又清零。delegate-skills 给出第三条路：主 agent 把有边界的任务写成 brief，派给机器上另一个独立的 CLI 进程（Codex、Cursor、OpenCode 随便挑），干完拿回 diff 自己审查、自己 commit。上下文不膨胀，干活的人和拍板的人分开。</p>
+
+![](./delegate-skills-demo.png)
+
+<!-- 章节标题：p+strong 22px 加粗 + 左侧 5px 绿色边框 -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">它解决什么问题</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">单个 agent 跑长任务的三个老毛病：上下文越堆越厚、干活和审查混在同一个会话里（写代码的模型顺手给自己放行）、机器上明明装着 Codex/Cursor 却只能手动切过去用。delegate-skills 把这些工具变成主 agent 手下的"外包工人"：任务在各自的独立会话里跑，消耗的是对方的上下文窗口；主 agent 只干两件事：写清楚要什么，审查干出来的是什么。commit 权始终握在主 agent 手里。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">另一个隐含红利是跨模型分工。Claude 擅长规划和审查，Codex 跑机械执行便宜又快。以前这种分工要你手动开两个终端来回贴代码，现在一句话就交接了。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">核心原理</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它不是一个编排框架，是一套"委派协议"。每个 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">*-delegate</code> 技能把委派循环编码成固定步骤：</p>
+
+<ol style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#333;">写 brief</strong>：一份自包含任务书，目标、验收标准、边界条件都写进去，implementer 不需要任何主会话上下文</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#333;">派发</strong>：<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, monospace; font-size: 14px;">relay.mjs</code> 这个轻量脚本以 headless 模式启动目标 CLI（比如 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, monospace; font-size: 14px;">codex --sandbox workspace-write</code>），默认只给最小写权限</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#333;">轮询</strong>：implementer 的状态、退出码、结果存在 JSON artifact 文件里，relay 轮询这些文件而不是盯着终端</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#333;">审查 + 落 commit</strong>：主 agent 看 diff、跑门禁（lint/测试），确认后自己 commit。委派的活儿永远不自动入库</li>
+</ol>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">8 月 17 日推过的 oh-my-claudecode 解决的是另一个问题：它把流水线编排在 Claude Code 内部，各环节是同一个进程里的子 agent。delegate-skills 委派的是<strong style="font-weight:bold;color:#000;">真实独立的 CLI 进程</strong>：独立的沙盒、独立的会话状态、独立的账单。内部编排省切换，外部委派省上下文，两者不冲突，可以一起装。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">第二个机制是 <strong style="font-weight:bold;color:#000;">fleet（车队）</strong>。<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">delegate-setup</code> 扫描你机器上已装的 implementer CLI，提议按工作类型划分车道（lane）：<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">feature</code> 交给 OpenCode、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">tests</code> 交给 Codex、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">ui</code> 交给 Cursor。配置写入全局或项目级文件（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">delegate-fleet.v1</code> schema），写之前必须你显式批准；项目配置做了内容绑定，clone 或手改过的车道配置会 fail closed，直到重新批准。之后派活只需 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">--lane tests</code>，不用记每个工具的参数。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">17 种 implementer 一视同仁：Aider、Antigravity、Claude Code、Cline、Codex、Command Code、Cursor、Grok、Kimi、OpenCode、Pi、Oh My Pi、Qoder、Mistral Vibe、Copilot CLI、Warp、ZCode，每个都有对应的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">*-delegate</code> 技能，写权限、只读模式、会话续跑（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">--resume-last</code>）的映射在 README 里列成了一张大表。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">安装配置</strong></p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 一键装全部 18 个技能（setup + 17 个 implementer 委派）
+npx skills add amElnagdy/delegate-skills
+
+# 只要 Codex 一个
+npx skills add amElnagdy/delegate-skills --skill codex-delegate
+
+# 装到指定 agent（不写则自动检测）
+npx skills add amElnagdy/delegate-skills --skill codex-delegate --agent claude-code</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">前置条件只有三个：目标 CLI 已安装并登录（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">codex login</code>）、Node 18+、git。装完先让主 agent 建车队：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>Use $delegate-setup to discover my installed implementer CLIs and create a fleet for feature, tests, and UI work.</code></pre>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">使用指南</strong></p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">场景一：上下文快满，把独立任务外包出去</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：会话里已经干了四五个模块，窗口占用 70%+，还剩一个和前面关系不大的重构。操作：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>Use $codex-delegate to have Codex implement the refactor in services/billing/, then review and commit it.</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">主 agent 写 brief 派给 Codex，Codex 在自己的沙盒里干完写回 result.json，主 agent 拿回 diff 审查、跑测试、自己 commit。这次委派不占用主会话一行上下文。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">场景二：建车队，按工作类型分流</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：项目里前端、测试、功能代码每天都要改，工具也都装好了。操作：跑一次 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">$delegate-setup</code>，批准它提议的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">feature / tests / ui</code> 三条 lane，之后派活只带 lane 名：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>Use $opencode-delegate with --lane feature to implement the billing workflow, then review and commit it.
+Use $codex-delegate with --lane tests to add integration tests for the payment service.</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">lane 里绑定的 model、effort 等 dials 自动生效，显式 flag 可以临时覆盖单次派发。用错技能的 lane 会直接报错，不会静默跑偏。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong style="font-weight:bold;">场景三：任务队列，一个接一个审</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：攒了一批同类机械活，比如版本迁移、依赖升级、批量重命名。操作：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>Use $codex-delegate to run this queue of migration tasks through Codex while I review each one.</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">每个任务一个 brief，排队派发，主 agent 逐个审查落地。比让主 agent 自己串行跑这些省上下文，比一次性大改安全。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">进阶技巧</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">用只读模式白嫖第二意见：给 implementer 加 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">--read-only</code>（plan 模式），让它对某个改动只出方案不动代码，等于免费的第二设计评审，还不碰工作区。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">跨模型账本：执行型任务（迁移、样板代码、测试补全）派给 Codex，审查和架构判断留给 Claude。两个模型的强项各用各的，账单也更省。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">常见踩坑</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">原生 Windows 的 CLI 发现（discover）冒烟测试还没覆盖，Windows 用户跑 setup 时建议走 Git Bash 或 WSL；README 里的 shell 示例也以 bash 为前提。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">implementer 的写权限默认是开的（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">acceptEdits</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">workspace-write</code> 这类），在陌生仓库委派写任务前先确认沙盒范围。只读审查用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">--read-only</code> 显式降权。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">小任务别委派：brief、派发、轮询、审查一套流程有固定开销，改一行注释这种活自己干更快。relay 的 Codex 集成（flag、退出码、result.json）经过验证，端到端委派循环主要在 Claude Code 上验证过，其他 orchestrator 属于"设计支持、未充分验证"。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">同类技能对比</strong></p>
+
+<!-- 5 列对比表转卡片：主推条目绿色卡片，其余灰色卡片 -->
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">delegate-skills（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">npx skills add amElnagdy/delegate-skills</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>委派真实独立 CLI 进程，fleet 车道分工，审查与 commit 自留</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>跨模型分工、上下文隔离、批量外包</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 1280</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">oh-my-claudecode</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">/plugin install</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>Claude Code 内部五阶段流水线，同进程子 agent</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>单 agent 内部编排大任务</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>⭐ 38.6k</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">openai-codex 官方插件</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">/plugin install codex@...</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">核心特点：</strong>单向转发单个任务给 Codex，不轮询、不审查、不 commit</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">适用场景：</strong>快速丢一个任务就完事</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;text-align:left;"><strong style="color:#333;">热度：</strong>官方维护</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">与 oh-my-claudecode 的分工：内部编排管"一个 agent 怎么把活干完"，外部委派管"一台机器上的多个 agent 怎么协作"。装了 oh-my-claudecode 再装这个不重复，反而补上了跨 CLI 协作那块空白。<strong style="color:#07c160;">2 个月 19.8K 次安装</strong>，说明踩中这个需求的人不少。</p>
+
+<!-- 末尾来源行：URL 用 code+span 包裹，分隔符 &nbsp;·&nbsp;，左对齐 -->
+<p style="font-size:14px;color:#999999;margin:24px 0 0 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 1280 · MIT License · GitHub：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/amElnagdy/delegate-skills</span></code>
+  <span>&nbsp;·&nbsp;skills.sh：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>www.skills.sh/amelnagdy/delegate-skills</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">今日小结</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">适合手上同时装着两三个编程 CLI、又常被长任务上下文折磨的人。安装一条命令，setup 建车队十分钟，剩下就是学着把任务写清楚、把审查做扎实。换回来的是：主会话不再当垃圾场，机械活外包给便宜的模型，你自己从执行者变成工头，审什么、收什么，都归你。</p>
+
+</section>
