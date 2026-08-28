@@ -1,0 +1,131 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<!-- 文章标题由平台侧根据 frontmatter 渲染，body 开头只放日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-28</p>
+
+<!-- 源文件为 code-testing-agent-hero.webp，webp 格式上传接口不支持，已跳过 -->
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">"帮我写点测试"是 AI 编程里最常翻车的一类指令。微软 .NET 团队把这个活做成了开源 agent：一个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Generate unit tests</code>，它自己搞定语言识别、框架探测、测试规划、编译修复和有效性验证，官方基准里 152 个任务完成 140 个，比裸 Copilot 多 20 个。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">让 AI 写测试，常见死法有四种：生成的测试编译不过、跑不绿、测试项目没进解决方案导致 CI 永远不跑、或者测试本身全是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">assert x != null</code> 这种废话。前三种浪费你的调试时间，第四种最阴：测试全绿，覆盖率漂亮，但随便改一行生产代码测试照样过。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">微软博客《From generated code to trusted code with a unit-test agent》给出的实测数据很能说明问题：同样 152 个真实仓库任务，裸 Copilot 完成 120 个，装上这个 agent 后完成 <strong style="color:#07c160;font-size:20px;">140 个</strong>（92.1% vs 78.9%），失败率降了 63%。差距几乎全部来自模糊指令："Generate unit tests"这种什么都不交代的 prompt，裸 Copilot 89 题只过 59 题，agent 过 79 题。你写得越省事，这个 skill 越值钱。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">这个 agent 叫 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">code-testing-generator</code>，装在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">dotnet-test</code> 插件里，背后是一套七人分工的流水线：researcher 分析代码库、planner 定测试计划、implementer 写测试文件、builder 编译、tester 跑测试、fixer 修错误、linter 管格式。你不用管它们，agent 按任务规模自己选执行深度：</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#000;">Direct</strong>：单个函数、单文件，直接读码写测试，不开流水线。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#000;">Single pass</strong>：中等任务，研究加规划跑一轮，再实现。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#000;">Iterative</strong>：全仓库或覆盖率目标，反复"研究→计划→实现→验证"直到达标。</li>
+</ul>
+
+![code-testing-agent 工作流](./code-testing-agent-workflow.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">它比"模型当场硬写"多做了三件关键事。第一，写之前先摸仓库：检测语言和测试框架，找现有测试文件学命名和目录约定，找出仓库实际用来跑测试的命令。这一步专门解决"测试能跑但 CI 找不到"的问题。第二，写完自验：跑最小范围的测试命令，编译失败修编译，断言错读源码改断言，全程不改生产代码。第三，验有效性：做一轮轻量变异测试，故意改小生产代码看测试会不会挂；再检查断言强度和需求覆盖，最后跑全量构建和全量测试，确认仓库的测试命令真能找到新测试。能过这三关的测试才交给你。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">安装配置</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Copilot CLI / Claude Code，两条命令
+/plugin marketplace add dotnet/skills
+/plugin install dotnet-test@dotnet-agent-skills
+# 重启会话，然后
+/skills</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">VS Code 里走 Copilot Chat 也行（插件支持还是 preview，需先开开关）：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>// settings.json
+{
+  "chat.plugins.enabled": true,
+  "chat.plugins.marketplaces": ["dotnet/skills"]
+}</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Codex CLI v0.121+ 支持同一份插件：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">codex plugin marketplace add dotnet/skills</code>，然后 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/plugins</code> 浏览安装。插件是 MIT 协议，仓库 dotnet/skills 目前 5245 stars，.NET 官方团队在维护。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">使用指南</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">场景一：一句模糊指令，交给它自己琢磨</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">触发条件：只想说"Generate unit tests"，不想写长 prompt。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">操作：装好后直接在会话里说 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Generate unit tests</code>。agent 自己找需要测试的代码、判断测试框架、定位测试目录、跑通构建。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">预期结果：官方基准里这类模糊指令 89 题过 79 题，裸 Copilot 只过 59 题。你省下的 prompt 字数，它用研究步骤补回来了。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">场景二：给某个 diff 补测试</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">触发条件：刚改完一个函数或一个小模块，不想大动干戈。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">操作：请求里带上文件路径或 diff 范围，比如"为 src/utils/parser.py 写单测"。任务够小就走 Direct 路径，不产出 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.testagent/</code> 中间文件，读了目标文件和一份相邻测试文件就直接写。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">预期结果：15 个"针对特定 diff 写测试"的基准任务，agent 全过，裸 Copilot 一个都没过。这是它对裸模型优势最大的场景。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">场景三：全仓库冲覆盖率目标</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">触发条件：历史项目测试债重，要一个明确的覆盖率数字。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">操作：说清目标，比如"把覆盖率提到 80%"。agent 走 Iterative 路径，从简单代码入手逐步啃依赖重的模块，产出 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.testagent/research.md</code>（目标清单）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">plan.md</code>（每项需求到测试的映射）和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">status.md</code>（验证记录）。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">预期结果：最终回复带一张 Requirement | Evidence 表，每条需求对到具体测试名。覆盖率跑不完就修完再报，不会拿半路挂掉的数字糊弄你。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">最实用的组合技是"便宜模型 + 好流程"。官方数据：裸 Opus 4.8 过 152 题约 78%，装了 agent 的 GPT-5.5 达到 <strong style="color:#07c160;font-size:20px;">90.1%</strong>，和装了 agent 的 Opus（92.1%）只差两个点。也就是说流程本身把次一档的模型拉到了接近旗舰的水平。日常补测试可以放心用便宜模型，把 Opus 省给架构判断。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">另一招是看 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.testagent/</code> 产物的 diff。research.md 和 plan.md 是它对自己任务理解的书面记录，团队 Code Review 时扫一眼，比读测试代码快得多，也能发现它对业务需求的理解偏差。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">常见踩坑</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#000;">VS Code 里装不上：</strong>插件支持是 preview，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/plugins</code> 不出现时先检查 settings.json 里 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">chat.plugins.enabled</code> 是否为 true，装完要重载窗口。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#000;">PowerShell 场景别抱过高期待：</strong>官方基准里 PowerShell 十题过了七题，比裸 Copilot 还少一题（样本小，看趋势别较真）。PowerShell 项目建议把预期调低，重点盯它跑不跑得通。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#000;">装的 skill 不生效：</strong>plugin 装完要重启会话才会加载，装完直接喊没用是正常的。</li>
+</ul>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">code-testing-agent（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>/plugin install dotnet-test@dotnet-agent-skills</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>多 agent 流水线，变异测试自验，官方基准背书，支持 12 种语言</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>日常单测生成，尤其模糊指令</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 5.2k（官方）</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">smart-code-test-unit</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx skills add lordprotein/smart-code-test-unit</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Khorikov 分类法，12 种测试反模式检测</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>已有测试的评审和重构</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 较小</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">mavka-ai/unit-tests-skills</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx skills add mavka-ai/unit-tests-skills</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Given-When-Then 用例先行，再生成代码</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>Java/JUnit 5 项目</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 较小</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">superpowers:test-driven-development</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>/plugin install superpowers</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>红-绿-重构纪律，约束整个开发流程</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>新功能开发，不是补测试</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 较大</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">推荐理由：别的测试 skill 大多靠"更详细的提示词"让模型写好点，这个 skill 是拿一套 agent 流水线加变异测试当质量闸，还把 92.1% 这个数字摆出来。补测试是个高频活，值得装。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 8.8 · MIT · v 随仓库滚动 · GitHub </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/dotnet/skills</span></code>
+  <span>&nbsp;·&nbsp;官方博客 </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>devblogs.microsoft.com/dotnet/polyglot-unit-testing-agent/</span></code>
+</p>
+
+<!-- 装饰性场景分隔线 -->
+<p style="text-align:center;margin:32px 0;color:#07c160;letter-spacing:8px;font-size:12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">今天这个 skill 适合所有"AI 写的代码越来越多、测试却跟不上"的开发者：两条命令装完，日常补测试交给它，模糊指令下的完成率从三分之二拉到近九成。配置成本五分钟，换来的是每次"写点测试"都能省下修编译、对目录、查 CI 的来回。最划算的是它不挑模型，配便宜模型也能接近旗舰水平。</p>
+
+![code-testing-agent 基准数据](./code-testing-agent-benchmark.png)
+
+</section>

@@ -1,0 +1,193 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<!-- 文章标题由平台侧根据 frontmatter 渲染，body 开头只放日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-28</p>
+
+![AI 实用工具汇总](./summary.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">今天三个：一个把编码 Agent 的上下文压到四分之一还带论文，一个给 AI 写的代码在 Git 里上户口，一个把 Claude 的限额变成会漏气的汽水罐。我最想装的是第一个。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 工具 1：Paritok ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Paritok — 开源 4B 压缩模型，编码 Agent 的输入 token 压到四分之一</p>
+
+![Paritok demo](./paritok-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">编码 Agent 每轮对话都会把之前读过的文件、工具输出和聊天历史重新发给模型，这部分输入 token 占了账单的大头。通用压缩模型是按散文训练的，碰到代码会把函数名改写了、把要编辑的精确片段丢掉，压缩完 Agent 反而不会干活了。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Paritok 的做法是训练一个专门吃编码轨迹的 4B 压缩模型。它从 <strong style="color:#07c160;">67,074</strong> 条真实的 OpenHands Agent 轨迹里蒸馏出 45K 条训练片段，微调 Qwen3-4B 基座，只产出一个 264MB 的 LoRA 适配器。模型只做抽取：<strong style="color:#07c160;">96.0%</strong> 输出的标识符、路径和数字都原样来自输入，不做改写。压缩时还会告诉它 Agent 当前的任务意图，由它决定哪些行值得留。运行形态是一个网关，架在 Agent 和 LLM API 之间，Agent 把 BASE_URL 指向它，其余什么都不改。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">在 SWE-bench Lite 全部 300 个实例上，Paritok-4B 把上下文压到原来的 <strong style="color:#07c160;font-size:20px;">25.7%</strong>，是 gpt-4.1-mini 当压缩器的 2 倍、gpt-5 的 2.4 倍，同时保留了 <strong style="color:#07c160;font-size:20px;">86.5%</strong> 的无压缩解题质量。论文里还有一处算账：拿 gpt-5 做压缩是净亏的，压缩花的钱比省的 token 还多，而 4B 模型本地跑免费。官方给出的实际部署数据是第一轮就省 25%，长会话爬到 60% 以上，上下文塞满的场景超过 85%，同一个上下文窗口能多塞约 3 倍轮次。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 自托管网关（需要 24GB GPU，或 Ollama 在 CPU/消费级显卡跑）
+pip install paritok
+# 把你的 Agent 的 BASE_URL 指向网关，其余配置不动
+# Claude Code / Cursor / Codex / OpenHands 以及任何支持 BASE_URL 的 Agent 都适用
+
+# 或者用官方托管端点：paritok.com 注册拿 API key，免 GPU</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Paritok-4B（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">压缩率：</strong>25.7%（越低越狠）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">SWE-bench Lite 质量保留：</strong>86.5%</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">形态：</strong>开源 4B 模型 + 网关</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>自托管免费</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">LLMLingua-2</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">压缩率：</strong>约 40%</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">质量保留：</strong>未评估</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">形态：</strong>开源 token 分类器</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">gpt-4.1-mini 做压缩器</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">压缩率：</strong>50.2%</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">质量保留：</strong>85.6%</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">形态：</strong>闭源 API prompt</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>按 token 计费</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">gpt-5 做压缩器</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">压缩率：</strong>61.9%</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">质量保留：</strong>93.6%</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">形态：</strong>闭源 API prompt</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>净亏损（压缩成本高于节省）</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Paritok 压得狠，同时不破坏 Agent 干活，这是选它的理由。抽取式设计保住函数名和路径，网关给每段打上引用标记，Agent 随时能取回原文。别的压缩器压完就丢了，它压完还能还原。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 1.4K · v1.3.7 · Apache 2.0 · GitHub </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/Paritok-official/paritok-4b-v1</span></code>
+  <span>&nbsp;·&nbsp;论文 arXiv:2608.24188 </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>arxiv.org/abs/2608.24188</span></code>
+  <span>&nbsp;·&nbsp;官网 </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>www.paritok.com</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 工具 2：git-ai ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">git-ai — Git 扩展，让每一行 AI 代码都能查到是谁写的、为什么写的</p>
+
+![git-ai demo](./git-ai-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">半年前 Agent 写的代码出了问题，想知道这段代码是哪条 prompt 引出来的、用的哪个模型，答案无从查起。AI 代码进仓库不携带任何来路信息，review 时看不出哪行是机器写的，审计时也没有证据链。两天前 v1.7.0 发布，Windows 上现在有 MSI 安装包了。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">git-ai 不靠猜测。Agent 写代码或改文件时会调用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">git-ai checkpoint</code>，提交时扩展把行级归属写进 Git Notes，每一行 AI 代码都链到产生它的 agent、模型、prompt 和会话。它不装 git hooks、不包一层 git 二进制，靠一个 Rust 守护进程事后分析，所以 git 操作速度不受影响。关键设计是归属随 Git 历史一起漂移：rebase、squash、cherry-pick、stash、amend 之后，归属会被搬动和合并而不是丢失。prompt 存储会先做扫描脱敏再落到仓库外，防止密钥和个人信息入库。项目还定义了开放标准 v3.0.0，用 Git Notes 表达 AI 代码归属。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">装完之后 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">git log --show-notes="ai"</code> 能看到归属，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">git ai blame</code> 是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">git blame</code> 的替代品，逐行显示 AI 归属，支持全部标准参数。团队版可以把 token 花费对到具体 PR、按仓库算 AI 代码占比、把生产事故回溯到引发它的那次会话。单机使用本地优先、离线可用、不需要登录。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Windows（PowerShell），v1.7.0 起提供 MSI 安装包
+irm https://github.com/git-ai-project/git-ai/releases/download/v1.7.0/install.ps1 | iex
+
+# 验证构建出处（可选）
+gh attestation verify git-ai-windows-x64.exe --repo git-ai-project/git-ai</code></pre>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># macOS / Linux
+curl -fsSL https://github.com/git-ai-project/git-ai/releases/download/v1.7.0/install.sh | bash</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">git-ai（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">归属存储：</strong>Git Notes</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">捕获方式：</strong>Agent 显式上报 checkpoint</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">关键差异：</strong>标准开放、Rust、rebase/squash 全程保真</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 2.5K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Origin</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">归属存储：</strong>git refs + notes</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">捕获方式：</strong>全局 git hooks 自动捕获</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">关键差异：</strong>附带治理、成本限额、PR 门禁</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>商用，有免费层</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">agentdiff</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">归属存储：</strong>git refs</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">捕获方式：</strong>各 Agent hooks</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">关键差异：</strong>每笔归属 ed25519 签名</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>较新</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">whogitit</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">归属存储：</strong>git notes</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">捕获方式：</strong>Claude Code hooks + 三方 diff</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">关键差异：</strong>三方 diff 区分人改过的 AI 代码</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>较新</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">git-ai 赢在它是这个方向里 stars 最高、活得最久的一个，且把归属格式做成了公开标准。不用 ed25519 签名那套复杂性，日常"这行是谁写的"足够用了；需要审计级证据或团队治理的，再往 Origin、agentdiff 那边看。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 2.5K · v1.7.0 · Apache 2.0 · GitHub </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/git-ai-project/git-ai</span></code>
+  <span>&nbsp;·&nbsp;文档 </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>usegitai.com</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 工具 3：Diet Claude ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Diet Claude — Chrome 扩展，Claude 限额变成会漏气的汽水罐</p>
+
+![Diet Claude demo](./diet-claude-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">用 Claude 订阅的人大多经历过：正写着一半，5 小时限额突然见底，之前毫无预兆。Claude 网页版不显示你用了多少，限额是道从天上掉下来的墙。Diet Claude 把用量数字摆到你眼前——一个汽水罐，随使用往下漏，重置时自动加满。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">扩展直接读取 Claude 自己账户里已有的用量数据，在本机浏览器里算，没有账号、没有 API key、无需配置。屏幕上有 5 小时会话和每周额度的实时读数、重置倒计时、70% 和 90% 两道告警，还有会话重置提醒，连 Claude 标签页都没开也会弹。省着用的一侧：输入框旁边的 token 用量计告诉你当前对话已经多重了，缓存保温计时器标出 5 分钟内回复可以便宜复用上下文，对话过重时提示你开新会话更划算。Fork &amp; Compress 能让 Claude 自己总结当前对话，带着摘要开新会话继续。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">最实用的是耗尽之后的一键转移：把当前对话总结好，打开 ChatGPT、Gemini 或 Grok 时摘要已经填在输入框里，发不发由你决定。隐私处理写得比较坦白——Organize 和 Improve prompt 两个功能会把你点的那点文本发给服务端，其余全部留本机；对话内容、搜索索引、交接摘要从不上传。8 月 25 日在 Product Hunt 发布，拿了当天第 2 名，401 票。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>🏪 Chrome Web Store · 5.0 分（58 条评分）· 免费 · 安装 </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>chromewebstore.google.com/detail/diet-claude/jngclbkljdepkgiomnmokmmmkeffjddg</span></code>
+  <span>&nbsp;·&nbsp;官网 </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>dietclaude.com</span></code>
+</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Diet Claude（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">用量可视：</strong>会话/周双重读数+倒计时</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">降耗建议：</strong>token 计、缓存计时、Fork 摘要</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">跨模型迁移：</strong>一键交接 ChatGPT/Gemini/Grok</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">形态：</strong>Chrome 扩展，本地优先</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">同类 Claude 用量 tracker 扩展</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">用量可视：</strong>会话/周读数</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">降耗建议：</strong>无</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">跨模型迁移：</strong>无</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">形态：</strong>Chrome 扩展</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Claude 官方网页</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">用量可视：</strong>无读数</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">降耗建议：</strong>无</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">跨模型迁移：</strong>无</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">形态：</strong>内置</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">同类 tracker 只把数字显示出来，Diet Claude 多了两道告警、降耗动作和跨模型续命，这才是解决"限额见底"的完整回路。如果只想要个读数，tracker 够用；想把每一分额度用到刀刃上，装这个。</p>
+
+<!-- 装饰性场景分隔线 -->
+<p style="text-align:center;margin:32px 0;color:#07c160;letter-spacing:8px;font-size:12px;">··· ◆ ···</p>
+
+<!-- ============ 其他值得关注 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">VS Code 1.135 于 8 月 26 日发布，Agent Host Protocol 落地——Claude Code、Codex、Copilot 的会话可以在 VS Code 窗口间、甚至跨应用继续，编辑器的分叉们靠"拥有会话"建立的价值主张被进一步削弱。Vajra（JetBrains Marketplace，3,561 次下载）在 8 月 16 日发布了它的 Cursor 对齐版本，支持 Composer 式多文件 diff 和检查点回滚。这些都不是独立可安装的增量，记在这里供追踪。</p>
+
+</section>

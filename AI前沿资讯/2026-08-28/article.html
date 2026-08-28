@@ -1,0 +1,423 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<!-- 文章标题由平台侧根据 frontmatter 渲染，body 开头只放日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-28</p>
+
+<!-- 摘要提示卡：绿色信息卡 -->
+<section style="background-color:#f0f9eb;border-radius:10px;padding:18px 20px;margin:0 0 28px 0;border:1px solid #c8e6c9;">
+  <p style="margin:0 0 10px 0;font-size:15px;color:#2e7d32;line-height:2.0;">本期覆盖 2026-08-27 至 08-28 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Bluesky / Lobsters / arXiv / HF Papers / 知乎 / AI 实验室博客。精选 10 条按影响力排序。</p>
+  <p style="margin:0;font-size:15px;color:#2e7d32;line-height:2.0;">核心主题：<strong style="color:#07c160;font-weight:bold;">agent 技能与记忆基础设施集中爆发</strong>，archify 单日 +4,239 星续爆登顶，Bilawal Sidhu 的浏览器卫星模拟器走红，跨 CLI 记忆服务与 Google 双模型更新跟进。</p>
+</section>
+
+<!-- ============ 条目 1 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. archify（Agent 架构图 skill，单日 4,239 星续爆）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.3/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending +4,239 stars/day，总星 23.6K</span>
+</section>
+
+![archify 架构图 demo](./archify-demo.png)
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">tt-a1i 的开源 agent skill（MIT），让 agent 把代码库或系统描述画成交互式技术图：架构、工作流、时序、数据流、生命周期五种图型。Typed JSON 中间表示 + 确定性校验，agent 控制层级、间距、路由、强调，产出自包含 HTML（可导出 PNG/SVG/WebM）。Architecture Delta 模式对 PR 生成 Before/Delta/After 三帧快照，把代码评审的架构差异直接画出来。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 全局安装（Claude Code / Codex / Cursor / OpenCode / Raven）
+npx skills add tt-a1i/archify -g
+# 免安装试用
+npx skills use tt-a1i/archify@archify --agent codex
+# 之后直接说："Use archify to map this repository's runtime architecture."</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">昨天（8/27）单日 +1,035 星、总星 18.1K；今天单日 <strong style="color:#07c160;font-size:20px;">+4,239</strong> 星、总星 23.6K。48 小时进账约 5.5K，增速翻 4 倍。此前让 agent 画图的主流路径是 Mermaid：生成快、布局糙。archify 靠「agent 控制布局 + 类型化交付 + 五重校验不过不发布」把画图变成可复验的工程步骤，节点可链到 Git 固定 commit 做来源证据。它是本周少数靠单点做深、不靠打包合集冒头且持续加速的项目。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">Trendshift 连续在榜，简介「beautiful, verifiable architecture, workflow, sequence, data-flow, and lifecycle diagrams in a single HTML file」。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">社区讨论集中在 Architecture Delta 用于 PR review：以前架构改动靠 git diff 硬读，现在直接看三帧对比图。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">README 明确与 Mermaid 的分工：Mermaid 适合快速出图，archify 适合「要拿去评审、要存档、要分享」的图。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/tt-a1i/archify</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 条目 2 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. God's Eye View（浏览器里的「间谍卫星模拟器」，数据是真的）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.8/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending +1,984 stars/day，总星 8.3K</span>
+</section>
+
+![God's Eye View demo](./gods-eye-view-demo.jpg)
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Bilawal Sidhu（God's Eye View 病毒视频系列作者）开源，MIT。纯浏览器应用：CesiumJS + Google Photorealistic 3D Tiles 渲染真实地球，叠加航班（OpenSky/adsb.lol）、军用 ADS-B、AIS 船只、约 840 颗卫星（SGP4 轨道）、地震（USGS）、火点（NASA FIRMS）、交通（TomTom）、约 800 路公开 CCTV 投影进 3D 城市。无框架 vanilla JS + Vite。内置 OpenAI Realtime 语音 agent，28 个工具：相机控制、标注测距、图层查询、电影化运镜。分享链接会把相机、视觉风格、图层、跟踪目标序列化进 URL。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/bilawalsidhu/gods-eye-view
+cd gods-eye-view
+cp .env.example .env   # 只需填 GOOGLE_MAPS_API_KEY
+npm install
+npm run dev -- --host localhost --port 4173</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">10 个图层零 key；Google 3D 瓦片每月 1,000 次免费 root-tile 会话（每次最长 3 小时）。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">7 种 GLSL 传感器视觉风格（CRT、夜视、热成像 FLIR 等），点击任意飞机/船只/火灾/ISS 即可追踪，支持驾驶舱视角跟飞和 250km 联系名单。此前同类「上帝视角」演示多为闭源或视频拼贴，这是第一个把多源真实公共数据 + 语音 agent 控制开源成可本地跑的项目。8.3K 总星中今天一天进账 <strong style="color:#07c160;font-size:20px;">1,984</strong>。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">作者该系列视频在 YouTube 累计 500 万+ 播放，社区最关注数据源全公开、本地可跑两点。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">README 明示伦理边界：不提供「点名搜索、人脸识别、追踪个人」，这也是社区讨论里反复出现的点。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/bilawalsidhu/gods-eye-view</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 条目 3 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. OpenMontage（开源 agentic 视频生产系统）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.3/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending +1,292 stars/day，总星 52.4K</span>
+</section>
+
+![OpenMontage demo](./openmontage-demo.png)
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">calesthio 出品，AGPLv3。口号「把你 AI 编程助手变成完整视频工作室」。没有代码编排器——AI 助手自己就是 orchestrator：读 pipeline 清单（YAML）、stage director skill（Markdown）、调 Python 工具、自审、状态存 JSON。流程：research → proposal → script → scene plan → assets → edit → compose。12 条生产管线（动画解说、人物出镜、纪录片混剪、播客重制、屏幕演示等），100+ 生产工具，60+ provider 集成，700+ skill/生产知识文件。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/calesthio/OpenMontage.git
+cd OpenMontage
+make setup   # 需 Python 3.10+ / FFmpeg / Node 18+
+# 之后对助手说："Make a 60-second animated explainer about how neural networks learn."</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">零 key 也能出片：Piper TTS 免费旁白，Archive.org / NASA / Wikimedia 实拍素材，Remotion + HyperFrames 合成，FFmpeg 后期。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">参考驱动创作（贴 YouTube/Reel 链接生成有据可依的制片方案）、Backlot 实时故事板审批门、成片自审（ffprobe/帧/音频检查 + 幻灯片风险打分）、预算护栏（默认单动作审批阈值 $0.50）。把 AI 视频生成从单模型抽卡升级为可复现的制片流水线，<strong style="color:#07c160;font-size:20px;">52.4K</strong> 星。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">README 置顶「🏆 #1 Repository of the Day on GitHub Trending」徽章。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">讨论集中在零成本路径（Piper + 公共素材）与 provider 7 维评分（任务契合/质量/控制/可靠/成本/延迟/连续性）。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/calesthio/OpenMontage</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 条目 4 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. ai-memory（跨 vendor 的 agent 长期记忆，Rust 单二进制）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.1/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending +606 stars/day，总星约 5K</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">akitaonrails 出品。一个 Rust 二进制跑 MCP/HTTP server，把 Claude Code 会话干到一半的任务换到 Codex 接着干：sanitized 生命周期 hook（prompt、tool call、session 边界）编译成 git 版本化的 markdown wiki，任何支持的 agent 都能查，不需要向量库。数据目录：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">wiki/</code>（真相源）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">raw/</code>（不可变转录段）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">db/</code>（SQLite FTS5）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">models/</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">logs/</code>。检索融合 FTS5、实体匹配 RRF、图邻居 RRF、可选向量 RRF。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Arch Linux
+yay -S ai-memory-bin
+systemctl --user enable --now ai-memory
+# 或 Docker（loopback 绑定）
+docker run -d --name ai-memory -p 127.0.0.1:49374:49374 akitaonrails/ai-memory:latest
+# 装 CLI 后
+ai-memory install-mcp &amp;&amp; ai-memory install-hooks
+# 跨 harness 接续同一工作流
+ai-memory run claude     # 然后 ai-memory run codex --yolo 续上</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">支持 <strong style="color:#07c160;font-size:20px;">16+</strong> CLI（Claude Code、Codex、Cursor、Gemini CLI、OpenClaw、Antigravity、Kimi Code 等）。session 结束时观察编译成摘要，下一个 agent 的 SessionStart 注入有界 handoff（开放问题 + 下一步）。LLM 可选：零 LLM 模式仍有 FTS5/实体/图检索。走 Karpathy「compile-not-retrieve」路线，相比 agentmemory / basic-memory，差异在于 vendor 中立、单二进制、git 版本化。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color:#f0f9eb;border-left:4px solid #07c160;margin:0 0 12px 0;padding:14px 18px;border-radius:0 6px 6px 0;color:#555555;line-height:2.0;">
+  <p style="margin:0;font-size:15px;">「Quit Claude Code mid-task, start OpenAI Codex in the same directory, continue without re-explaining the architecture, the failed approaches, or the open questions.」</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">README 开场场景直击痛点（上方引用）。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">仓库声明的参考源：agentmemory、basic-memory、cognee、Hermes Agent。讨论集中在跨 vendor handoff 与隐私（数据单租户、默认仅本地 loopback）。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/akitaonrails/ai-memory</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 条目 5 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. Gemini 3.5 Transcribe（Google 新 STT：85+ 语言，流式 WER 4.0%）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 154 分/35 评论 · Product Hunt 当日 #4</span>
+</section>
+
+![Gemini Transcribe demo](./gemini-transcribe-demo.jpg)
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Google 8/27 发布的语音转写模型。自动检测 <strong style="color:#07c160;">85+</strong> 语言（含方言口音），流式 WER 4.0%、非流式 2.6%（Artificial Analysis 测量），FLEURS 上流式 5.50%、非流式 5.04%。智能转写解析自我纠正、去填充词、自动排版；自定义词表适配行话和特殊拼写；预录音频支持最多 3 说话人标注（3+ 为实验性）。支持 function calling，转写结果可派给其他 Gemini 模型做下游任务。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Google AI Studio 公开预览：https://aistudio.google.com
+# 流式模型 gemini-3.5-transcribe-live；预录音频 gemini-3.5-transcribe
+pip install google-genai
+# 取 key 后按官方文档调用，完整示例见：
+# https://ai.google.dev/gemini-api/docs/transcribe</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">已有集成：Agora、Fishjam、LangChain、LiveKit、Pipecat、Vercel、Vision Agents。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">较前代 Chirp 3 出最终转写时间快 <strong style="color:#07c160;font-size:20px;">70%</strong>，流式延迟亚秒级。官方对标 Whisper/Deepgram/AssemblyAI，差异点是噪声环境下的数字实体识别（邮编、订单号）。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">HN 154 分帖聚焦 85 语言覆盖与自定义词表对行业术语的适配。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">X @DataconomyMedia（13h 前）推文概要：「detect over 85 languages, learn custom terms, add speaker labels with timestamps」。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-5-transcribe/</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 条目 6 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. Experiential（本地 OpenAI 兼容网关：把用量变成更好的路由）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.4/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Show HN 109 分/17 评论 · Apache-2.0，495 星</span>
+</section>
+
+![Experiential demo](./experiential-demo.png)
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">experientiallabs 出品。开源网关 + 路由：一个控制面接封闭、开源、本地、自定义模型，OpenAI 兼容 API。特色是把生产流量变成更好的路由器——收集实际调用数据做路由优化，权衡质量/速度/成本。数据面是编译好的原生二进制，本地跑；也提供托管版 platform.experientiallabs.ai。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>pip install experiential
+exp run   # 向导配置 providers / 模型 / 预算，签发一次性 key
+# 端点 http://127.0.0.1:8000，把 OPENAI_BASE_URL / ANTHROPIC_BASE_URL 指过去</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">BYOK：OpenAI、Anthropic、Gemini、Azure、Bedrock 等；本地模型同样可接；OpenTelemetry trace 收集；遥测可关（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">exp config telemetry disable</code>）。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">OpenRouter 是托管服务，Experiential 把同款能力装进 pip 包本地跑，流量数据不离开机器就能做路由调优。Show HN 首发即 <strong style="color:#07c160;font-size:20px;">109 分</strong>。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">Show HN 帖（109 分）讨论集中在 trace 数据如何反哺路由、与 OpenRouter 的取舍。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">自托管数据面 + BYOK 的组合在评论里认可度最高。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/experientiallabs/experiential</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 条目 7 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. go-modern-guidelines（JetBrains 官方：教 AI agent 写现代 Go）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.3/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending +300 stars/day，总星 2.1K</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">JetBrains 官方仓库，目标读者是 coding agent 而非人。解决两个失败模式：训练数据滞后（模型不知道截止日期后的语言特性）与频率偏差（旧写法在训练语料中占比高，模型惯性输出）。skill 读 go.mod 检测 Go 版本，只用该版本可用的语法与 stdlib，并优先新写法（与 go 的 modernize analyzer 取向一致）。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code
+/plugin marketplace add JetBrains/go-modern-guidelines
+# 安装 modern-go-guidelines@goland-claude-marketplace，调用 /modern-go-guidelines:use-modern-go
+# Codex
+codex plugin marketplace add JetBrains/go-modern-guidelines
+codex plugin add modern-go-guidelines@goland-codex-marketplace
+# 其他 agent
+npx skills add JetBrains/go-modern-guidelines</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">覆盖 Go 1.0–1.27 特性，示例替换全是具体语法：if-else 取最大值 → <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">max(a,b)</code>，手写循环 → <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">slices.Contains</code>，nil 链判断 → <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">cmp.Or</code>，加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">new(42)</code> 指针与 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">errors.AsType[T](err)</code>（Go 1.26）。<strong style="color:#07c160;font-size:20px;">2,147</strong> 星两天内攒起，是官方下场给 agent 写编码规范的第一个大厂案例。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">仓库开篇点出的训练数据滞后与频率偏差两个失败模式被社区转发最多。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">兼容 5 种 agent（Junie / Claude Code / Codex / Cursor / OpenCode）；首次安装自动 go install 小 CLI 到本地缓存，不改项目文件。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/JetBrains/go-modern-guidelines</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 条目 8 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. Qwen3.8-Flash-Next（Qwen4 架构预览：125B 主模型 + 51B N-gram 查表）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.2/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">知乎热文（8/27）+ ModelScope 官宣 + SGLang day-0 支持</span>
+</section>
+
+![Qwen Next demo](./qwen-next-demo.png)
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">阿里 Qwen 团队 8/26 晚发布，官方定位 Qwen4 架构预览。125B 主模型 + 51B N-gram Embedding 查表，每 token 仅激活 <strong style="color:#07c160;">6B</strong>。48 层 = 36 层 Gated DeltaNet（线性注意力）+ 12 层 Qwen Sparse Attention。MoE 512 专家 top-10 路由。N-gram 查表放在第二个 decoder 块：hash 寻址，每 token 取 16 行（8 个 2-gram + 8 个 3-gram head）拼成 2560 维向量；稀疏 pinned-host offload 让表驻留内存，每 token 只搬 16 行进 GPU。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># SGLang day-0 支持；NVFP4 量化 RadixArk/Qwen3.8-Flash-Next-NVFP4 同日发布
+pip install "sglang[all]"
+python -m sglang.launch_server --model RadixArk/Qwen3.8-Flash-Next-NVFP4 --tp 4
+# per-workload 配置见 SGLang Cookbook：
+# https://docs.sglang.io/cookbook/autoregressive/Qwen/Qwen3.8-Flash-Next</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">API：千问平台（OpenAI 协议）。本地：llama.cpp/Ollama 量化版已跟进。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">B200 上 TP4、NVFP4、batch 1 带 MTP：<strong style="color:#07c160;font-size:20px;">540 tok/s</strong> 解码（accept length 约 3.3）。H200 TP4 带 offload：目标权重每 GPU 83.91 → 60.45 GiB（-23.46 GiB），KV 容量 1.84M → 3.28M token（+78.54%），吞吐几乎不变（-0.07%）。对比 DeepSeek V4 Flash 与 GLM-5.3 Flash，125B/6B-A 是三者中最激进的稀疏比。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">知乎 8/27 热文《前沿性能，普惠价格，Qwen3.8-Flash重划模型性价比"斩杀线"》在发布次日跟进。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">LMSYS 官方 blog：SGLang 同日提供 day-0 支持，附 cookbook 与 per-workload 配置。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://lmsys.org/blog/2026-08-26-qwen-flash-next/</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 条目 9 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. Gemini Omni 1.1 Flash（生成式视频控制进 API）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.0/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 191 分/140 评论</span>
+</section>
+
+![Omni demo](./omni-demo.png)
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Google 8/27 发布，面向开发者的 production-ready 更新，把生成式视频的创作控制带进 Gemini Omni 系列 Flash 档：文生视频、图生视频，多模态输入支持最多 3 秒视频参考，音频/音乐生成提示词同样受支持。Omni 是 Google 的全模态实时家族，Flash 是其中的轻量快档。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Google AI Studio / Gemini API 接入，接口沿用 Omni 系列
+# 官方发布与接入文档：
+# https://blog.google/innovation-and-ai/technology/developers-tools/build-with-gemini-omni-1-1-flash/</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">开发入口在 Google AI Studio，模型接入方式见上方官方 blog。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">视频生成此前多在消费级 App 里，Omni 1.1 Flash 把可控视频生成正式放进开发者 API，多模态输入支持 3 秒视频参考。HN 上 <strong style="color:#07c160;font-size:20px;">191 分/140 评论</strong>，热度超过同日的 Transcribe（154 分）。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">HN 191 分帖（blog.google）讨论最多的是生成视频的成本控制与创作控制（运镜/风格）的能力边界。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">发布定位「production-ready update for developers」，社区关心它与消费端产品的差异化。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://blog.google/innovation-and-ai/technology/developers-tools/build-with-gemini-omni-1-1-flash/</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 条目 10 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">10. Traccia（vendor 中立的 AI Agent 控制面）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+  <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 6.8/10</span>
+  <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 2026-08-27 Launch of the Day</span>
+</section>
+
+![Traccia demo](./traccia-demo.png)
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">定位「Finally, a vendor-neutral AI Agent Control Plane」：给多 agent 环境做统一治理，跨供应商的 agent 策略、权限与管控。PH 同类对标 Langfuse、Latitude、Helicone、Eden AI，但那些偏观测/LLM 分析，Traccia 主打控制面（策略执行）而非仅监控。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">怎么用</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 无 CLI，8/27 上线，注册试用
+# 官网与接入文档见 Product Hunt 页：
+open https://www.producthunt.com/products/traccia</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Agent 控制面（区别于模型 API 网关和 observability）是 2026 年新出的中间层品类：Langfuse 管 trace，Traccia 管「谁能干什么、超没超限」。PH 当日 Launch of the Day，417 粉丝起步。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">PH 榜单 8/27 当日第一（Launch of the Day + daily #5 称号）。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">社区关注点是与 Langfuse/Helicone 的边界：Traccia 强调 vendor-neutral 与治理策略执行。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>来源：</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/products/traccia</span></code>
+</p>
+
+<!-- 装饰性场景分隔线 -->
+<p style="text-align:center;margin:32px 0;color:#07c160;letter-spacing:8px;font-size:12px;">··· ◆ ···</p>
+
+<!-- ============ 其他值得关注 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 16px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">NVIDIA 收购 Hugging Face（$13B）</p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:1.9;">模型托管平台并入芯片厂。X 上 @FutbolmeAI 评论获转发：「the github deal worked because migrating a git repo is a weekend…moving off the hub means rehosting weights, datasets and every from_pretrained call」。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：HN 1,831 分/857 评论，X 热议</p>
+</section>
+
+<section style="margin:0 0 16px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">DiffSynth-WebUI</p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:1.9;">本地 LoRA 训练 WebUI，4-bit NF4 让 10B+ 模型在 24GB 显存上训练，20 个模型家族 100+ 配方（Krea2、Qwen-Image、Z-Image、LTX-2），数据不出本机。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：ModelScope 官方推文（8/27）</p>
+</section>
+
+<section style="margin:0 0 16px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">MiniMax-H3-Fun-Controlnet-Union</p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:1.9;">单 checkpoint 覆盖 Canny/Depth/HED/MLSD/Pose 五种控制，支持视频局部重绘。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：ModelScope 8/27</p>
+</section>
+
+<section style="margin:0 0 16px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">Lenz</p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:1.9;">独立多模型事实核查 API，接入 AI 工作流做输出校验。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：PH 8/27 当日 #3</p>
+</section>
+
+<section style="margin:0 0 16px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">Anthropic Model Hardware Standard</p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:1.9;">Anthropic 研究预览，推进模型硬件标准化。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：HN 82 分</p>
+</section>
+
+<section style="margin:0 0 16px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">scientific-agent-skills</p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:1.9;">把任意 agent 变成 AI Scientist 的技能包（5 月曾登榜，今重回 Trending）。</p>
+  <p style="margin:0;font-size:13px;color:#999;">来源：+498 stars/day，总 35.4K</p>
+</section>
+
+<!-- 关键词底栏 -->
+<section style="background-color:#f5f7fa;border-radius:10px;padding:16px 18px;margin:28px 0 0 0;">
+  <p style="margin:0 0 8px 0;text-align:center;font-size:17px;font-weight:bold;color:#333;">本期关键词</p>
+  <p style="margin:0;text-align:center;font-size:15px;color:#555;">agent skills · 记忆基础设施 · 视频生成 API · 卫星模拟器 · Rust 单二进制</p>
+</section>
+
+</section>
