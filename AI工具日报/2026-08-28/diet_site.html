@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Diet Claude — You weren't born to be rate-limited</title>
+    <meta
+      name="description"
+      content="Diet Claude — a usage meter for Claude that drains as you go and refills when your session resets. Crack open the can — free on the Chrome Web Store."
+    />
+    <link rel="canonical" href="https://dietclaude.com/" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="theme-color" content="#a8472a" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Square icon set generated from the extension's own can icon by scripts/build-social-assets.mjs.
+         public/favicon.png is the old 388x820 can artwork — non-square, so browsers squashed it. -->
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./favicon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+
+    <!-- Open Graph / Twitter. Absolute URLs are REQUIRED here: link scrapers do not resolve relative
+         hrefs, and Vite would rewrite a root-relative one to "./" under base:'./' anyway. og.png is a
+         real 1200x630 capture of the finished hero — regenerate it with `npm run social`. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Diet Claude" />
+    <meta property="og:url" content="https://dietclaude.com/" />
+    <meta property="og:title" content="Diet Claude — You weren't born to be rate-limited" />
+    <meta
+      property="og:description"
+      content="A soda can that tracks your Claude session. Crack it open — free on the Chrome Web Store."
+    />
+    <meta property="og:image" content="https://dietclaude.com/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="A half-drained Diet Claude soda can on a red background, flanked by the words YOU WEREN'T BORN TO BE RATE-LIMITED."
+    />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Diet Claude — You weren't born to be rate-limited" />
+    <meta
+      name="twitter:description"
+      content="A soda can that tracks your Claude session. Crack it open — free on the Chrome Web Store."
+    />
+    <meta name="twitter:image" content="https://dietclaude.com/og.png" />
+    <meta
+      name="twitter:image:alt"
+      content="A half-drained Diet Claude soda can on a red background, flanked by the words YOU WEREN'T BORN TO BE RATE-LIMITED."
+    />
+
+    <!-- downloadUrl/installUrl/offers are asserted only because the listing is actually live. Still no
+         aggregateRating: there are no reviews yet, and claiming one is a manual-action risk. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://dietclaude.com/#organization",
+            "name": "Socia Tools Private Limited",
+            "url": "https://dietclaude.com/",
+            "logo": "https://dietclaude.com/favicon-192.png"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://dietclaude.com/#website",
+            "url": "https://dietclaude.com/",
+            "name": "Diet Claude",
+            "description": "A usage meter for Claude that drains as you go and refills when your session resets.",
+            "inLanguage": "en",
+            "publisher": { "@id": "https://dietclaude.com/#organization" }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://dietclaude.com/#app",
+            "name": "Diet Claude",
+            "url": "https://dietclaude.com/",
+            "applicationCategory": "BrowserApplication",
+            "operatingSystem": "Chrome",
+            "browserRequirements": "Requires Chrome or another Chromium-based browser",
+            "description": "A browser extension that shows your Claude session usage as a soda can: it drains as you use your session and refills when the limit resets.",
+            "image": "https://dietclaude.com/og.png",
+            "publisher": { "@id": "https://dietclaude.com/#organization" },
+            "downloadUrl": "https://chromewebstore.google.com/detail/diet-claude/jngclbkljdepkgiomnmokmmmkeffjddg",
+            "installUrl": "https://chromewebstore.google.com/detail/diet-claude/jngclbkljdepkgiomnmokmmmkeffjddg",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "availability": "https://schema.org/InStock",
+              "url": "https://chromewebstore.google.com/detail/diet-claude/jngclbkljdepkgiomnmokmmmkeffjddg"
+            },
+            "disambiguatingDescription": "An independent product of Socia Tools Private Limited. Not affiliated with, endorsed by, or sponsored by Anthropic PBC."
+          }
+        ]
+      }
+    </script>
+    <!-- Product Hunt badge. Pinned and OUT OF THE LAYOUT FLOW on purpose: the hero is a tuned single
+         non-overflowing screen, and anything added in flow re-triggers the documented regression (overflow →
+         classic scrollbar → its ~15px shoves the centred hero ~8px sideways on reload). Measured before
+         adding this: only 44px of clearance under the CTA at 360x640, against a 54px badge. position:fixed
+         costs zero vertical budget, so none of that arithmetic applies.
+         Bottom-right by default (the convention). It falls back to the TOP-LEFT strip on short viewports:
+         at bottom-right the badge covered the CTA by 7px at 360x640 and 31px at 320x640, where only ~20px
+         remains below the CTA. Top-LEFT, not top-right, because the mobile replay button floats in the
+         top-right red margin (y 134-216 at 390x844); the top-left strip is empty at every measured size —
+         the can starts 117-167px down. -->
+    <style>
+      .ph-badge {
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        z-index: 10; /* site max is 3; the CRT overlay is -1 and pointer-events:none */
+        line-height: 0; /* kill the inline-image descender gap */
+      }
+      .ph-badge img {
+        display: block;
+        width: 250px;
+        height: 54px;
+      }
+      /* Narrow phones: 250px is 78% of a 320px screen. Scale from the corner so the offset holds. */
+      @media (max-width: 420px) {
+        .ph-badge {
+          bottom: 12px;
+          right: 12px;
+          transform: scale(0.72);
+          transform-origin: bottom right;
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="./assets/index-s90CNkJG.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CAiUwGJ1.css">
+  </head>
+  <body>
+    <!-- STATIC, CRAWLABLE COPY — deliberately outside #root so React never replaces it.
+         The page is client-rendered, so without this the served HTML is an empty <div> and every scraper
+         that does not execute JS (most social/AI crawlers) sees a blank document. Visually hidden with
+         INLINE styles rather than the .visually-hidden class, because that class lives in the bundled CSS
+         and would not be applied before it loads (or at all, if JS/CSS fails). This is also the page's
+         only <h1> — Hero.tsx no longer renders one. -->
+    <h1
+      style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0"
+    >
+      You weren't born to be rate-limited
+    </h1>
+    <p
+      style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0"
+    >
+      Diet Claude is a usage meter for Claude: a soda can that drains as you use your session and refills
+      when the limit resets. Free on the Chrome Web Store.
+    </p>
+
+    <!-- Static, outside #root, so it paints without waiting for the bundle, survives a JS failure, and
+         lands in the served HTML for crawlers. This is the "Top Post" (daily) badge, which replaced the
+         earlier featured.svg on 2026-08-27. theme=light is what Product Hunt supplies for it; the previous
+         featured badge deliberately used theme=dark, because light renders #FF6154 on white and glares
+         against the coral. If that glare is back, swap theme=light for theme=dark here.
+         fetchpriority=low keeps it from competing with bg.webp, the LCP image.
+         This is the site's ONLY third-party request. -->
+    <a
+      class="ph-badge"
+      href="https://www.producthunt.com/products/diet-claude?embed=true&amp;utm_source=badge-top-post-badge&amp;utm_medium=badge&amp;utm_campaign=badge-diet-claude"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <img
+        src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1229322&amp;theme=light&amp;period=daily&amp;t=1787815611583"
+        alt="Diet Claude - Never get blindsided by Claude's usage limits again | Product Hunt"
+        width="250"
+        height="54"
+        fetchpriority="low"
+      />
+    </a>
+
+    <div id="root"></div>
+
+    <noscript>
+      <div style="max-width:34rem;margin:0 auto;padding:14vh 24px;font-family:system-ui,sans-serif;color:#faf9f6">
+        <h2 style="font-size:1.6rem;line-height:1.2;margin:0 0 0.6em">You weren't born to be rate-limited</h2>
+        <p style="line-height:1.6;margin:0 0 1em">
+          Diet Claude is a usage meter for Claude — a soda can that drains as you use your session and refills
+          when the limit resets. It is free on the Chrome Web Store.
+        </p>
+        <p style="line-height:1.6">
+          <a href="https://chromewebstore.google.com/detail/diet-claude/jngclbkljdepkgiomnmokmmmkeffjddg" style="color:#d97757">Get Diet Claude</a>
+          &nbsp;·&nbsp;
+          <a href="/privacy/" style="color:#d97757">Privacy policy</a>
+        </p>
+      </div>
+    </noscript>
+
+  </body>
+</html>
