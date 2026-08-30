@@ -1,0 +1,161 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<!-- 文章标题由平台侧根据 frontmatter 渲染，body 开头只放日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-30</p>
+
+![AI 实用工具汇总](./summary.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">今天的两个工具在回答同一个问题：Agent 越来越多地替你干活，谁来给它接系统，谁又盯着它改了什么。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 工具 1：AnythingMCP ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">AnythingMCP：自托管网关，把任何 API/数据库变成 Agent 连接器</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">给 Claude、ChatGPT、Cursor 接入你已有的系统，常见两条路：等官方出 MCP server，或者自己写一个。AnythingMCP 走第三条：一个自托管的 MCP 网关，把 REST、SOAP/WSDL、GraphQL、SQL/NoSQL 数据库甚至其他 MCP server 导入后直接暴露成连接器，一行 SDK 代码都不用写。导入方式覆盖 OpenAPI/Swagger、Postman、cURL、WSDL、GraphQL introspection，工具名、描述、参数都能在可视化编辑器里调整，决定 Agent 看到什么的是你。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">它不只是管道。网关会为每个 workspace 构建一张连接器数据关系的知识图谱，通过 MCP 回喂给 Agent，让它跨系统串联调用工具时知道谁跟谁关联；团队里工具的真实用法还会被提炼成可复用的 AI skills。这两块都可选，关掉之后它就是纯粹的转发网关。企业向的能力也没落下：OAuth2、RBAC 角色权限、完整审计日志，Caddy 自动配 HTTPS。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">自带 <strong style="color:#07c160;font-size:20px;">175+</strong> 预置适配器是它的特色：Deutsche Bahn、weclapp ERP、Etsy、Shopware、DHL 这类常见集成一键导入，填个凭证就能用。同一条连接器可以同时服务 Claude、ChatGPT、Gemini、Copilot 和 Cursor，搭一次处处可用。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 需要 Docker 24+、bash、openssl
+git clone https://github.com/HelpCode-ai/anythingmcp.git
+cd anythingmcp &amp;&amp; ./setup.sh
+# setup 完成后打开 http://localhost:3000，第一个注册的账号自动成为 admin
+
+# 或手动部署
+cp .env.example .env &amp;&amp; docker compose up -d</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">AnythingMCP（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>docker compose up</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>网关式无代码接入，175+ 预置适配器，RBAC/审计</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源 AGPL-3.0</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 180</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">mcpify</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx mcpify openapi spec.yaml</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>OpenAPI → MCP server 代码生成，带语义搜索、熔断器</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ —</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">aurl</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>一条命令</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>任意 OpenAPI → 随手可调的 CLI，不装 MCP 服务器</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ —</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">mcp-anything</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>pip install mcp-anything</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>LLM 按 brief 生成 server 代码包和 SKILL.md</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源 Apache-2.0</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 41</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">mcpify 和 mcp-anything 生成的是代码，改一次 spec 要重新生成、重新部署；AnythingMCP 是运行中的网关，连接器热插拔，RBAC 和审计面向团队协作场景，这是生成式方案普遍没有的。代价是 AGPL 协议：自托管无碍，拿去当云服务卖需要留意。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 180 · AGPL-3.0 · GitHub </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/HelpCode-ai/anythingmcp</span></code>
+  <span>&nbsp;·&nbsp;官网 </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>anythingmcp.com</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 工具 2：Flare ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Flare：依赖图当主界面的 agentic IDE，盯着 Agent 改代码</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">编码 Agent 在终端里跑的时候，你对它改动的了解基本只剩聊天记录和 git diff。Flare 把整个代码库画成一张活图：每个文件是一个节点，每条 import 是一条边。图下面嵌一个完整终端，跑 claude、codex 或 opencode。Agent 改文件的瞬间图上就变，谁改的标在谁头上。哪些文件被重写、这些文件又被谁 import，影响范围一眼可见。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">每一波改动都会快照进本地 shadow history，可以按文件或整棵树 diff、回滚。Agent 的写入波及到其他文件引用时，Flare 会把你拉进来确认。任务分发走 MCP：Agent 从看板领任务干活，人和图在旁边看着。桌面应用或浏览器模式都行，数据不出本机，无账号，MIT。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">测试方面作者下了功夫：<strong style="color:#07c160;">350+</strong> 单元测试、<strong style="color:#07c160;">73</strong> 个 Playwright 端到端测试，覆盖桌面和浏览器两种模式。8 月 2 日开源，22 日上 Product Hunt，目前 v1.1.0。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/AlgoNoRhythm/Flare
+cd Flare
+npm install
+npm run build
+npm start   # 或从 Releases 页下载预编译包</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Flare（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm start / 预编译包</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>依赖图即主界面，改动实时上图，shadow history 可回滚</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 免费</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 113</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Juggler</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>桌面应用</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>GUI 编码 Agent，会话是 CRDT 文档树</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ —</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">OpenCursor</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code 扩展</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Cursor 替代，本地语义搜索</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 6K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Graphify</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>一行命令</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>96K★ 代码知识图谱，喂给 Agent 当上下文</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 96K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Codistry</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>插件</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>给 Agent 装代码库结构地图，减少上下文探索</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ —</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Graphify、Codistry 把图谱塞进 Agent 的上下文，帮 Agent 少迷路；Flare 把图谱摆到人眼前，帮人监督 Agent。方向相反，不冲突。改动归属标记和整树级回滚，在同类 GUI 工具里还不多见。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 113 · MIT · GitHub </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/AlgoNoRhythm/Flare</span></code>
+  <span>&nbsp;·&nbsp;Product Hunt </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>www.producthunt.com/products/flare-11</span></code>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<!-- ============ 其他值得关注 ============ -->
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 16px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">Apache Maka（4,049★）</p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:1.9;">Apache 孵化的 local-first AI agent workspace，append-only 日志保证每一步可追溯，本周 GitHub Trending 第 5。</p>
+</section>
+
+<section style="margin:0 0 16px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">cc-wf-studio（2,300★）</p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:1.9;">Claude Code 可视化工作流编辑器，拖节点画自动化流程，导出 <code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">.claude/agents</code> 和 <code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">.claude/commands</code>，支持 MCP 与 Skills 节点。</p>
+</section>
+
+<section style="margin:0 0 16px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">LansCoder（PyPI，v1.2.1）</p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:1.9;">约 2.9 万行 Python 的本地编码 Agent，Textual TUI，Harbor Aider Polyglot 基准 96.38% pass@1，代码小到能从头通读。</p>
+</section>
+
+<section style="margin:0 0 16px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">session-indexer（08-24 上 Product Hunt）</p>
+  <p style="margin:0 0 2px 0;font-size:15px;color:#666;line-height:1.9;">对 Claude Code 会话历史做本地语义搜索，bge-m3 向量加 FTS5 兜底，随会话启动自动注入相关旧上下文。</p>
+</section>
+
+</section>

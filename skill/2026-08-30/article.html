@@ -1,0 +1,133 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<!-- 文章标题由平台侧根据 frontmatter 渲染，body 开头只放日期副标题 -->
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-30</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">你让 Claude Code「测一下注册流程通不通」。它调起 playwright-mcp，打开页面、点一下、抓一页 accessibility tree、再点一下、再抓一页——一个三分钟的表单测试还没做完，上下文已经被一页页快照吃掉了大半，回答开始变慢变贵。lackeyjb/playwright-skill 换了一条路：agent 直接把 Playwright 代码写出来，执行器跑完只回截图和 console 输出。3056 stars，MIT 协议，189 分的 HN 讨论帖，一条命令装完。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+![playwright-skill demo](./playwright-skill-demo.png)
+
+<p style="font-size:14px;color:#999;margin:0 0 24px 0;text-align:left;">（GitHub 仓库页面：通用 Playwright 自动化 skill，agent 按需加载，代码优先）</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">playwright-mcp 的设计面向逐步交互：每执行一个动作，就把当前页面的 accessibility tree 送回模型，让模型「看着」页面决定下一步。这套机制对探索式浏览合理，代价是上下文——微软官方仓库 issue #889 讨论的就是它吃 token 的问题。动作一多，窗口很快被历史快照塞满，模型开始退化。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">这个 skill 把交互模型倒过来。用户描述要测什么，agent 一次性写出完整的 Playwright 脚本，本地执行器跑完，回传三样东西：执行结果、截图、console 输出。中间过程不进上下文。作者在 HN 上给的对比很直白：314 行指令文件对抗一个常驻 MCP 服务器，完整 API 文档只在需要时才加载。HN 用户 yomismoaqui 的实际体验是：playwright-mcp 截全页截图失败，换这个 skill 让 Claude 写原生 JS，一次通过。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">另一个容易被忽略的收益：脚本是完整产物。MCP 的逐步操作用完即弃，skill 产出的是一段能存下来、能改、能重跑的 Playwright 代码。测试做完，脚本还在。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">机制分三层，全部落在本地：</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#000;">第一层，指令精简（progressive disclosure）。</strong>SKILL.md 只有几百行，写清「什么时候用、怎么组织代码、怎么跑」。完整的 Playwright API 参考放在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">API_REFERENCE.md</code> 里，覆盖选择器、网络拦截、认证、移动模拟、性能测试等专题，只有任务真正需要时才加载进上下文。常驻加载的只有操作手册，不是整套 API 文档。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#000;">第二层，通用执行器 run.js。</strong>agent 生成两种形态的代码：临时脚本（写进临时目录）和内联脚本（直接传给执行器）。run.js 负责一件事——稳定的模块解析。Playwright 装在技能目录的 node_modules 里，不管脚本在哪，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">require('playwright')</code> 都能解析到，避免「本地能跑、技能目录下报 Module not found」这类环境问题。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#000;">第三层，安全清理与辅助函数。</strong>临时文件用完即删，清理逻辑避开了脚本还在运行时被删的竞态；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">lib/helpers.js</code> 提供一批可选工具函数处理常见重复劳动。截图默认存系统临时目录，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">PW_ARTIFACT_DIR</code> 环境变量可以改到别处。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">默认配置值得注意：浏览器可见（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">headless: false</code>），你能亲眼看着自动化跑；慢动作 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">SLOW_MO</code> 默认 0ms，想观察细节再开。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">安装配置</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">推荐 Vercel 的 skills CLI，一条命令全局安装：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 全局安装（所有项目可用）
+npx skills add lackeyjb/playwright-skill --skill playwright-skill --global --yes
+
+# 装完后进入技能目录跑一次 setup（装 Playwright + Chromium）
+cd ~/.claude/skills/playwright-skill
+npm run setup</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">或走 Claude Code 插件市场（自动更新、团队分发）：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>/plugin marketplace add lackeyjb/playwright-skill
+/plugin install playwright-skill@playwright-skill
+cd ~/.claude/plugins/marketplaces/playwright-skill/skills/playwright-skill
+npm run setup</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">装完用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/help</code> 确认技能已加载，然后说一句「Test if google.com loads」验证。依赖只有 Node.js；Chromium 由 setup 脚本下载。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">使用指南</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">场景一：本地页面冒烟测试</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">触发条件：开发服务器跑着，改完一个页面想快速验证。直接说「测试首页」「检查联系表单能不能用」「验证注册流程」。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">操作：agent 会先探测本地 dev server（不需要你手动告诉它端口），然后写脚本、开浏览器、跑完回传截图和 console 输出。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">预期结果：适合每次提 PR 前花三十秒过一遍核心路径。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">场景二：多视口截图与响应式检查</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">触发条件：移动端适配是最容易漏的。说「截 dashboard 在手机和桌面两种尺寸下的截图」或「测不同 viewport 下的响应式布局」。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">操作：agent 写脚本遍历你指定的视口列表，产出一组截图对比。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">预期结果：比手动开 DevTools 切设备快得多，截图还能贴进 PR 描述。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222;margin:22px 0 12px 0;">场景三：生成可以进 CI 的 E2E 脚本</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">触发条件：这是 HN 用户 cadamsdotcom 给的用法，也是这个 skill 和 MCP 最本质的分野——让 agent 写出脚本后，把脚本存进代码库。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">操作：今天它在本地替你验证，明天它就是 CI 里的回归测试。一开始写个登录流程，之后每次让 agent 补一段新的用户路径，E2E 套件像滚雪球一样长大。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">预期结果：脚本是普通 Playwright 代码，CI 里照常跑，不依赖任何 agent 运行时。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#000;">网络拦截与调试。</strong>需要验证「接口挂了页面显示什么」时，让 agent 写 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">page.route</code> 拦截特定请求返回 mock 数据，或者延迟响应模拟慢网。API_REFERENCE.md 里有完整的网络拦截专题，agent 按需加载。调试卡住时开 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">SLOW_MO</code> 慢动作，或者让脚本在关键步骤截图留档。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#000;">固定产物目录。</strong>默认截图进系统临时目录，用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">PW_ARTIFACT_DIR=/path/to/artifacts</code> 把截图归到项目目录下，方便归档和对比多次运行结果。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">常见踩坑</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#000;">别在敏感数据上跑它：</strong>console 输出和页面内容会作为上下文发给模型厂商（作者在 HN 上明确提醒过：截图留在本地 /tmp，但 console 和页面内容会出去）。生产数据、真实用户账号都别用，dev 环境和假数据是它的主场。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#000;">长链路自动化别指望一次跑通：</strong>多位 HN 用户提到 LLM 写浏览器自动化时容易陷入「死亡螺旋」：定位元素失败、改脚本、再失败。简单表单、点击路径没问题，跨多个页面状态跳转的长流程（尤其是 OAuth 授权、日期选择器、跨域 iframe）会明显吃力。作者的定位也很清楚：它是本地「可脚本化的手动测试」工具，不是 CI 级或自主浏览 agent。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#000;">run.js 会执行 agent 生成的任意 Node 代码：</strong>HN 上 AftHurrahWinch 指出这一点：生成代码直接本地执行，是一个命令注入面。个人开发机上问题不大，但在共享环境或公司机器上跑之前想清楚。这也是它和 MCP 工具白名单模式的差别。</li>
+</ul>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">playwright-skill（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx skills add</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>code-first：写完整脚本执行，产物可留存</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>测试、截图、生成 E2E 脚本</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3.1K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">playwright-mcp</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx @playwright/mcp@latest</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>逐步操作 + a11y 快照回传</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>探索式浏览、逐页调试</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 微软官方</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">@playwright/cli</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm i -g @playwright/cli</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>CLI 命令式，token 高效</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>交互式浏览会话</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 微软官方</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">agent-browser</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm i -g agent-browser</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Rust 原生 CLI + 守护进程</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>多 agent 通用浏览器控制</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 41K</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">三个方案微软官方自己也有区分：CLI 适合交互浏览，MCP 适合需要持久状态和迭代推理的场景，skill 适合「自动化代码本身是有用产物」的场景。如果你的目标是要一段能存进仓库、能上 CI 的脚本，选 skill；如果是在页面上东点西点找线索，MCP 的逐步反馈仍然值得它的 token 开销。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 8.5 · MIT · GitHub </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/lackeyjb/playwright-skill</span></code>
+  <span>&nbsp;·&nbsp;HN 讨论 </span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>news.ycombinator.com/item?id=45642911</span></code>
+</p>
+
+<!-- 装饰性场景分隔线 -->
+<p style="text-align:center;margin:32px 0;color:#07c160;letter-spacing:8px;font-size:12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">给日常要在浏览器里验证东西的人：五到十分钟装完，之后「测一下这个页面」就从手动点点点变成一段可留存的脚本。收益在两头——干活时省上下文，干完留下测试资产。给偶尔用的人同样划算，npx 一条命令随时装。如果你已经在用 playwright-mcp，两个可以共存：探索用 MCP，出脚本用 skill，各取所长。</p>
+
+</section>
