@@ -1,0 +1,421 @@
+<section style="max-width:677px;margin:0 auto;padding:10px 0;font-size:16px;line-height:2.1;color:#333333;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;">
+
+  <p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-31</p>
+
+  <!-- 摘要提示卡：覆盖范围与核心主题拆为两段 -->
+  <section style="background-color:#f0f9eb;border-radius:10px;padding:18px 20px;margin:0 0 28px 0;border:1px solid #c8e6c9;">
+    <p style="margin:0 0 10px 0;font-size:15px;color:#2e7d32;line-height:2.0;">本期覆盖 2026-08-30 至 08-31 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Bluesky / Lobsters / arXiv / HF Papers / 知乎 / AI 实验室博客，精选 10 条按影响力排序。</p>
+    <p style="margin:0;font-size:15px;color:#2e7d32;line-height:2.0;"><strong style="color:#1b5e20;">核心主题：</strong><strong style="color:#07c160;">agent skills 生态主导 GitHub 热榜</strong>、<strong style="color:#07c160;">本地优先 Agent 框架密集上新</strong>、<strong style="color:#07c160;">AI 视频生成越过实时线</strong></p>
+  </section>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">1. archify（Agent 架构图 skill，单日 +3,722 星，连续四日破千）</strong></p>
+
+  <!-- 标签栏：只保留影响力评分，可操作性按要求删除 -->
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.5/10</span>
+    <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +3,722 stars/day（今日全站第 1），总星 34.9k，连续四天单日破千</span>
+  </section>
+
+  ![archify-demo-1](./archify-demo-1.png)
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">tt-a1i 团队做的 agent skill，让 Claude Code / Codex / Cursor 等编码 Agent 画"可验证"的架构图。普通 AI 画架构图的问题在于图是"凭印象"画的——组件、连线、数据流都可能和真实代码对不上。archify 的做法是先扫描仓库真实结构（入口、模块、调用链、数据流），再生成 mermaid 架构图，每一步都锚定在真实代码上，图中每个组件都能追溯到具体文件和行号。8 月 27 日首次进入本日报，8 月 28、29 日连续单日 4,000+ 星，今天仍以 <strong style="color:#07c160;">3,722 星</strong> 领跑全站。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 全局安装（Claude Code / Codex / Cursor / OpenCode / Raven 通用）
+npx -y archify-cli install
+
+# 之后在任意仓库里直接说：
+# "Use archify to map this repository's runtime architecture."</code></pre>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">架构图是代码评审和新人 on-boarding 的高频刚需，但手画耗时、AI 瞎画不可信。archify 把"可信"做成硬约束：图与代码双向可验证，图中每一条连线都能跳回源码。单日 <strong style="color:#07c160;">3,722 星</strong> 是本周 GitHub 全站最高日增，且连续四天破千，说明开发者每天都在用它。同类工具（如 GitDiagram、RepoCloud）没有代码级可验证性，只能出"示意图"。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">CSDN 每日 AI 资讯（8/30）盘点当日热榜时写道："昨天霸榜的插件目录沉下去，上来的是架构图、视频制作、互动课堂，清一色 agent skills"——archify 就是这批"架构图"方向的代表。</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">仓库讨论区的高频反馈集中在"图与代码可回溯"这点：评审时不用再打开 IDE 逐个文件对，直接按图点进去就是对应源码。</li>
+  </ul>
+
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/tt-a1i/archify</span></code>
+  </p>
+
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">2. GenOffice（Genspark 开源 AI 办公套件：docx/xlsx/pptx/PDF 字节级保真编辑）</strong></p>
+
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.2/10</span>
+    <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +1,200 stars/day（GitTrend AI Agent 榜第 2），总星 4.0k</span>
+  </section>
+
+  ![genoffice-demo-1](./genoffice-demo-1.jpg)
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Genspark 团队出的免费开源 AI 办公套件，对标 Microsoft Office，覆盖 macOS / Windows / Linux 三个平台。核心卖点是"字节级保真"：打开的 docx/xlsx/pptx 编辑后，未改动的部分原样写回，Word 打开完全察觉不到差异——这是 Office 替代品里最常翻车的环节。内置块级 AI 编辑（带快照和 diff）、文档感知型 agent，PDF 支持真实文本/图片编辑并保留原字体，还能本地转 PDF → docx/xlsx/pptx（扫描件走系统 OCR）。架构上六个 Electron 应用共享一个引擎层，Sheets 基于开源的 Univer 内核 + 自研 Rust xlsx sidecar。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 从 Releases 下载安装包：https://github.com/genspark-ai/genoffice/releases
+# Windows: genoffice-setup.exe  /  macOS: .dmg
+# Linux (Debian/Ubuntu):
+sudo apt install ./genoffice_&lt;version&gt;_amd64.deb
+# Linux (Fedora/RHEL):
+sudo dnf install ./genoffice-&lt;version&gt;.x86_64.rpm
+# 首次启动后可选 BYOK：接 Claude / OpenAI / Gemini / DeepSeek / Kimi / GLM / Qwen 等任意 key</code></pre>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">办公文档是 AI 最难啃的场景之一：格式保真是硬门槛，搞不定格式就没有企业敢用。LibreOffice 打开复杂 docx 排版错乱、OnlyOffice 不支持 AI 原生编辑。GenOffice 用"未改部分原样写回 + 块级快照 diff"解决保真问题，再用内置 agent 解决 AI 编辑问题，并且完全本地离线（文档不出本机）。开源 + Apache-2.0 + 三平台，单日 <strong style="color:#07c160;">1,200 星</strong> 的增速在工具类新仓库里罕见。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">GitTrend AI Agent 榜收录语："Free, open-source AI office suite for macOS, Windows &amp; Linux — Word (.docx), Excel (.xlsx), PowerPoint (.pptx), PDF and Markdown editing with built-in AI agents."</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">社区关注的争议点是 Electron 架构的包体积与内存占用；官方回应称文档编辑引擎完全本地，分析数据默认不含文档内容、文件名和路径，可在设置里关。</li>
+  </ul>
+
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/genspark-ai/genoffice</span></code>
+  </p>
+
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">3. waku-agent（本地优先的个人 AI Agent：SQLite 记忆 + 95 行 Agent Loop）</strong></p>
+
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.0/10</span>
+    <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +655 stars/day，总星 1.6k（新仓库一周破 1.5k）</span>
+  </section>
+
+  ![waku-demo-1](./waku-demo-1.png)
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Sean Chen 做的"你能读懂的 AI 助手"——一个 local-first 的 agent 代码库，定位是 ChatGPT/Claude Desktop 的反面：所有东西都在你笔记本上，代码一个下午能读完。四大支柱（harness / loop / memory / eval）全部用可读 Python 实现：Agent Loop 只有约 <strong style="color:#07c160;">95 行</strong> 纯 Python（无 LangGraph）；记忆存在本地 SQLite（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.waku/state.db</code>，含 FTS5 全文检索 + 自动生成人读镜像 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">MEMORY.md</code>）；每 N 轮对话触发 consolidation 把摘要固化成事实。最有意思的设计是"检索门控"：先让一个廉价模型判断这轮要不要查记忆，避免每轮都查库。Provider 支持 Anthropic、OpenAI、Gemini、DeepSeek、MiniMax、Kimi、GLM、OpenRouter，全部走同一个约 60 行的适配层。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>pip install waku-agent
+waku             # 终端对话
+waku dashboard   # localhost:7777 网页界面：Loop/记忆/工具调用全程可视化
+
+# 或克隆源码自己改（项目的本意就是拿来读、拿来改）：
+git clone https://github.com/ShenSeanChen/waku-agent &amp;&amp; cd waku-agent
+uv venv &amp;&amp; uv pip install -e . &amp;&amp; cp .env.example .env
+uv run waku</code></pre>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 框架正朝两个极端分化：一端是 LangGraph/CrewAI 式的生产级抽象（学习成本高、黑盒），另一端是"玩具 demo"（跑得起来但缺记忆和评测）。waku 站在中间：代码短到可读，但记忆（SQLite + 三种记忆类型）、评测（pytest 确定性测试 + DeepEval LLM-as-judge，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">make gate</code> 作为发布门槛）、追踪（OTel/Phoenix/Langfuse）、多通道（CLI/语音/Telegram/网页）全是生产级做法。1.6k 星的体量不大，但 <strong style="color:#07c160;">+655/day</strong> 的速度说明它踩中了"开发者想拥有并理解自己的 agent"这个真实需求。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">GitTrend 收录语："Waku Agent is a local-first AI agent harness you actually own, including loop, memory, eval, all in code built to stay legible as it grows."</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">仓库 README 直言目标读者是"想在下午读完整个 agent 代码的人"，社区对其"fail open"设计（图工作流任何失败都回退到普通 loop）评价为克制而务实。</li>
+  </ul>
+
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/ShenSeanChen/waku-agent</span></code>
+  </p>
+
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">4. LongHorizon-Harness（长时程 computer-use harness：WeaveBench 51.8 → 80.7）</strong></p>
+
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.9/10</span>
+    <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +565 stars/day，总星 1.4k，配套论文 arXiv:2608.01964</span>
+  </section>
+
+  ![lh-harness-demo-2](./lh-harness-demo-2.png)
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AMAP-ML 出的长时程计算机使用 harness，解决的是"让 agent 在桌面应用 + 终端上连续工作几十小时"的工程难题。核心是 Loop Engineering：Manager / Executor / Auditor 三角色分工。Manager 每轮从原始目标 + 已验证进度重建状态，Executor 拿全新上下文执行一个有界步骤，Auditor 独立检查真实文件、UI、日志、测试，不信任 Executor 的自述。只有通过独立验证的结果才成为可信任务状态；上下文刷新、动作失败、交付物不合格时，从最后检查点恢复。原生集成 Claude Code / Codex / OpenCode，GUI 任务可选装 computer-use 插件。论文报告三组基准均大幅提升。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>uv tool install lh-harness          # 或 pip install lh-harness
+lh-harness plugin install open-computer-use   # 仅 GUI 任务需要
+cd /path/to/project &amp;&amp; lh-harness init       # 生成 ./.lh-harness/config.toml
+lh-harness web --workspace-root .            # 浏览器工作台
+# 或 CLI 直接跑：
+lh-harness run --task "把仓库里所有 TODO 注释分类整理成 issue" --agent claude_code
+lh-harness doctor                   # 只读环境自检</code></pre>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">长任务 agent 的死因是上下文膨胀、状态丢失、动作漂移。市面上的 computer-use 方案（OpenInterpreter、Clawdbot 生态）大多没有"独立审计 + 检查点恢复"这套机制。harness 的数据说话：WeaveBench 114 任务 PassRate <strong style="color:#07c160;">51.8 → 80.7</strong>（+28.9 分），OSWorld 2.0 从 2.8 涨到 8.3（3 倍），Terminal-Bench 2.1 成功率 69.7 → 77.2 且省 24% tokens。跑的还是同一个 Claude Code + Qwen 3.7-Plus，说明增益完全来自 loop 工程本身。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">论文（arXiv:2608.01964）把三个角色的实现边界写得很清楚，社区的关注点集中在 Auditor 的独立性——它拒绝 Executor 自述、只信文件/UI/日志/测试，被 HN 用户类比为"给 agent 配了个 code review 同事"。</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">仓库 Dashboard 支持任务中途人工审批和发指令，结束后还能追问（沿用已有轮次账本不重新规划），这套交互设计在同类 harness 里少见。</li>
+  </ul>
+
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/AMAP-ML/LongHorizon-Harness</span></code>
+  </p>
+
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">5. MiniMax H3 Max（fal 后训练加速版：5 秒视频 3 秒生成，AI 视频越过实时线）</strong></p>
+
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.7/10</span>
+    <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">X 上 levelsio 推文 2.1M views（8/29），多帖合计 3.7 万+ 互动，Digg 等媒体报道</span>
+  </section>
+
+  ![h3max-demo-1](./h3max-demo-1.jpg)
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">fal Research 对 MiniMax H3 做后训练 + 推理栈协同优化得到的加速版视频模型。生成 5 秒视频不到 3 秒——比播放速度还快，是官方 H3 端点吞吐的约 <strong style="color:#07c160;">35 倍</strong>，比同质量模型平均快 15 倍。fal 自己的人评评测里 H3 Max 在综合质量、prompt 理解、美学三项排第一；独立评测 Artificial Analysis 和 Design Arena 也把它列为视频模型第一（Design Arena 原话："以 50 倍以上的速度维持 H3 的质量，建立了新的速度-偏好帕累托前沿"）。8 月 29 日开发者 Rehan Sheikh 把它接到 Twitch，聊天区随机 prompt 驱动无限直播，直接引爆讨论。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># API 调用（fal.ai，首周 5 折）：
+curl -X POST https://queue.fal.run/fal-ai/minimax/h3-max/text-to-video \
+  -H "Authorization: Key $FAL_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "a cat surfing on a neon wave, cinematic"}'
+
+# 或在 Playground 直接试：https://fal.ai/models/minimax/h3-max/text-to-video
+# Python: import fal_client; fal_client.subscribe("fal-ai/minimax/h3-max/text-to-video", arguments={"prompt": "..."})</code></pre>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">生成速度超过播放速度，意味着视频生成从"离线渲染"变成"实时广播"——无限直播、按观众弹幕实时生成剧情、游戏 CG 实时生成都成为可能。作为对比：同代高质量视频模型（Seedance 2.5、Kling 3）生成 15 秒要 2-5 分钟，H3 Max 是 <strong style="color:#07c160;">9 秒</strong>。这是 2026 年视频模型速度-质量帕累托曲线上第一次实质位移，而且 API 立即可用（首周 50% 折扣）。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">levelsio（8/29，2.1M views）："Today is a very historical moment for AI video generation. You can now generate AI video faster than you can watch it."</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">Sriram Krishnan 转发时评论："this is bad ass."；另一位网友："spent far too much time last night watching this actual interdimensional cable unfold (see rick and morty)."</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">Digg 报道称社区把它称为"无限次元有线电视"（infinite interdimensional cable），即 Rick and Morty 里的梗。</li>
+  </ul>
+
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://blog.fal.ai/introducing-h3-max-by-fal</span></code>
+  </p>
+
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">6. ai-engineering-from-scratch（523 课 342 小时的 AI 工程手册，单日 +703 星）</strong></p>
+
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+    <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +703 stars/day，总星 51.3k</span>
+  </section>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">rohitg00 维护的免费 AI 工程学习课程库（MIT），定位是"参考手册"而非视频课：20 个阶段、<strong style="color:#07c160;">523 节课</strong>、约 342 小时学习量，从数学基础一路到 LLM from Scratch、Agent Engineering、Multi-Agent Swarms，Python / TypeScript / Rust / Julia 四语言并行。每节课结构统一：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">code/</code>（可运行实现）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">docs/en.md</code>（讲解）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">outputs/</code>（产出物），教学节奏是 MOTTO → PROBLEM → CONCEPT → BUILD IT → USE IT → SHIP IT。先手写原始实现，再用生产级库做一遍，最后产出一个可复用构件。还有 17 节课的 MCP 专项路径和 5 节课的 Agent Skills 路径，内容已编译为 6 卷 EPUB/PDF 随每次 release 更新。仓库自己披露：截至 8/29 有 <strong style="color:#07c160;">114,584 名读者</strong>，近 30 天 181,995 次页面浏览。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 在编码 agent 里装课程导师（Claude Code / Codex 等宿主通用）：
+npx skills add rohitg00/ai-engineering-from-scratch
+# 之后说 "start-learning" 开始，或 "learn MCP" 直接进 MCP 专项
+
+# 或直接克隆自学：
+git clone https://github.com/rohitg00/ai-engineering-from-scratch
+# 网站版：https://aiengineeringfromscratch.com</code></pre>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">市面上的 AI 课程要么是零散的"5 分钟速成"视频，要么是抄一遍 API 文档的教程，少有像这份一样把"手写实现 → 生产库 → 可复用产物"串成完整链条的。<strong style="color:#07c160;">51.3k 星</strong>、523 课的体量在同类免费资源里是断层第一；课程强调实践证据留存（记录命令、退出码、产出物），并有配套 Claude 认证学院（覆盖 4 个官方认证方向），对备考和转岗都直接有用。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">仓库自我定位："No five-minute videos, no copy-paste deploys, no hand-holding"——社区讨论里最常见的评价是"这是少数真正要求你先懂原理再上 PyTorch 的课程"。</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">项目当前有 80 个 open PR，贡献活跃度在同量级学习库里罕见；MCP 相关课程强调 stateless 协议设计，与 7 月底 MCP 规范大改版（stateless core）同步更新。</li>
+  </ul>
+
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/rohitg00/ai-engineering-from-scratch</span></code>
+  </p>
+
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">7. cursor/plugins（Cursor 官方插件市场开源：60 个插件 + 完整插件规范）</strong></p>
+
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.2/10</span>
+    <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +246 stars/day，总星 6.3k，Cursor 官方维护</span>
+  </section>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Cursor 官方开源了插件规范与官方插件集合。规范定义清晰：一个插件就是仓库里的一个目录，带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.cursor-plugin/plugin.json</code> 清单，可包含 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">skills/</code>（带 frontmatter 的 SKILL.md）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">rules/</code>（.mdc 规则文件）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mcp.json</code>（MCP 服务器定义）。仓库里现有约 60 个插件：Cursor 自研的开发工具类（teaching、continual-learning、thermos 深度安全审查、pr-review-canvas、orchestrate 云端并行 agent 编排、cursor-sdk 等），以及约 50 个第三方集成（Gmail、Salesforce、HubSpot、Xero、GitHub、Playwright、Notion 系等）。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 插件已内置在 Cursor 插件市场（设置 → Plugins），或手动安装：
+git clone https://github.com/cursor/plugins
+# 参照 create-plugin 脚手架自己写插件并校验：
+npx @cursor/create-plugin my-plugin
+# 插件目录结构：
+# my-plugin/
+#   .cursor-plugin/plugin.json   # 清单
+#   skills/       # SKILL.md 技能
+#   rules/        # .mdc 规则
+#   mcp.json      # MCP server</code></pre>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Claude Code 有 skills、Codex 有 plugins，Cursor 过去在扩展性上是封闭的。官方插件规范一开源，Cursor 生态里的"技能资产"就能和 skills 生态互通（SKILL.md 格式兼容），第三方 SaaS 也开始以插件形式进入 Cursor。对开发者最直接的收益：thermos（安全/正确性深度审查）、pr-review-canvas、orchestrate 这些官方工程插件现在能看到源码、能改、能照着写自己的。<strong style="color:#07c160;">246 stars/day</strong> 对一个 6k 星的官方仓库来说，说明规范本身正在成为生态标准。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">插件规范与 Claude Code 的 skills 格式（SKILL.md + frontmatter）对齐，社区讨论集中在"一套技能文件三端复用"（Claude Code / Codex / Cursor）的可能性。</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">官方在清单里标注联系邮箱 plugins@cursor.com 接受插件上架，第三方插件已有 Gmail、Salesforce、Playwright 等 50 个，上架节奏明显加快。</li>
+  </ul>
+
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/cursor/plugins</span></code>
+  </p>
+
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">8. GitNexus（零服务器代码知识图谱：46.6k 星，17 个 MCP 工具）</strong></p>
+
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+    <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +182 stars/day，总星 46.6k</span>
+  </section>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Akon Labs 出的"零服务器"代码智能引擎：把任意代码库离线索引成知识图谱，再挂一个 Graph RAG agent 做代码探索。索引期就预先完成聚类、调用链追踪与置信度评分，让 agent 一次调用拿到完整上下文，避免传统 Graph RAG 反复查询。技术栈：Tree-sitter 做 AST 解析（支持约 14 种语言）、嵌入式图数据库 LadybugDB、transformers.js 本地生成嵌入、BM25 + 语义 + RRF 混合检索。提供 <strong style="color:#07c160;">17 个 MCP 工具</strong>，包括 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">impact</code>（爆炸半径分析）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">trace</code>（调用链追踪）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">rename</code>（多文件重命名）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">cypher</code>（原始图查询）。CLI 全部本地运行、无网络调用，索引存 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.gitnexus/</code>。README 的自述只有一句："Like DeepWiki, but deeper."</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>npm install -g gitnexus        # 建议用 pnpm 安装（npm 11 有已知崩溃问题）
+gitnexus analyze               # 索引当前仓库
+gitnexus setup                 # 一键接入 Claude Code / Cursor / Codex / Windsurf
+# 然后在编辑器里问："这个函数改了会影响哪些调用方？" → agent 会调用 impact 工具
+
+# 浏览器端图谱 + AI 对话：
+# https://gitnexus.vercel.app （或 docker compose up -d 自托管）</code></pre>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">"改一行代码会不会炸"是大仓开发的高频恐惧，传统做法是 grep 调用链（慢、漏、断）。GitNexus 把结构智能在索引期预计算好，agent 一次 MCP 调用就拿到爆炸半径；<strong style="color:#07c160;">46.6k 星</strong>和 1,877 次提交说明它已过了概念验证期。相比 DeepWiki 之类的只读文档生成，它提供的是可查询、可追溯的活图谱，且完全本地——代码不出本机这点在企业场景是硬需求。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">README 那句 "Like DeepWiki, but deeper" 在社区被广泛引用，讨论焦点是本地嵌入式图数据库（LadybugDB）替代 Neo4j 的取舍：牺牲集群能力换零部署成本。</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">impact</code> 工具在 Cursor/Claude Code 用户里的口碑是"改前必查"，尤其多语言 monorepo。</li>
+  </ul>
+
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/abhigyanpatwari/GitNexus</span></code>
+  </p>
+
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">9. Code as Worlds（把物理世界表征为可执行代码，HF 当日最高 202 upvotes）</strong></p>
+
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.6/10</span>
+    <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Hugging Face Papers 当日第 1（202 upvotes），代码 + 技术报告 8/27 公开</span>
+  </section>
+
+  ![codeasworld-demo-1](./codeasworld-demo-1.png)
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">MirroS Lab 提出的物理推理新范式：用"代码"作为物理世界的可执行表征，再通过 agentic 流程在"模拟 → 验证"的迭代中自动发现这些表征。代码把实体、状态、事件、关系抽象成显式结构，用 MuJoCo 执行，把原始视觉观察转化为可复用的物理数据（显式状态、动力学、机制）。三个关键性质：抽象（剥离像素细节，保留任务相关结构）、可组合（对象/环境/约束/相机可拆解重组）、可执行（表征必须能跑、能被物理证据检验）。配套视觉管线用了 SAM 3、VGGT-Omega、Wan、VACE，评测用 QuantiPhy。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/MirroS-Lab/Code-as-World
+pip install -r requirements/requirements.txt
+# 跑弹道足球示例（世界表征发现 + 物理推理）：
+python examples/ballistic_soccer/run.py
+# 技术报告：https://mirros-lab.github.io/code-as-world （PDF 见仓库 code-as-world.pdf）</code></pre>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">世界模型的主流路线（像素重建、latent 预测）有两个老问题：不可组合、不可精确编辑。Code-as-World 用"代码即世界"绕开它们——表征可读、可改、可执行，还能自动发现。论文报告在定量物理推理上达到 SOTA，且公开了代码和完整技术报告。这类"代码-世界"路线（VCode、VIGA、Code World Model）正在汇聚成 2026 年世界模型的一个新方向，这篇是目前把"agentic 发现"的迭代验证做完整的代表作。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">HF Papers 当日 <strong style="color:#07c160;">202 upvotes</strong> 居首，评论区关注"执行验证作为物理监督信号"的规模化潜力——理论上可以从任意视频里无限提取物理监督数据。</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">MirroS 官方 X 推文："Code-as-World reconstructs visual observations as executable code that describes a world's composition, dynamics, and appearance."</li>
+  </ul>
+
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/MirroS-Lab/Code-as-World</span></code>
+  </p>
+
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">10. 混元 Hy4 MIX-STQ1_0（1.5TB 压到 ~200GiB GGUF：逐层混合位宽量化）</strong></p>
+
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.4/10</span>
+    <span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">腾讯混元官方 X 推文（8/30），Hy4 本体发布 48 小时内已获 SWE-bench Pro 开源第一</span>
+  </section>
+
+  ![hy4-demo-1](./hy4-demo-1.png)
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">腾讯混元官方 8 月 30 日发布 Hy4-preview 的 GGUF 量化版 MIX-STQ1_0：把 1.5TB 的原始权重压到约 <strong style="color:#07c160;">200GiB</strong>，且官方称"still works well"。技术要点不在压得狠，而在"逐层决定位宽"——用校准数据为每层选择位宽，部分层低至 1.31-bit 的 STQ1_0，部分层给到 2.06-bit 的 IQ2_XXS，同等预算下比均匀量化损失更小。Hy4 本体是 8 月 28 日发布的开源旗舰：总参数 770B、激活 49B、1M 上下文，发布当天即登 SWE-bench Pro 开源模型榜首。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用</p>
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 下载量化权重（约 200GiB，需大磁盘）：
+huggingface-cli download tencent/Hy4-preview-GGUF --include "*MIX-STQ1_0*"
+# llama.cpp 加载（Hy4 为 MoE 架构，需最新版 llama.cpp）：
+./llama-cli -m Hy4-preview-MIX-STQ1_0.gguf -c 65536 -ngl 99
+# API 直接调（无需本地跑）：
+# https://hy.tencent.ai  |  OpenAI 兼容端点，支持 Cline: npm i -g cline → /model → Hy4 preview</code></pre>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">770B 模型本地跑在一年前是不可想象的：按 FP8 存权重都要 ~800GB 显存。200GiB 量化版让"旗舰级模型落在 4×A100/H100 或大内存工作站"第一次有了现实可能，1.31-bit 的逐层混合位宽量化（STQ1_0）本身就是量化技术的一次公开实战。对国内开发者还有一层意义：Hy4 是国产开源模型里首个在 SWE-bench Pro 上压过 GPT-5.5 级的选手，量化版意味着私有化部署门槛大幅下降。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">腾讯混元官方 X："We compressed Hy4-preview from 1.5TB to ~200GiB GGUF and it still works well! The trick isn't just going low, it's deciding where."</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">Cline 官方跟进发布接入指引（"Tencent Hy4 Preview leads on SWE-bench Pro"），社区实测 2.06-bit IQ2_XXS 层的数学/代码能力保持是讨论焦点。</li>
+  </ul>
+
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Tencent-Hunyuan/Hy4</span></code>
+  </p>
+
+  <!-- 区块切换：装饰性分隔线（唯一允许居中的元素） -->
+  <p style="text-align:center;margin:32px 0;color:#07c160;letter-spacing:8px;font-size:12px;">··· ◆ ···</p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">其他值得关注</strong></p>
+
+  <section style="margin:0 0 14px 0;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;"><strong style="font-weight:bold;">screenshot-to-code</strong><span style="font-size:13px;color:#999;font-weight:normal;">（GitHub +326 stars/day，总星 75.8k）</span></p>
+    <p style="margin:0;font-size:15px;color:#666;line-height:2.0;">截图转 HTML/Tailwind/React/Vue 代码的老牌工具热度回潮，无重大版本更新，属常态波动。</p>
+  </section>
+
+  <section style="margin:0 0 14px 0;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;"><strong style="font-weight:bold;">crawl4ai</strong><span style="font-size:13px;color:#999;font-weight:normal;">（GitHub +221 stars/day，总星 80.3k）</span></p>
+    <p style="margin:0;font-size:15px;color:#666;line-height:2.0;">开源 LLM 友好网页爬虫，持续热榜常客，8/30 无新版本发布。</p>
+  </section>
+
+  <section style="margin:0 0 14px 0;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;"><strong style="font-weight:bold;">last30days-skill</strong><span style="font-size:13px;color:#999;font-weight:normal;">（GitHub +230 stars/day，总星 60.5k）</span></p>
+    <p style="margin:0;font-size:15px;color:#666;line-height:2.0;">给 agent 装"研究任意主题近 30 天动态"的 skill，与 8/30 热榜"清一色 agent skills"的主题同频。</p>
+  </section>
+
+  <section style="margin:0 0 14px 0;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;"><strong style="font-weight:bold;">livekit/agents</strong><span style="font-size:13px;color:#999;font-weight:normal;">（GitHub +132 stars/day，总星 13.8k）</span></p>
+    <p style="margin:0;font-size:15px;color:#666;line-height:2.0;">实时语音 AI agent 框架，8/30 有维护性更新。</p>
+  </section>
+
+  <section style="margin:0 0 14px 0;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;"><strong style="font-weight:bold;">Midjourney V8.2 图像编辑模型开放测试</strong><span style="font-size:13px;color:#999;font-weight:normal;">（8/30）</span></p>
+    <p style="margin:0;font-size:15px;color:#666;line-height:2.0;">支持指令编辑与四图参考，优设等中文设计渠道当日报道，官方未发独立公告。</p>
+  </section>
+
+  <section style="margin:0 0 14px 0;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;"><strong style="font-weight:bold;">OpenAI Codex 持久模式测试</strong><span style="font-size:13px;color:#999;font-weight:normal;">（8/30）</span></p>
+    <p style="margin:0;font-size:15px;color:#666;line-height:2.0;">跨会话持续执行、主动追加任务，目前仅灰度测试，未开放 API。</p>
+  </section>
+
+  <section style="margin:0 0 14px 0;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;"><strong style="font-weight:bold;">patent-disclosure-skill</strong><span style="font-size:13px;color:#999;font-weight:normal;">（GitHub +62 stars/day，总星 5.7k）</span></p>
+    <p style="margin:0;font-size:15px;color:#666;line-height:2.0;">中文专利交底书编写的 agent skill，对国内开发者实用但热度刚过线。</p>
+  </section>
+
+  <!-- 关键词底栏：中性灰卡片 -->
+  <section style="background-color:#f5f7fa;border-radius:8px;padding:16px 18px;margin:24px 0 0 0;">
+    <p style="margin:0 0 10px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;"><strong style="font-weight:bold;">本期关键词</strong></p>
+    <p style="margin:0;font-size:15px;color:#555;text-align:left;">agent skills 霸榜 · 本地优先 Agent · AI 视频实时生成 · 量化本地化旗舰 · 可执行世界模型</p>
+  </section>
+
+</section>

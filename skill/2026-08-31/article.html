@@ -1,0 +1,123 @@
+<section style="max-width:677px;margin:0 auto;padding:10px 0;font-size:16px;line-height:2.1;color:#333333;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;">
+
+  <p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-08-31</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你在 GitHub 上看到一个 800 star 的 Claude Code skill，README 写得漂亮，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx skills add</code> 一条命令就装上了。装进去的可不只是几段指令——脚本会不会悄悄读 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.ssh</code>，触发描述里有没有藏 prompt 注入，没人审过，agent 以隐含信任执行它。NVIDIA 的研究数据是：<strong style="color:#07c160;">26.1% 的技能包含漏洞</strong>，5.2% 存在明显的恶意意图。SkillSpector 就是给这个信任缺口兜底的：一个扫描器，装之前先回答"这个 skill 安不安全"。<strong style="color:#07c160;">15,196 stars</strong>，Apache 2.0，昨天还在更新。</p>
+
+  ![skillspector-demo](./skillspector-demo.png)
+
+  <p style="font-size:14px;color:#999;margin:0 0 1.4em 0;text-align:left;">（GitHub 仓库页面：NVIDIA SkillSpector，Agent Skill 安全扫描器）</p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">它解决什么问题</strong></p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Skill 生态跑了一年多，装第三方技能成了日常操作，但审查机制基本为零。npm 有 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npm audit</code>，pip 有 safety，skill 什么都没有——从网上下来的 SKILL.md 直接进 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.claude/skills/</code>，里面的 shell 脚本、MCP 配置、触发器描述全都以 agent 的权限运行。一个恶意 skill 能做的事：在触发描述里埋 prompt 注入让 agent 执行额外指令、脚本里藏数据外泄（读 SSH 密钥、读环境变量发到外网）、MCP server 配置申请超出需要的权限。</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">人工审查也不现实。一份 SKILL.md 加脚本加参考文件，几百行，还要判断"描述和实际行为是否一致"——这是语义层面的检查，逐行看代码只能发现明显问题。SkillSpector 把这件事变成一条命令。</p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">核心原理</strong></p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">扫描引擎是一个 LangGraph 工作流：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">resolve_input</code> 解析输入（Git URL、zip、目录、单文件都行），并行跑一组静态分析器，可选再过一个 LLM 语义分析层，最后产出 SARIF 报告加 0-100 风险分。</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">静态层是确定性的，<strong style="color:#07c160;">71 个漏洞模式</strong>分 17 个类别：prompt 注入、数据外泄、提权、供应链投毒、过度授权、输出处理、系统提示词泄漏、记忆投毒、工具滥用、rogue agent、反拒绝指令、触发器滥用、危险代码（AST 级）、污点追踪、YARA 签名、MCP 最小权限、MCP 工具投毒。它还会用 SC4 实时查 OSV.dev 拿 CVE 数据，网络断了自动降级到离线模式。</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">语义层只在配置了 LLM provider 时启用。它干的是静态规则够不着的那件事：对比 skill 声称做什么和代码实际做什么。描述写"帮你格式化 Markdown"，脚本里却 curl 了一个陌生域名——这类描述与行为不一致，只有语义分析能看出来。</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">报告有四种输出格式：终端交互式、JSON（自动化）、Markdown（review 包）、SARIF（CI 门禁）。0-100 风险分带严重级别标签和处置建议。误报可以通过 glob 规则或指纹 baseline 接受，重扫时只报新问题。</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它同时是 NVIDIA Verified Skills 流水线的安全层：官方技能发布前都要过这一关（SkillEvaluator 的 Tier 1），过了才进 NVIDIA skills 目录。</p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">安装配置</strong></p>
+
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 一键安装（CLI 版）
+uv tool install git+https://github.com/NVIDIA/skillspector.git
+
+# 需要 MCP 模式就装带 mcp extra 的版本
+uv tool install 'skillspector[mcp] @ git+https://github.com/NVIDIA/skillspector.git'</code></pre>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">不想装 Python 就用 Docker：</p>
+
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>make docker-build
+docker run --rm -v "$PWD:/scan" skillspector scan ./my-skill/ --no-llm</code></pre>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">启用 LLM 语义分析（可选）：</p>
+
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>export SKILLSPECTOR_PROVIDER=anthropic
+export ANTHROPIC_API_KEY=sk-ant-...
+skillspector scan ./my-skill/</code></pre>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">使用指南</strong></p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景一：装新 skill 前的例行检查</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：GitHub 上看到一个想装的 skill。先扫再装：</p>
+
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>skillspector scan https://github.com/someone/cool-skill</code></pre>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：终端输出风险分和逐条 findings。critical/high 的坚决不装；低分项里如果只有"过度授权"这类可以接受的问题，装上但留意权限。装之前心里有数，装完之后 agent 也有数。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景二：CI 里做 skill 供应链门禁</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：团队仓库里有共享的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.claude/skills/</code> 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.agents/skills/</code>，成员往里提 PR。在 CI 里加一步：</p>
+
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>- name: Scan agent skills
+  run: skillspector scan .agents/skills/ --format sarif --output skillscan.sarif</code></pre>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">配合 SARIF 上报到 GitHub Code Scanning，新 PR 引入的 skill 自动扫，发现 critical 直接 block。预期结果：恶意或带洞的 skill 进不了团队仓库，历史扫描记录留在 Code Scanning 面板里可追溯。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景三：MCP 模式，让 agent 自己把关</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：你常让 agent 自己找 skill 装。把 SkillSpector 注册成 MCP server：</p>
+
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>claude mcp add skillspector -- skillspector mcp</code></pre>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">之后 agent 每次装 skill 前可以调用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">scan_skill</code> 工具，返回 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">risk_score</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">severity</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">safe_to_install</code> 和 findings。预期结果：安装决策从"看到就装"变成"扫描结果说了算"，agent 还能判断静态扫描的低分报告不等于干净（报告里有 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">llm_used</code> 字段标注是不是完整扫描）。</p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">进阶技巧</strong></p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">把 SkillSpector 和 NVIDIA 官方技能目录串起来用：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx skills add nvidia/skills</code> 装的是已经过了 SkillSpector 扫描的官方技能。自己写 skill 准备发布时，也可以用同一套扫描反向检查——发布前扫一遍自己的技能，等于免费蹭了一次 NVIDIA 的发布审查标准。</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">误报多了别关掉扫描，用 baseline 压掉：把确认无害的 finding 按指纹记录进 baseline 文件，之后重扫只报增量。扫描器保持全开，噪音归零。</p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">常见踩坑</strong></p>
+
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">静态扫描不完整：</strong>不加 LLM provider 时只跑静态规则，低分不代表安全。看报告的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">scan_mode</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">llm_used</code> 字段确认这次是不是完整扫描。</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">安装路径注意大小写：</strong>pip/uv 安装的包名是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">skillspector</code>（全小写），GitHub 仓库名是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">SkillSpector</code>，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">uv tool install git+https://github.com/NVIDIA/skillspector.git</code> 里的仓库路径小写，别写错。</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">MCP extra 装错版本：</strong>只装了 CLI 版后来想用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">skillspector mcp</code>，得重装带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">[mcp]</code> extra 的版本：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">uv tool install --force 'skillspector[mcp] @ git+https://github.com/NVIDIA/skillspector.git'</code>。</li>
+  </ul>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">同类技能对比</strong></p>
+
+  <section style="margin:20px 0;">
+    <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">SkillSpector (推荐)</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">uv tool install git+https://github.com/NVIDIA/skillspector.git</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>71 模式静态 + LLM 语义双引擎，MCP 门禁模式，SARIF/CI 集成</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>装 skill 前把关、CI 供应链门禁、agent 自动审查</p>
+      <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 15.2k</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">asm（agent-skill-manager）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm CLI（见仓库 README）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>技能盘点与安装管理，内置安全审计和 eval 评分</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>管一堆已装技能的版本、重复、安全基线</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 686</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">vbsec</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>skill 文件（git clone）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>AI 写出的代码做推理优先的安全审计，L1-L4 数据流追踪</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>审 agent 写的业务代码，不是审 skill</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 246</p>
+    </section>
+  </section>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">asm 解决"装完之后怎么管"，SkillSpector 解决"装之前怎么查"，两个工具在安全上互补：SkillSpector 拦进货，asm 管库存。vbsec 审的是 AI 写的代码，SkillSpector 审的是人写（或 AI 写）的 skill 本身，对象不同。30 天内推过两个安全领域的技能（vbsec、KubeShark），但都在"审代码/配置"这条线上；SkillSpector 审的是技能供应链，热度是前者的 61 倍，算同领域的重磅新秀。</p>
+
+  <p style="font-size:14px;color:#999;margin:0 0 14px 0;text-align:left;letter-spacing:0.3px;">⭐ 15.2k · Apache 2.0 · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/NVIDIA/SkillSpector</span></code> <span>&nbsp;·&nbsp;</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>docs.nvidia.com/skills/scanning-agent-skills</span></code></p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">今日小结</strong></p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">适合所有往 agent 里装第三方 skill 的人。配置时间五分钟，之后每次装 skill 前多一条命令，换来的是：恶意技能进不了你的机器、团队 CI 里自动拦带洞的 PR、agent 自己装技能时有一个说"不"的机制。对技能信任成本的压制，是这套东西最值钱的地方。</p>
+
+</section>
