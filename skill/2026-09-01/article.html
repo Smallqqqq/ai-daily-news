@@ -1,0 +1,180 @@
+<section style="max-width:677px;margin:0 auto;padding:10px 0;font-size:16px;line-height:2.1;color:#333333;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;">
+
+  <p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-01</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你的 Claude Code 现在挂着 5 个 MCP server：GitHub、数据库、文件系统、浏览器、公司内部 API。每个 server 十几二十个工具，加在一起 <strong style="color:#07c160;">80 多个工具</strong>定义在对话开始前就全部塞进上下文窗口。结果很反直觉：能力加得越多，Agent 选错工具的概率越高、响应越慢、token 账单越贵。skillful-mcp 干的事就是把这一大坨工具折叠成 4 张卡片，Agent 只在需要时展开具体的一张。<strong style="color:#07c160;">62 stars</strong>，MIT，Google Cloud Code 团队工程师 Kurtis Van Gent 出品。</p>
+
+  ![skillful-mcp-demo](./skillful-mcp-demo.png)
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">它解决什么问题</strong></p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">问题有个专门的名字：tool bloat（工具膨胀）。Van Gent 在博客文章《Skills and MCP》里写过测算：连接 5 个 MCP server 的 Agent，开场就有 <strong style="color:#07c160;">80+ 个工具</strong>的 JSON Schema 躺在上下文里，一个词都还没说，几千 token 已经烧掉。上下文里噪音越多，模型选工具越容易错，延迟越高。而且这会反过来惩罚你装新工具：每加一个 server，全局准确率都在掉。</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">现有的思路大多在「裁」上做文章：少装几个 server、用白名单砍工具。skillful-mcp 换了个方向：不裁，折叠。所有工具保留，只是不再全部常驻上下文，改成渐进式披露（progressive disclosure），和 Agent Skills 的按需加载一个道理，区别是它作用在 MCP 层。</p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">核心原理</strong></p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">skillful-mcp 本身是一个 Go 写的 MCP server，坐落在 Agent 和你的其他 MCP server 之间，扮演代理：</p>
+
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>Agent  &lt;--MCP--&gt;  skillful-mcp  &lt;--MCP--&gt;  Database Server
+                                &lt;--MCP--&gt;  Filesystem Server
+                                &lt;--MCP--&gt;  API Server</code></pre>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它读一份标准 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mcp.json</code> 配置，连接每个下游 server，然后对外只暴露 4 个工具：</p>
+
+  <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #e8e8e8;">
+    <thead>
+      <tr>
+        <th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">工具</th>
+        <th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">作用</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background-color:#fafafa;">
+        <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">list_skills</code></td>
+        <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">列出所有配置好的下游 server 名字（每个 server 就是一个 skill）</td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">use_skill</code></td>
+        <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">展开某个 skill，返回它拥有的工具列表和入参 Schema</td>
+      </tr>
+      <tr style="background-color:#fafafa;">
+        <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">read_resource</code></td>
+        <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">读取某个 skill 的资源</td>
+      </tr>
+      <tr>
+        <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">execute_code</code></td>
+        <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">在 Monty 沙盒里跑 Python 代码，一次调用串起多个工具</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 的标准工作流变成三步：先 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">list_skills</code> 看有什么，再 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">use_skill</code> 展开相关的那一个拿到工具 Schema，最后 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">execute_code</code> 编排调用。上下文里常驻的从「80 个工具的完整 Schema」降成「4 个工具 + 一张轻量索引」。</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">execute_code</code> 这一层是真正的妙处。沙盒用的是 pydantic 出品的 Monty，代码跑在沙盒里而不是你的 shell 里。下游工具的调用在沙盒内表现为普通 Python 函数，Agent 可以在一次往返里链式编排：</p>
+
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 查未发欢迎邮件的用户，逐个发信，最后返回一句话
+users = query(sql="SELECT name, email FROM users WHERE welcomed = false")
+for user in users:
+    send_email(to=user["email"], subject="Welcome!", body="Hi " + user["name"])
+"Sent " + str(len(users)) + " welcome emails"</code></pre>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">两个 skill 定义了同名工具时，函数名会自动加 skill 前缀（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">database_search</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">docs_search</code>），不会打架。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">use_skill</code> 返回的工具名和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">execute_code</code> 里的函数名严格一致。</p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">安装配置</strong></p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">安装有三种方式，Go 1.25+ 用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">go install</code> 最省事：</p>
+
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 方式一：go install（需要 Go 1.25+）
+go install github.com/kurtisvg/skillful-mcp@latest
+
+# 方式二：从 releases 下载二进制（linux/darwin/windows 均有）
+# https://github.com/kurtisvg/skillful-mcp/releases/latest
+
+# 方式三：Docker
+docker run --rm -v /path/to/mcp.json:/mcp.json \
+  ghcr.io/kurtisvg/skillful-mcp:latest --config /mcp.json --transport http --port 8080</code></pre>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">然后写一份 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mcp.json</code>，把现有 server 收编进来。支持三种下游类型：STDIO（子进程）、HTTP（Streamable HTTP）、SSE：</p>
+
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@toolbox-sdk/server", "--prebuilt=postgres"],
+      "description": "Postgres 数据库工具，用户提到读写数据、查表结构、跑 SQL 时使用。",
+      "env": {
+        "POSTGRES_HOST": "${POSTGRES_HOST}",
+        "POSTGRES_USER": "${POSTGRES_USER}"
+      }
+    },
+    "github-issues": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/x/issues",
+      "headers": { "Authorization": "Bearer ${GITHUB_TOKEN}" },
+      "description": "GitHub Issue 管理，用户提到 bug、需求、issue 分诊时使用。"
+    }
+  }
+}</code></pre>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">启动后把 Agent 接到 skillful-mcp 上（原来的直连全部拆掉）：</p>
+
+  <pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>{
+  "mcpServers": {
+    "skillful": {
+      "command": "/path/to/skillful-mcp",
+      "args": ["--config", "/path/to/mcp.json"]
+    }
+  }
+}</code></pre>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Claude Code 写入 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.claude/settings.json</code>，Gemini CLI 写入 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.gemini/settings.json</code>，Codex 写入 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.codex/config.toml</code> 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">[mcp_servers.skillful]</code> 段。任何支持 MCP 的客户端都行。</p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">使用指南</strong></p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景一：把 GitHub MCP server 拆成 4 个技能</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">GitHub 官方 MCP server 暴露 19+ 个 toolsets，40 多个工具，是 tool bloat 的重灾区。skillful-mcp 的做法是按功能组拆成多个 skill，各自挂到不同的 toolsets URL 上：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">github-issues</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">github-prs</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">github-actions</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">github-labels</code>。Agent 处理 PR 时只展开 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">github-prs</code>，看到十几个工具；处理 CI 失败时只展开 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">github-actions</code>。40+ 工具常驻变成 4 个名字常驻，Schema 按需取。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景二：数据库到邮件服务的跨 server 编排</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">上面那段 Python 就是完整示例：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">query</code> 来自 postgres skill，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">send_email</code> 来自邮件 API skill，两个不同 server 的工具在同一个沙盒脚本里串联。传统 MCP 下这种跨工具编排要 Agent 一次调用一个工具、等结果、再调下一个，往返六七次；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">execute_code</code> 一次搞定，还顺手用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">len(users)</code> 做了汇总返回。</p>
+
+  <p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景三：收编公司内部 API 的远程 server</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">内部平台如果已经把能力做成了 HTTP 或 SSE 形态的 MCP server，不用改任何代码，在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mcp.json</code> 里加一段 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">type: "http"</code> 的配置就能收进来。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">headers</code> 里放 token，支持 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">${VAR}</code> 环境变量展开。新 server 上线只是配置文件里多一个条目，Agent 的常驻上下文一个 token 都不涨。</p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">进阶技巧</strong></p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">每个 skill 支持三个可选过滤字段：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">allowedTools</code> 只暴露指定工具名，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">allowedResources</code> 只暴露指定资源 URI，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">description</code> 覆盖 server 自带的说明文字。被过滤掉的工具彻底隐身：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">use_skill</code> 里不出现、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">execute_code</code> 里调不了、也不会触发命名冲突的前缀逻辑。想对某个大而全的 server 做减法，改配置就行，不用动 server 本身。</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">description</code> 值得认真写。它是 Agent 决定「要不要展开这个 skill」的唯一依据，写清楚触发条件（用户提到 bug、跑 SQL 时使用），比写一句「强大的数据库工具」有用得多。</p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">常见踩坑</strong></p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">环境变量缺一个，启动直接报错。配置里写了 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">${POSTGRES_HOST}</code> 但 shell 里没这个变量，skillful-mcp 会拒绝启动并指出缺哪个，这是有意为之：与其 Agent 跑到一半发现数据库连不上，不如一开始就失败。用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">env</code> 字段显式列出的变量才会传给 STDIO 子进程，父进程环境不会被继承，别指望系统变量能透传进去。</p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">项目还在 0.x：v0.1.0 是 2026 年 4 月 6 日发布的第一个正式版本，37 个 commit，API 存在调整的可能。生产环境使用建议锁版本。另外 Go 1.25+ 的要求不算低，老机器上优先用 releases 二进制。</p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">同类技能对比</strong></p>
+
+  <section style="margin:20px 0;">
+    <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">skillful-mcp (今日推荐)</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>go install / 二进制 / Docker</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>4 工具代理层 + 沙盒代码编排，按需展开</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>MCP server 多、工具膨胀明显的重度用户</p>
+      <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 62</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">context-mode</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>MCP 配置</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>沙盒拦截工具输出，SQLite 索引在窗口外</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>工具返回数据量大、上下文被输出撑爆</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 高</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">skilljit</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>JIT 路由技能和 MCP 工具，本地 SQLite 目录</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>装了几千个技能想做懒加载</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 5</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">skills_mcp_server</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>pip / Docker</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>FastAPI + Agno，把技能暴露给 n8n 等低代码平台</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>企业级技能中心化管理</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 21</p>
+    </section>
+  </section>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">context-mode 管的是工具输出的体积，skillful-mcp 管的是工具列表的体积，两者互补，可以一起装。skilljit 思路接近但还太早期。skills_mcp_server 面向的是低代码平台集成，不是日常编程场景。</p>
+
+  <p style="font-size:14px;color:#999;margin:0 0 14px 0;text-align:left;letter-spacing:0.3px;">⭐ 62 · v0.1.0 · MIT License · <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/kurtisvg/skillful-mcp</span></code> <span>&nbsp;·&nbsp;</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>kvg.dev/posts/20260125-skills-and-mcp</span></code></p>
+
+  <p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">今日小结</strong></p>
+
+  <p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">MCP server 挂了 3 个以上的 Claude Code / Codex / Gemini CLI 用户，都值得花半小时装上试一次。配置就是把现有 server 挪进一份 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mcp.json</code>，Agent 侧改一行配置，工具一个不少，常驻上下文从几十个 Schema 掉到 4 个工具加一张索引。换回来的是更快的响应、更准的工具选择和明显下降的 token 账单。作者是 Google Cloud Code 团队的 Kurtis Van Gent，工具膨胀这个问题本身也是他在博客上系统写过的，方案和问题出自同一人之手，可信度不低。</p>
+
+</section>
