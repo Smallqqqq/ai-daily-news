@@ -1,0 +1,146 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+  <p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-02</p>
+  ![summary.png](./summary.png)
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">今天三个工具各填一个具体的坑：工作流文件写得像天书，画布上拖出来；代码库每次都从零解释，索引一次持续复用；订阅买重了，一份 Copilot 喂饱三个客户端。</p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">CC Workflow Studio：把 Claude Code 工作流搬上拖拽画布</strong></p>
+  ![ccwfs-demo.png](./ccwfs-demo.png)
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Claude Code 的 skills 和 subagents 全是 Markdown 文件，结构简单，可一旦流程超过三四个步骤——读 PR、按规模路由到不同审查流程、跑测试、决定放行还是打回——手写 YAML frontmatter 和 prompt 就开始劝退。写错了只能在执行时才发现，改起来又是纯文本里找段落。CC Workflow Studio 的答案直白：像画流程图一样拖节点，连线，导出成 Claude Code 直接认识的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">.claude/agents/</code> 和 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">.claude/commands/</code> 文件。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">它本质是一个 workflow.json 的三种视图。VS Code 扩展里是 React Flow 画布，节点分四类：Sub-Agent 编排、Agent Skills 调用、MCP 工具接入、普通步骤。工具栏点 Export，同一个 JSON 能变成 8 种 agent 的格式——Claude Code 的 slash 命令、GitHub Copilot 的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">.github/prompts/</code>、Codex 的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">.codex/skills/</code>、Cursor 的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">.cursor/agents/</code>，还有 Gemini CLI、Antigravity、Zoo Code。画完的流程不锁定在 Claude Code 一家。没有 VS Code 的环境也有两条路：CLI 包 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">npx @cc-wf-studio/cli</code> 提供 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">ccwf export</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">ccwf run</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">ccwf canvas</code>（浏览器里开完整编辑器）；MCP 包 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">npx @cc-wf-studio/mcp --file workflow.json</code> 让外部 Claude Code 直接读写工作流文件。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">比画布更实用的功能是 Edit with AI。点开面板，用自然语言说"加一个超时重试步骤"，内置 MCP 服务器把工作流 JSON 交给 AI 修改再刷新画布，和改代码一样迭代。参考项目明确写了 Dify——不过 Dify 面向的是生产部署的 LLM 应用，它面向的是本机 agent 配置，两者不打架。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">数据：<strong style="color:#07c160;">5,352 stars</strong>、<strong style="color:#07c160;">9,202 次安装</strong>，2025 年 11 月创建，最近一次大规模增长正好赶上 Claude Code 插件生态爆发。AGPL-3.0 许可，商用改造成闭源服务不允许，自己团队内部用没问题。</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># VS Code / Cursor 直接装扩展
+code --install-extension breaking-brake.cc-wf-studio
+
+# 或者只用 CLI（终端 / CI / SSH）
+npx @cc-wf-studio/cli --help</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+  <section style="margin:20px 0;">
+    <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">CC Workflow Studio（今日推荐）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">code --install-extension breaking-brake.cc-wf-studio</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>画布编辑，导出 8 种 agent 格式，AI 改图</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费（AGPL-3.0）</p>
+      <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 9,202 安装 · ⭐ 5.3K</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">GitHub Agentic Workflows</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>GitHub Actions + Markdown</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>云端自动化，无本地画布，跑在 CI 里</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>技术预览免费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>官方预览</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Dify</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Docker 自托管</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>完整 LLM 应用编排，面向生产部署</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>开源热门</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">手写 SKILL.md</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>文本编辑器</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>零依赖，灵活但无预览、无校验</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+    </section>
+  </section>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">和六天前写过的 GitHub Agentic Workflows 正好互补：那个把 agent 流程塞进 Actions 定时跑，这个把同样的流程画在本地画布上随时改。Dify 拿来编排生产服务，它拿来编排你本机的编码 agent，配置粒度完全不同。手写 SKILL.md 的问题是没有预览——画布上能直接看到流程走向对不对。</p>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>⭐ 5.3K · AGPL-3.0 · GitHub：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/breaking-brake/cc-wf-studio</span></code>
+    <span>&nbsp;·&nbsp;Marketplace：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>marketplace.visualstudio.com/items?itemName=breaking-brake.cc-wf-studio</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">CodeMate C0：83K 安装的代码库知识库，不再每轮从零解释</strong></p>
+  ![codemate-demo.png](./codemate-demo.png)
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">大多数 AI 编码工具的对话是失忆的：换个会话，重新解释项目结构、重新贴文件、重新讲约定。C0（CodeMate AI）用一条别的路解决这个问题——装一个持续运行的知识库索引层。项目打开即索引，之后只增量更新改动文件；索引的不只是本地代码，还有 GitHub 仓库、文档 URL、Swagger/OpenAPI 规范，每个都是一类知识库。提问时 C0 先检索索引再回答，回答锚定在真实代码上，不是"典型项目一般长这样"。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">知识库之上铺了八个专用工作流，替代通用聊天框：Debug 模式贴报错栈追踪定位根因，Generate Test 按项目现有测试框架生成用例，Code Review 审 staged 改动和 PR，Deep Wiki 生成与实际实现一致的文档，Code Map 用 Mermaid 画系统结构，Swagger Agent 直接读 OpenAPI 规范做接口相关任务。聊天里支持 @ 引用精确锚点——<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">@src/utils/logger.ts</code> 是文件，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">@UserRepository.findById</code> 是函数级定位。Jira 工单能直接作为上下文读进来。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">一个需要知道的依赖：扩展之外还要装 CodeMate Toolbox 本地组件，产品间通信走它。初始索引小项目一分钟内，大代码库首次几分钟，之后就快得多。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">数据：VS Code Marketplace <strong style="color:#07c160;">83,544 安装</strong>、35 条评价，免费。支持 100+ 语言，React、Next.js、Vue、FastAPI、Spring 这些常见栈都有覆盖。它和 Continue 的路线差异很清晰：Continue 主打模型无关、BYOK，C0 主打代码库理解，两者可以同装。</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 1. 装 CodeMate Toolbox（本地组件，官网 codemate.ai 下载）
+# 2. VS Code 扩展面板搜索 "C0" 安装（publisher: AyushSinghal）
+# 3. 打开项目，等索引完成即可提问</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+  <section style="margin:20px 0;">
+    <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">C0（今日推荐）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code 扩展 + Toolbox</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>持续索引知识库 + 8 工作流 + Swagger/Jira</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+      <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 83,544 安装</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Continue</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code/JetBrains 扩展</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>模型无关 BYOK，本地模型可用</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>核心免费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 4,048,975 安装</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Cursor</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>独立编辑器</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>agent 能力开箱即用，零配置</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>$20/月起</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>商业产品</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Codistry</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Claude Code 插件</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>代码库结构地图，轻量</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>小众</p>
+    </section>
+  </section>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Continue 安装量是 C0 的 48 倍，但它不替你做代码库理解——embedding 配置、索引范围都要自己调，它的卖点是模型自由。C0 卖的是理解：装上就索引，提问即落地到具体文件和函数，Swagger 规范、Jira 工单这些后端日常上下文直接进知识库。要模型自由选 Continue，要代码库记忆选 C0，不冲突。</p>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>🏪 83,544 安装 · 免费 · 官网：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>codemate.ai</span></code>
+    <span>&nbsp;·&nbsp;Marketplace：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>marketplace.visualstudio.com/items?itemName=AyushSinghal.Code-Mate</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">LM Proxy：一份 Copilot 订阅，喂饱 Claude Code 和 Codex</strong></p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">订阅了 GitHub Copilot 的人想用 Claude Code，通常要再掏一份 Anthropic 订阅钱；反过来用着 Claude 的人想试 Codex CLI，也是同样的问题。LM Proxy 用 VS Code 的 Language Model API 把这件事办了：装一个扩展，本机起个代理服务，把你 VS Code 里已登录的 Copilot 能力以 OpenAI、Anthropic 两种兼容格式暴露在 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">localhost:4000</code> 上。外部 CLI 把它们当成普通 API 端点接入，账单走的还是你现有的 Copilot 订阅。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">原理不复杂。VS Code 的 LM API 本身允许扩展调用内置语言模型，LM Proxy 做的就是协议转换：收到 OpenAI 格式的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">/v1/chat/completions</code> 或 Anthropic 格式的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">/v1/messages</code> 请求，翻译成 LM API 调用，把结果原样翻回去，流式输出完整支持。模型选择在扩展里做——<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">LM Proxy: Select Anthropic API Model</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">Select Claude Code Thinking Model</code> 这类命令指定 Claude Code 用哪个 Copilot 模型跑。想只用已有的 Copilot 订阅跑 Claude Code，配 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">ANTHROPIC_BASE_URL=http://localhost:4000/anthropic/claude</code> 就完成，Codex 则在 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">~/.codex/config.toml</code> 里把 base_url 指向 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">/openai</code>。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">数字说实话：<strong style="color:#07c160;">3,074 安装</strong>、1 条评价，低于本栏目常规门槛。入选理由是这个痛点太具体——订阅复用，不是模型路由。它解决的问题 ngrok AI Gateway、LiteLLM 都不碰：那些是把多路 API 聚合计费，这个是把你已经付过费的能力换一个入口。原作者 ryonakae 是日本开发者，项目 MIT 开源，fork 即改。</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 1. VS Code 扩展面板搜索 "LM Proxy"（publisher: Ryo Nakae）安装
+# 2. 命令面板运行 "LM Proxy: Start LM Proxy Server"（默认 4000 端口）
+# 3. Claude Code 接入：
+#    set ANTHROPIC_BASE_URL=http://localhost:4000/anthropic/claude
+# 4. Codex 接入：~/.codex/config.toml 中
+#    [model_providers.vscode-lm-proxy]
+#    base_url = "http://localhost:4000/openai"</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+  <section style="margin:20px 0;">
+    <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">LM Proxy（今日推荐）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code 扩展</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Copilot 订阅转 OpenAI/Anthropic API</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费（MIT）</p>
+      <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 3,074 安装</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">ngrok AI Gateway</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>注册即用</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>一个 URL 聚合多家模型，按 token 计费</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费层 + 用量费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>商业产品</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">LiteLLM</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>pip / Docker</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>自托管网关，100+ provider 统一 API</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>开源热门</p>
+    </section>
+  </section>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">ngrok AI Gateway 和 LiteLLM 解决的是多 provider 管理——账单还是各付各的。LM Proxy 的账算得更简单：Copilot 的订阅费已经付了，Claude Code、Codex、任何支持 OpenAI/Anthropic 协议的 CLI 都从这个口子走，一份钱多个客户端。代价是能力受 Copilot 模型菜单限制，也依赖 VS Code 常驻。适合订阅固定、想少开一份钱的个人开发者。</p>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>🏪 3,074 安装 · MIT · GitHub：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/ryonakae/vscode-lm-proxy</span></code>
+    <span>&nbsp;·&nbsp;Marketplace：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>marketplace.visualstudio.com/items?itemName=ryonakae.vscode-lm-proxy</span></code>
+  </p>
+</section>

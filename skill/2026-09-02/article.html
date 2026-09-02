@@ -1,0 +1,118 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+  <p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-02</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">你给 Claude Code 装了个数据库 MCP，想着"让 AI 帮我查库"。装完之后发现：对话一开始，MCP 先往上下文里塞了 28 个工具定义，1.9 万个 token。你还没提问，窗口已经被吃掉十分之一。DBHub 的做法相反：默认只加载 2 个工具，共 <strong style="color:#07c160;">1.4k tokens</strong>，其余能力按需开启。<strong style="color:#07c160;">3378 stars</strong>，MIT 协议，Bytebase 团队维护，也是 Claude Code 官方文档中连接 PostgreSQL 的示例 MCP。</p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <!-- 原图 dbhub-workbench.webp 为 WebP 格式，上传接口不支持，已跳过 -->
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">它解决什么问题</strong></p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">MCP 时代的工具爆炸在数据库领域尤其严重。Google 的 MCP Toolbox 默认暴露 28 个工具、占 <strong style="color:#07c160;">19k tokens</strong>；Supabase MCP 全量加载占 19.3k。每个工具定义都是模型每次决策前要扫一遍的背景噪音，工具越多，选错工具的概率越高、响应越慢、账单越贵。DBHub 把"数据库查询"这个需求拆回本质：你需要的只是一个执行 SQL 的工具，加一个找表找字段的工具。执行计划、健康检查、自定义查询这些附加能力全部 opt-in。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Bytebase 本身是做数据库治理平台的（Schema 变更、审批流、SQL 审查），DBHub 是它面向 AI 场景的轻量网关：一头接 MCP 客户端（Claude Code、Cursor、Claude Desktop、VS Code、Copilot CLI），一头接数据库（PostgreSQL、MySQL、MariaDB、SQL Server、SQLite），中间用最少的工具定义和最严格的防护拦一道。</p>
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">核心原理</strong></p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">DBHub 是一个零依赖的 TypeScript MCP server，跑在 Node.js ≥ 22.5 上（用内置的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">node:sqlite</code> 模块支持 SQLite，不需要装任何驱动）。它的 token 效率来自一个设计取舍：<strong style="font-weight:bold;color:#000;">默认工具集只有两个</strong>。</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;"><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">execute_sql</code>：执行 SQL，带事务支持和安全控制</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;"><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 14px;">search_objects</code>：渐进式探查 schema：表、列、索引、存储过程，按需展开</li>
+  </ul>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">防护默认全开：只读模式、行数上限（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">max_rows</code>）、查询超时。可以配 SSH 隧道和 SSL/TLS 连生产库。另外三个工具按需开启：<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">explain_sql</code>（只看执行计划不真跑）、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">health_check</code>（连接池状态、buffer cache 命中率）、以及自定义工具。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">自定义工具是 DBHub 真正区别于"又一个查询 MCP"的地方：你在 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dbhub.toml</code> 里把一条参数化 SQL 声明成一个具名工具，它就被注册成 MCP tool 暴露给模型。模型看到的工具是 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">get_user_by_id(user_id)</code> 这样的具体接口，参数带类型校验和枚举白名单，SQL 藏在配置里。</p>
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">安装配置</strong></p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 一条命令启动（HTTP 模式，连 Postgres）
+npx @bytebase/dbhub@latest --transport http --port 8080 \
+  --dsn "postgres://user:password@localhost:5432/dbname?sslmode=disable"</code></pre>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Claude Code 注册（stdio 模式）：</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>claude mcp add dbhub -- npx -y @bytebase/dbhub@latest --dsn "postgres://user:password@localhost:5432/dbname"</code></pre>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">多数据库场景用 TOML 配置，支持 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">${VAR}</code> 环境变量插值和热重载：</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># dbhub.toml —— 一个进程连多个库
+[[sources]]
+id = "production"
+description = "线上订单库，只读"
+dsn = "postgres://readonly:${DB_PASSWORD}@db.example.com:5432/mydb"
+
+[[sources]]
+id = "staging"
+type = "mysql"
+host = "${STAGING_HOST}"
+database = "myapp"
+user = "root"
+password = "${STAGING_PASSWORD}"
+ssh_host = "bastion.example.com"
+
+# 对生产库强制只读 + 行数上限
+[[tools]]
+name = "execute_sql"
+source = "production"
+readonly = true
+max_rows = 1000</code></pre>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx @bytebase/dbhub@latest --config ./dbhub.toml</code></pre>
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">使用指南</strong></p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">场景一：本地开发，让 Claude Code 直接查库验证假设</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">改完一个查询，你想确认"这个索引到底有没有被用上"，或者想看看某张表真实的数据分布再决定怎么写迁移。以前是切到 psql/DataGrip 手查，现在直接在 Claude Code 里问，模型调 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">search_objects</code> 找表结构、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">execute_sql</code> 跑查询，结果直接参与它的推理。配上 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--dsn</code> 一条命令的事，从装到用不超过一分钟。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">场景二：把只读视图开放给非技术同事</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">DBHub 官方列出的用例之一：给运营、产品同学配一个只读连接，通过 Claude Desktop 或 VS Code 暴露一个 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dbhub.toml</code>，其中只有几个自定义工具："查本月订单量"、"查某客户的购买记录"。他们面对的是自然语言加几个参数化工具，没有 SQL 控制台。权限边界由配置写死，模型连写操作的工具都没有。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">场景三：五库合一，团队统一数据入口</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">公司里 MySQL 存业务数据、Postgres 存分析数据、SQLite 存本地缓存，每人装三个 MCP 是常态。DBHub 一个进程用 TOML 声明多个 source，模型看到的是带 id 区分的统一工具集。注意参数占位符因库而异：PostgreSQL 用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">$1</code>，MySQL/MariaDB/SQLite 用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">?</code>，SQL Server 用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">@p1</code>。写自定义工具时照库改占位符即可。</p>
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">进阶技巧</strong></p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">给 AI 定义"团队专属工具集"</strong>。把高频查询封装成带枚举校验的自定义工具，比直接暴露裸 SQL 更稳：模型不会写出错误的 JOIN，也不会发明不存在的列名。比如订单查询：</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>[[tools]]
+name = "list_orders"
+description = "List orders with optional status filter"
+source = "prod_pg"
+statement = "SELECT * FROM orders WHERE customer_id = $1 AND ($2::text IS NULL OR status = $2)"
+
+[[tools.parameters]]
+name = "customer_id"
+type = "integer"
+description = "Customer ID"
+
+[[tools.parameters]]
+name = "status"
+type = "string"
+description = "Optional status filter"
+required = false
+allowed_values = ["pending", "processing", "shipped", "delivered"]</code></pre>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">改完 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dbhub.toml</code> 不需要重启进程。DBHub 监听文件变化，500ms 防抖后自动重连数据库，失败还会回滚到上一个可用配置。</p>
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">常见踩坑</strong></p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">热重载在 stdio 模式下只换连接不换工具</strong>。Claude Code、Claude Desktop 这类 stdio 客户端启动时只发现一次工具列表，你新增的自定义工具要重启 MCP server（重启会话）才会出现在模型面前。想要即时生效就用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--transport http</code> 模式。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;"><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--config</code> 与 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--dsn</code> 二选一</strong>。TOML 文件自带数据库定义，两个参数同时传会冲突。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">npx 缓存旧版本</strong>。README 里的安装命令都写 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">@latest</code> 是有原因的，npx 会缓存旧版。行为异常时先确认版本号。</p>
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">同类技能对比</strong></p>
+  <section style="margin:20px 0;">
+    <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">DBHub（今日推荐）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @bytebase/dbhub</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>默认 2 工具 1.4k tokens；五库合一；TOML 自定义参数化工具；只读防护</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>想让 AI 查库又不想污染上下文，团队统一数据入口</p>
+      <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3378</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">MCP Toolbox</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @google/toolbox</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>28 工具 19k tokens，40+ 云服务和数据源</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>Google Cloud 生态全家桶</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 高</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Supabase MCP</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>云端托管</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>19.3k tokens，全平台管理（分支、存储、函数）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>Supabase 深度用户</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 高</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">sqlx-mcp</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">cargo install</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Rust 异步 + 连接池，自动装 Claude Code skill</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>追求单机性能的小工具</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 低</p>
+    </section>
+  </section>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">推荐 DBHub 的理由是它的克制：数据库查询这个需求本来就不需要 28 个工具，两个工具加自定义封装已经覆盖了绝大多数场景。省下的 17k tokens 是每轮对话都在省。</p>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>⭐ 8.7 · MIT · 3378 stars · GitHub：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/bytebase/dbhub</span></code>
+    <span>&nbsp;·&nbsp;文档：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>dbhub.ai</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">今日小结</strong></p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">如果你的 agent 需要查数据库，装 DBHub 而不是其他全家桶：10 分钟配完，换回来的是每轮对话少烧 <strong style="color:#07c160;">17k tokens</strong> 的上下文、一个配置驱动的权限边界，以及一个团队可以共享的自定义工具集。数据库越重要的团队，收益越明显。</p>
+</section>
