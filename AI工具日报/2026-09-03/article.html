@@ -1,0 +1,165 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+  <p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-03</p>
+  ![summary.png](./summary.png)
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">今天三个工具各解决一个具体问题：AI 生成的界面怎么从"能渲染"变成"可预测"，GitHub 的 MCP 怎么从"自己运维"变成"官方托管"，AI 写的测试怎么从"写完算完"变成"跑通才算完"。</p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">json-render：Vercel Labs 的 Generative UI 框架</strong></p>
+  ![json-render-demo.png](./json-render-demo.png)
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">让 AI 直接吐 HTML/CSS 是件危险的事：布局说崩就崩，输出里可能混进不可信的脚本，同一个提示词两次结果天差地别。json-render 换了个思路——AI 只输出 JSON，界面由你自己定义的组件目录渲染出来。JSON 里能写的组件、能传的参数，全部提前圈定。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">核心机制就一条：Guardrailed。开发者用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">defineRegistry(catalog, ...)</code> 声明一份组件目录，模型只能在目录内挑选组件、填写 props，输出还要过 schema 校验。流式响应走 SpecStream，模型边生成边渲染，不用等整段 JSON 出完。同一份 UI 描述能渲染到十几个目标：React、Vue 3、Svelte 5、Solid、React Native、Next.js（含路由和 SSR）、Remotion 视频、PDF、邮件 HTML、终端 TUI，甚至 SVG 社交卡片。内置 36 个 shadcn/ui 组件开箱即用。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">典型场景：聊天应用里让模型返回结构化卡片、表单、图表；用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">@json-render/mcp</code> 给 Claude、ChatGPT、Cursor 接入 MCP Apps，让对话里直接出现交互式 UI；用 react-pdf 和 react-email 渲染器从同一个 JSON 生成 PDF 和邮件。一份 schema，多端复用。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">数据：<strong style="color:#07c160;">5,978 stars</strong>、<strong style="color:#07c160;">865 forks</strong>，2026 年 1 月创建，最新 v0.17.0，Apache-2.0。Vercel Labs 出品，维护者里有多位 Vercel 工程。</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># React 项目
+npm install @json-render/core @json-render/react
+
+# 想直接上 shadcn/ui 预置组件
+npm install @json-render/shadcn
+
+# MCP Apps 接入 Claude / ChatGPT / Cursor
+npm install @json-render/mcp</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+  <section style="margin:20px 0;">
+    <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">json-render（今日推荐）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm install @json-render/react</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>组件目录约束输出，13 个渲染器</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源（Apache-2.0）</p>
+      <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 6K</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">A2UI</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>协议规范 + 各框架自行实现</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Google 的 Agent-to-UI 开放协议</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 社区早期</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Vercel AI SDK</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm install ai</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>管模型调用和流式响应，不管 UI 约束</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 万级</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Bolt.new / Lovable</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>网页直接用</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>云端生成整站，不开源自托管不了</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅制</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>商业化产品</p>
+    </section>
+  </section>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">选 json-render 的原因：A2UI 是协议不是框架，Vue 社区实现才 85 stars，落地还得自己写渲染器；AI SDK 管不到"模型输出什么 UI"这一层，两者其实互补——AI SDK 负责对话，json-render 负责渲染。Bolt/Lovable 是黑盒 SaaS，代码和组件目录都不在你手里。</p>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>⭐ 5.9K · v0.17.0 · Apache-2.0 · GitHub：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/vercel-labs/json-render</span></code>
+    <span>&nbsp;·&nbsp;文档：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>json-render.dev</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">github-mcp-server Remote：GitHub 官方托管 MCP 端点</strong></p>
+  ![github-mcp-remote-demo.png](./github-mcp-remote-demo.png)
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">跑本地 GitHub MCP server 的账算得过来吗：装 Docker、拉镜像、发 PAT、配回调端口、每次发版手动升级。GitHub 官方仓库 32K stars，但托管端点一上线，这些步骤全都不用做了。服务器跑在 GitHub 那边，你只负责连。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">用法两步：VS Code 1.101+ 里命令面板跑 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">GitHub MCP: Install Remote Server</code>，走一次 OAuth 登录；其他 MCP 客户端直接指向 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">https://api.githubcopilot.com/mcp/</code>。token 只存在内存里，不落盘、不用自己创建。安全边界也做进去了：请求头加 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">X-MCP-Readonly: true</code> 全局只读；<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--toolsets</code> 参数按需开关 20 多组工具（issues、pull_requests、actions、dependabot、code_security……），remote 端点还多了 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">copilot</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">copilot_spaces</code> 两组本地版没有的。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">典型场景：换新机器或远程开发箱，不用重装 Docker 和重发 token；代码审查时切只读模式，Agent 看得见改不了；CI 里配合 Actions toolset 查失败日志。GitHub 官方博文原话：本地版是"managing Docker, rotating access tokens, and pulling updates"，托管端点把这些运维成本归零。</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># VS Code / VS Code Insiders
+# 命令面板 → GitHub MCP: Install Remote Server → OAuth 登录
+
+# 其他 MCP 客户端（http 类型）
+{
+  "servers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": { "X-MCP-Readonly": "true" }
+    }
+  }
+}</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+  <section style="margin:20px 0;">
+    <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Remote Server（今日推荐）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>OAuth 一次登录</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>官方托管，自动升级，免 Docker 免 PAT</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+      <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 官方</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">本地 Docker 版</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">docker run ghcr.io/github/github-mcp-server</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>60+ 工具全量，数据不出本机</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 32K</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">社区 Python github-mcp</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">uv tool install</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>小而精，只做 PR/文件/Dependabot</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 极小</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">mcp-github-agent</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install -r requirements.txt</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>34 工具跨 9 平台聚合</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 极小</p>
+    </section>
+  </section>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">本地 Docker 版和 remote 版是同一个项目的两种交付方式：数据敏感的团队继续跑本地，图省事的用托管端点。社区方案工具面窄、维护者少，遇上游 API 变更容易断更。官方托管最大的差别是零运维——GitHub 自动打补丁，你连更新日志都不用看。</p>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>🏪 GitHub 官方 · Remote Server · v1.x · GitHub：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/github/github-mcp-server</span></code>
+    <span>&nbsp;·&nbsp;官方指南：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.blog/ai-and-ml/generative-ai/a-practical-guide-on-how-to-use-the-github-mcp-server/</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">testpilot-ai：npx 一条命令，测试写完还非得跑通</strong></p>
+  ![testpilot-demo.png](./testpilot-demo.png)
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">AI 生成测试的老毛病：写出来的测试经常跑不过——导入路径猜错、API 名捏造、断言拍脑袋。多数工具"生成完"就交差了，testpilot-ai 的立场是生成只是第一步，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--verify</code> 才是本体：生成 → 运行 → 把失败信息和堆栈回喂给 LLM → 重写 → 再跑，默认循环 3 轮。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">几个防坑设计：每轮修复后对比，只保留通过率最高的版本，修坏了自动回滚；同样的失败反复出现就停（振荡检测），不烧 token；失败信息按测试用例增量裁剪后回喂，上下文不膨胀。生成前的上下文也讲究——用 TypeScript compiler API 做 AST 分析，提取函数签名、参数类型、JSDoc，再沿相对导入和 tsconfig 路径别名（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">@/foo</code>）追进项目内部，上限 5 个文件 × 3KB，避免把整个仓库塞进 prompt。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">典型场景：给一个 utils 文件补测试，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">npx testpilot src/utils.ts --verify</code>，出来就是全绿的；<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">testpilot analyze</code> 扫一遍项目，列出最缺测试的文件；有 lcov/cobertura 报告的话直接生成未覆盖代码的测试。支持 Vitest、Jest、Mocha、Node test runner 四种框架，LLM 可以接 OpenAI、Anthropic、Google，也能接本地 Ollama——<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--max-cost</code> 设个预算上限，跑超了直接中止。</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 生成并验证：跑不通自动修，直到全绿
+npx testpilot src/utils.ts --verify
+
+# 找出项目里最缺测试的文件
+npx testpilot analyze
+
+# 本地模型 + 预算上限
+npx testpilot src/ --provider ollama --max-cost 0.50</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+  <section style="margin:20px 0;">
+    <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">testpilot-ai（今日推荐）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx testpilot</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>生成后必跑，跑不通自动修复循环</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源（MIT）</p>
+      <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>npm 新秀</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">code-testing-generator</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code 扩展</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>微软出品，用伪变异检验测试真能抓 bug</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>官方出品</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">TestTrout</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">trout add</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>连部署环境做基线测试，MCP 驱动</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 8 月下旬刚发布</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Qodo</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>IDE 插件 + 云端</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>商业化全家桶，测试只是其中一块</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅制</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>商业产品</p>
+    </section>
+  </section>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">微软的 code-testing-generator 解决"测试有没有用"（伪变异杀死率），testpilot 解决"测试过不过"（自动修复），角度不同。TestTrout 8 月下旬才发布，star 数还不成规模。要一条命令把测试补到能跑，npx 零配置 + 自动修复循环目前没有直接对手。</p>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>⭐ npm 新秀 · MIT · GitHub：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/amit641/autotest</span></code>
+  </p>
+</section>

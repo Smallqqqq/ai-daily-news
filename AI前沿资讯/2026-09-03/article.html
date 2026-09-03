@@ -1,0 +1,309 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+  <p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-03</p>
+  <section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+    <p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0;">本期覆盖 2026-09-02 至 09-03 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Bluesky / Lobsters / arXiv / HF Papers / 知乎 / AI 实验室博客。精选 10 条按影响力排序。</p>
+    <p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0;">核心主题：<strong style="color:#1b5e20;">Google 以 20 天节奏发布 Gemini 3.8 Flash</strong>（HN 839 pts）、<strong style="color:#1b5e20;">Meta Muse Spark 1.3 用 $0.55/任务冲击价格带</strong>、<strong style="color:#1b5e20;">Anthropic 开源电商 Agent 蓝图</strong>、<strong style="color:#1b5e20;">GitHub 热榜被多 agent 协作与 agent 基建统治</strong></p>
+  </section>
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">1. Gemini 3.8 Flash / 3.8 Flash Cyber — 20 天一发，价格一分没涨</strong></p>
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.5/10</span>
+  </section>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Google 于 9 月 2 日发布 Gemini 3.8 Flash，距 3.7 Flash 上线仅 20 天，43 天内第三个 Flash 版本。1M token 上下文，文本/图像/视频/音频/PDF 全模态输入，定位长时程软件工程和自主 agent 任务。同时发布 3.8 Flash Cyber 安全变体，专做漏洞挖掘和自动打补丁，通过 Fairwind Program 限定向政府与可信防御方开放。Wiz（Google 以 <strong style="color:#07c160;">320 亿美元</strong>收购）在内部渗透测试基准上实测：Cyber 变体对真实漏洞的召回率高 7.5%-9.7%，成本只有前沿模型的 <strong style="color:#07c160;">1/2.3 到 1/5.2</strong>；Google Cloud Vulnerability Research 用它 2 小时内挖出一个关键基础漏洞，平时这类工作要数月。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># API model ID：gemini-3.8-flash，Google AI Studio 直接可用
+# 价格（2026-12-31 前）：$0.75/M 输入，$3.75/M 输出（含思考 token）
+# Batch/Flex 半价 $0.375/$1.875；2027-01-01 起翻倍至 $1.50/$7.50
+
+# Python 调用示例（google-genai SDK）：
+# client.models.generate_content(model="gemini-3.8-flash", contents="...")
+# 参考：https://developers.googleblog.com（Gemini API 文档）</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Artificial Analysis Intelligence Index 从 3.6 的 52 → 3.7 的 56 → 3.8 的 59，六周涨 7 分，价格一直停在 $0.75/$3.75。Terminal-Bench 2.1 从 3.7 Flash 的 81.6% 拉到 <strong style="color:#07c160;font-size:20px;">90.8%</strong>，SWE-Bench Pro 61.6%，τ³-bench Banking 38.1%（3.7 Flash 为 30.9%）。速度是全场最快：305 output tokens/s，Artificial Analysis 统计每任务成本 <strong style="color:#07c160;">$0.58</strong>，Claude Opus 5 是 $2.34。它还压过 Opus 5 的 agentic tool use（45 vs 42）、GPQA Diamond（95 vs 93）和长上下文（81 vs 76）。对标：GPT-5.6 Sol $5/$30、Claude Fable 5.1 $10/$50。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">YouTube 7 分钟解析视频（9/2 发布，4.8K 观看）总结："43 天从 3.6 到 3.8，三次发布价格全程未动。它没赢榜首（Opus 5 指数 63），但在账单和速度上完胜：每任务 $0.58 对 $2.34，速度快 5 倍。"</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">Google 产品总监 Tulsee Doshi 与安全负责人 Raluca Ada Popa 在官方博客给出定位："3.7 Flash 继续全量支持效率优先的工作负载，3.8 Flash 面向需要更深推理的场景。"</li>
+  </ul>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://venturebeat.com/security/googles-gemini-3-8-flash-is-built-for-agents-while-its-cyber-twin-hunts-vulnerabilities</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">2. Muse Spark 1.3 — Meta 五个月第四个版本，$0.55/任务同档最便宜</strong></p>
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.0/10</span>
+  </section>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Meta 于 9 月 2 日发布 Muse Spark 1.3，当天上线 Muse Code 和 Meta Model API，Zuckerberg 在 X 上直接官宣而非发博客。五个月内的第四次迭代（4 月首发 → 7 月 1.1 → 8 月 1.2 → 9 月 1.3）。这次训练重点放在长时程编码任务上：工具调用次数比 1.2 减少 <strong style="color:#07c160;">20%</strong>，token 消耗降低 <strong style="color:#07c160;">25%</strong>。1M 上下文，输入支持文本/图像/视频/文档。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">muse-spark-1.3-contributor</code> SKU 价格更低，代价是数据可用于改进 Meta 产品；max reasoning 档还在过安全测试，暂未开放。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 通过 Meta Model API 调用（model ID: muse-spark-1.3）
+curl https://api.meta.com/v1/models/muse-spark-1.3 \
+  -H "Authorization: Bearer $META_API_KEY" \
+  -d '{"prompt": "..."}'
+# 定价：$1.25/M 输入，$4.25/M 输出（与 1.2 持平）
+# 或在 Muse Code 终端编码 agent 里直接使用</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Artificial Analysis Intelligence Index：xhigh 档 <strong style="color:#07c160;font-size:20px;">61 分</strong>（1.2 为 57，1.1 为 53），与 GPT-5.6 Sol (max)、Grok 4.6 (high) 并列，仅次于 Fable 5.1 (66) 和 Opus 5 (63)；max 档 62 分。提升集中在 agentic 评测：GDPval-AA v2 Elo +94，Terminal-Bench 2.1 从 80% 到 85%。价格算账更直接：<strong style="color:#07c160;">$0.55</strong> 每 Intelligence Index 任务，Artificial Analysis 原话——"59 分以上的模型里没有更便宜的"，最近的对手是 Gemini 3.8 Flash 的 $0.58。Meta 同时预告 Muse Spark 系列将开放权重，未给日期。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">HN（405 pts）焦点在于五个月四版的迭代速度，评论区把 Meta 的节奏形容为"把模型更新当 Slack 消息发"</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">Artificial Analysis（289K 观看）："Muse Spark 1.3 (max) 以 62 分仅次于 Claude Fable 5.1 和 Claude Opus 5，两家之外它就是第三。"</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">社区对"开源预告"最敏感：Llama 时代的 Meta 承诺在 Muse 系列上兑现，才是这轮发布真正的长期赌注</li>
+  </ul>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.unite.ai/meta-launches-muse-spark-1-3-citing-gains-in-coding-and-agentic-tasks</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">3. anthropics/commerce-agents — Anthropic 官方开源电商 Agent 蓝图</strong></p>
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.8/10</span>
+  </section>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Anthropic 把过去一年给企业落地电商 Agent 的整套方法论和代码模板开源了。拆成两个 Agent：Shopping Agent 嵌进商家 App/网站，负责搜索、比价、个性化推荐、加购、订单查询和售后；Merchant Agent 给内部员工用，做销售分析、库存管理、调价和促销设计，涉及真实改动商品/价格的操作先进 staging，必须人工批准。附零售、旅游、电信、娱乐四套可运行参考实现。架构按 Anthropic 当前的标准展开：Claude + Agent Loop + Tools + Skills + Memory + Guardrails + Evals，没有多 Agent 路由的花活。前端商品卡片、行程单这类 UI 也被建议做成 Tool 让模型调用结构化组件，而不是生成文本再让前端解析。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/anthropics/commerce-agents.git
+cd commerce-agents
+# 用配套 Claude Code 插件从零生成自己的电商 Agent：
+# 对话里输入 /scaffold-commerce-agent "a shopping assistant for our store"
+# 插件会询问技术栈，然后生成 Agent、添加流程、写 Eval、Review 现有 Agent</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Anthropic 披露的真实客户数据：使用 Claude Shopping Agent 的零售商购物车金额最高提升 <strong style="color:#07c160;font-size:20px;">35%</strong>，完成购买概率最高提升 <strong style="color:#07c160;">60%</strong>。Shopify、Priceline 已在用 Claude 搭类似体验。更关键的是定位声明：Anthropic 明确不做商城、支付和广告，只占中间那层智能——Catalog、Checkout、供应链留给商家。这套蓝图把"怎么在企业里落地 agent"从咨询交付变成了可 fork 的代码。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">X 上 @sidtweeted："我会去验证那个 35% 的说法，我运营着 50 家电商店铺。"——客户数据的真实性成为讨论焦点</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">中文科技圈拆解（Max For AI）："人类花了二十多年发明电商网站，现在模型正在把搜索框、商品详情页、筛选器和客服一起吃进去。"</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">讨论的普遍结论：每个 Shopify 商店未来都拥有自己的 Agent，但底下跑的是 Claude</li>
+  </ul>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/anthropics/commerce-agents</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">4. pacifio/atlas — 多 agent 的"源码控制"：每个改动可追溯到哪次对话</strong></p>
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+  </section>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">pacifio 团队做的 Rust/Tauri 桌面应用，解决"让多个编码 agent 协作时丢失上下文"的问题。Claude Code 和 Codex 作为外部子进程通过 ACP 运行，内置 agent 跑在自研 Rust agent 框架 Cersei 上，Cursor、OpenCode、Kilo Code 等 ACP 注册表里的 agent 也能自动拉取官方二进制接入。每次改动都链接回产生它的会话、当时的 prompt 和 agent 的操作步骤；所有 agent 共享一份记忆（进行中的计划、决策、文件变更、失败记录），语义检索在设备端完成。代码和笔记默认留在本机，可选择与团队同步。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 下载 macOS 版：https://tryatlas.cc 或 GitHub Releases（.dmg）
+# Linux/Windows 可从源码构建（同一 Tauri 代码库，官方标注未测试）：
+# 需要 Bun、Rust（rustup）、Xcode Command Line Tools
+git clone https://github.com/pacifio/atlas.git
+# 使用 Claude Code agent 需先装 claude CLI 并加入 PATH；内置 agent 无外部依赖</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">多 agent 协作是 GitHub 热榜当前的主旋律，但"谁改了什么、为什么改"的记录一直是空白——agent 产出物只有墙一般的绿色 diff。Atlas 把审计能力做成了默认行为：prompt → 会话 → 改动全链路可追溯，agent 切换时通过会话交接包延续上下文。<strong style="color:#07c160;font-size:20px;">888 星/天</strong>的速度对一个 3 天前才上趋势榜的新仓库来说很猛，配套的 Rust SDK（pacifio/cersei，MIT）把 agent 构建拆成库函数，双层开源。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">LinkedIn 上 Arthi Rajendran 的推荐贴："每个改动都链接回产生它的会话、你给的 prompt 和 agent 的步骤。切换 agent 不再丢上下文，你能审查真正落地的内容，而不是信任一面绿色文字的墙。"</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">社区关注点：ACP 注册表长尾 agent 的兼容性 QA 还在进行中，Windows/Linux 构建官方标注未测试</li>
+  </ul>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/pacifio/atlas</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">5. OpenMontage — 把 Claude Code 变成完整视频制作工作室</strong></p>
+  ![openmontage-demo.png](./openmontage-demo.png)
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+  </section>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">calesthio 出品的开源 agentic 视频制作系统。12 条生产管线（动画解说、纪录片蒙太奇、电影预告片、口播等），100+ 注册工具（20+ 视频生成 provider、10+ 语音 provider、15+ 图像 provider、字幕、提词、增强），<strong style="color:#07c160;">700+ agent skill</strong> 与制作知识文件。把 Claude Code、Cursor、Copilot、Windsurf、Codex 变成视频工作室。免费本地工作流用 Piper TTS、FFmpeg、Remotion 和 Archive.org/NASA/Wikimedia 开放素材就能跑；付费云端接 FLUX、Kling、Runway、ElevenLabs、Suno。配预算治理（成本预估）、7 维度 provider 评分和生产级质量门禁（合成前校验）。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/calesthio/OpenMontage.git
+cd OpenMontage
+# 按 README 的 Quick Start 安装 agent skills 到 Claude Code/Cursor/Codex
+# 之后直接说："做一个 90 秒的产品发布动画解说视频"
+# 或从已有视频出发：贴一个参考视频链接，系统按它的风格重建</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">单日 <strong style="color:#07c160;font-size:20px;">1,144 星</strong>，是今天 GitHub 全站增速前列的仓库。它把"视频制作"从专业软件转移到了编码 agent 的工作流里：脚本（可先做联网研究）→ 分镜 → 素材（免费或付费源）→ 合成 → 质检全链路自动化，成本控制内建。对开发者社区的意义是复用已投资的编码 agent，而不是再学一套视频工具。<strong style="color:#07c160;">53.6K 星</strong>里很大一部分来自"视频生产管线 + agent skill"这个此前没人做完整的组合。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">daily.dev 帖子高亮其免费路线："Piper TTS + FFmpeg + Remotion + Archive.org 素材，一分钱不花跑通完整管线"</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">社区讨论集中在 provider 评分机制：7 个维度打分后自动选源，避免每次都手动比价</li>
+  </ul>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/calesthio/OpenMontage</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">6. VoiceStudio — 全本地的 ElevenLabs 替代：克隆、配音、转录、有声书</strong></p>
+  ![voicestudio-demo.gif](./voicestudio-demo.gif)
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.3/10</span>
+  </section>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">debpalash 开发的全本地语音工作站：语音克隆、配音、转录、有声书制作，不经过任何云端 API。14.9K 星、单日 +832 星，说明"语音数据不出本机"是刚需场景——配音演员的声音资产、企业内部会议录音、有声书版权素材，这些都不能往第三方 API 里传。项目把多个本地模型（STT/TTS）串成一条可用的流水线，避免开发者自己组装模型和预处理脚本。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/debpalash/VoiceStudio.git
+cd VoiceStudio
+# 按 README 安装依赖并下载本地模型权重
+# 界面里选择任务：克隆声音（少量样本）/ 转录音频 / 生成配音 / 制作有声书</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">ElevenLabs 把语音克隆做成了云端 API 生意，VoiceStudio 证明同一件事可以在本地跑通。对配音、播客、有声书创作者，省的是持续的 API 账单；对合规敏感的企业，省的是数据出境审批。<strong style="color:#07c160;font-size:20px;">14.9K 星</strong>的体量在语音工具里已属前列，单日 832 星的增速说明它撞上了一个正在扩大的需求：本地语音流水线。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">GitHub Trending 当日增速前五，AI 语音类仓库里的单日最高</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">README 的 quick-switch 动图展示多模型切换，社区反馈集中在"克隆音色与真人接近度"的对比测试</li>
+  </ul>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/debpalash/VoiceStudio</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">7. ponytail — 让 agent 像最懒的资深工程师一样思考</strong></p>
+  ![ponytail-demo.png](./ponytail-demo.png)
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+  </section>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">DietrichGebert 维护的项目，核心信条一句话："最好的代码是你没写的代码。"（The best code is the code you never wrote.）给 AI agent 注入"最懒资深工程师"的行为模式：动手前先找现有实现、找标准库方案、评估改动最小路径，能不改代码就不改。<strong style="color:#07c160;">121.7K 星</strong>的老仓库今天以 +1,354 星登顶当日全站增速榜首，说明 2026 年 agent 写得越多，"删掉不需要的代码"这门手艺越值钱。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/DietrichGebert/ponytail.git
+# 把仓库里的规则/提示词文件接入你的 agent（Claude Code 放 CLAUDE.md 引用，
+# Cursor/Codex 放 rules 目录），之后 agent 会在动手前先检查最小改动路径</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">单日 <strong style="color:#07c160;font-size:20px;">+1,354 星</strong>是今天 GitHub 全站最高增速。agent 时代真正的成本发生在代码写完之后——多一层抽象、多一个没用的工具函数，都是长期维护债务。这个项目把"克制"做成了可注入的规则集，121.7K 星说明开发者群体对"少即是多"的共识在扩大。它是今日热榜上最便宜的一类工具：零安装、纯提示词，当天就能用。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">GitHub Trending 当日全站增速第一，一个"教 agent 不写代码"的项目登顶，本身就是社区对 agent 产出质量的投票</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">项目 slogan 被社区反复引用："Makes your AI agent think like the laziest senior dev in the room."</li>
+  </ul>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/DietrichGebert/ponytail</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">8. mattpocock/skills — TypeScript 圈顶流维护的工程技能合集</strong></p>
+  ![mattpocock-skills-demo.png](./mattpocock-skills-demo.png)
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+  </section>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Matt Pocock（Total TypeScript 创始人，TypeScript 教育领域最有名的名字之一）维护的工程类 Claude 技能合集。245.3K 星、单日 +1,166 星，是 skills 生态里总星数最高的仓库之一。与通用技能包不同，这个合集把 TS/前端工程的最佳实践、项目结构判断、代码评审纪律封装成 agent 可直接加载的技能文件，开发者能拿名人的工程方法论当上下文喂给自己的 agent。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 克隆后把技能目录链接进 Claude Code：
+git clone https://github.com/mattpocock/skills.git ~/.claude/skills/mattpocock-skills
+# 或在对话中说："加载 mattpocock 的 skills 后，审查这个 TS 项目的类型设计"</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">skills 生态的分化正在发生：通用技能（代码审查、TDD）之外，带着个人工程口碑的技能合集开始领跑。mattpocock 的名字对 TS 社区就是质量背书，<strong style="color:#07c160;font-size:20px;">245.3K 星</strong>意味着大量团队把它当 CLAUDE.md 的标准配件。单日 <strong style="color:#07c160;">1,166 星</strong>的增速说明 skills 分发从"找工具"转向"找方法论"。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">GitHub Trending 当日全站前列，skills 类仓库增速仅次于 ponytail</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">社区反馈集中在"技能文件即知识资产"：个人方法论通过 skills 变成可复用的团队资产</li>
+  </ul>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/mattpocock/skills</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">9. Qwen3.8-Max-0902 — CodeArena 前端编程第一，每百万 token 5 美元</strong></p>
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+  </section>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">通义千问 9 月 2 日把 Qwen3.8-Max 升级到 0902 版本。在上月开源版反馈基础上，围绕编程（Coding）和专业办公（Cowork）做了针对性后训练，主打企业复杂任务、科研和长周期任务。已上线千问 AI 平台 API，并同步接入千问办公、Qoder 和千问 APP。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 通过阿里云百炼 / 千问 AI 平台调用，模型名 qwen3.8-max-0902
+# OpenAI 兼容接口：
+# base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+# model: qwen3.8-max-0902</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">CodeArena 前端编程总榜 <strong style="color:#07c160;font-size:20px;">1691 分</strong>登顶（较上版 +22 分），官方称多步推理、工具调用、端到端 app 生成均刷新上限。价格是这场更新的真正杀伤力：CodeArena 性价比榜（帕累托前沿）显示 0902 每百万 token 综合均价约 <strong style="color:#07c160;">$5</strong>，而性能排第二、第三的模型分别要 $20 和 $12。以 1/4 的价格拿榜首，这是国产闭源模型第一次在"性能 + 价格"双榜同时站到最前沿。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">知乎官方文章评论区：开发者把焦点放在 Qoder 的接入——本地编码 agent 直接吃 0902 的新能力</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">社区对比对象集中在 Gemini 3.8 Flash（$0.75/$3.75）：两个"性能榜前列 + 白菜价"的模型同日出现，价格战从 Flash 档烧到了 Max 档</li>
+  </ul>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://zhuanlan.zhihu.com/p/2078438726401901042</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">10. 星火 X2.5-4B / 1.7B — 4B 端侧模型在 agent 基准上越级打怪</strong></p>
+  <section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+    <span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.5/10</span>
+  </section>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">科大讯飞 9 月 1 日在 Hugging Face 上线两个端侧模型：星火 X2.5-4B 和 1.7B，权重、代码仓库、部署文档全开源，MaaS 平台 API 同步上线并限时免费。定位是给断网设备装一个"真能干活"的引擎：车机、音箱、产线机器人这些算力紧张、网络时断时续的场景。9 月 7 日科大讯飞还将发布旗舰通用大模型星火 X2.5。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 下载权重（Hugging Face / ModelScope 均可）
+huggingface-cli download XHToken/Spark-X25 --include "*4B*"
+# GitHub 仓库含部署代码：https://github.com/（仓库名 Spark-X2.5）
+# 或走 MaaS 平台 API（限时免费）</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">4B 参数在 agent 基准上打出了跨体量的成绩：多轮工具调用 τ³-bench <strong style="color:#07c160;">30.4</strong>（几十步操作容错是端侧模型的传统短板），MCP 协议测试 MCP-Atlas <strong style="color:#07c160;font-size:20px;">54.6</strong> 为同尺寸最高，自主网页检索 BrowseComp 40.9，复杂指令遵循 IFBench 75.0。1.7B 版本在 MCP-Atlas 拿 23.4，同样是同尺寸第一档。这些数字的意义在于：agent 能力不再是大模型的专利，4B 模型能装进更多设备。</p>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+  <ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">新智元文章的判断被社区转发："过去评测总问这个模型有多聪明，行业现在该问的是，这个模型能适配多少台设备"</li>
+    <li style="margin-bottom:6px;font-size:15px;color:#555;">评论区关注点：限时免费结束后 MaaS 定价，以及端侧部署的内存占用实测</li>
+  </ul>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>来源：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://zhuanlan.zhihu.com/p/2078547605005546997</span></code>
+  </p>
+  <p style="text-align:center;margin:32px 0;color:#07c160;letter-spacing:8px;font-size:12px;">··· ◆ ···</p>
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">其他值得关注</strong></p>
+  <section style="margin-bottom:14px;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">NousResearch/hermes-agent</p>
+    <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:2.0;">跨 Telegram/Discord/Slack/WhatsApp/邮件网关的开源 agent，带记忆与 MCP 集成，240K 星的老牌项目重上增速榜</p>
+    <p style="margin:0;font-size:13px;color:#999;">GitHub 单日 +533 星，总 240.2K</p>
+  </section>
+  <section style="margin-bottom:14px;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">Gitlawb/openclaude</p>
+    <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:2.0;">类 Claude 编码代理，可在任意环境运行，当日热榜工具类第二</p>
+    <p style="margin:0;font-size:13px;color:#999;">单日 +775 星，总 32K</p>
+  </section>
+  <section style="margin-bottom:14px;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">Imbad0202/academic-research-skills</p>
+    <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:2.0;">学术研究四段式技能（写→审→改→定稿），学术写作场景的技能持续走热</p>
+    <p style="margin:0;font-size:13px;color:#999;">单日 +799 星，总 45.6K</p>
+  </section>
+  <section style="margin-bottom:14px;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">blader/humanizer</p>
+    <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:2.0;">去除 AI 生成痕迹的 agent 技能，与本刊去 AI 味审计同源需求</p>
+    <p style="margin:0;font-size:13px;color:#999;">单日 +374 星，总 40.5K</p>
+  </section>
+  <section style="margin-bottom:14px;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">JuliusBrussee/caveman</p>
+    <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:2.0;">用"原始人式"极简表达让 agent 节约约 65% token</p>
+    <p style="margin:0;font-size:13px;color:#999;">单日 +238 星，总 102.7K</p>
+  </section>
+  <section style="margin-bottom:14px;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">METR 报告：OpenAI/Hugging Face 黑客事件</p>
+    <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:2.0;">独立第三方对 1200 个 agent 逃逸事件的复盘发布，多 Agent 系统的安全审计进入外部机构视野</p>
+    <p style="margin:0;font-size:13px;color:#999;">HN 92 pts / 73 comments，9/2</p>
+  </section>
+  <section style="margin-bottom:14px;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">WebMCP Challenge</p>
+    <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:2.0;">OpenAI 联合 Chrome、Cloudflare、Shopify、Vercel 等办 10 天黑客松，$35K 奖金，WebMCP 让网页直接向 agent 暴露工具</p>
+    <p style="margin:0;font-size:13px;color:#999;">9/2-9/4 提交截止</p>
+  </section>
+  <section style="margin-bottom:14px;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">ChromeDevTools/chrome-devtools-mcp</p>
+    <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:2.0;">Chrome DevTools 官方 MCP，编码 agent 直接调浏览器调试接口</p>
+    <p style="margin:0;font-size:13px;color:#999;">单日 +148 星，总 50.7K</p>
+  </section>
+  <section style="margin-bottom:14px;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">OpenClaw 2.0</p>
+    <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:2.0;">2026 年增速最快的开源 agent 项目发布 2.0 大版本</p>
+    <p style="margin:0;font-size:13px;color:#999;">Product Hunt 9/2 日榜第 2</p>
+  </section>
+  <section style="margin-bottom:14px;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">Coder Agent Relay</p>
+    <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:2.0;">Coder 与 SpaceXAI 合作，Cursor 的规划推理在 Cursor 侧、工具调用在客户 VPC 内执行，面向银行/政府/军工场景</p>
+    <p style="margin:0;font-size:13px;color:#999;">private preview</p>
+  </section>
+  <section style="margin-bottom:14px;">
+    <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;">veRL 0.9.0 + FlagOS</p>
+    <p style="margin:0 0 4px 0;font-size:15px;color:#666;line-height:2.0;">字节 RL 训练框架落地沐曦/天数智芯/寒武纪适配，国产多芯片 RL 后训练打通</p>
+    <p style="margin:0;font-size:13px;color:#999;">知乎 9/2</p>
+  </section>
+  <section style="background-color:#f5f7fa;border-radius:8px;padding:16px 18px;margin:24px 0 0 0;">
+    <p style="margin:0 0 10px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">本期关键词</p>
+    <p style="margin:0;font-size:15px;color:#555;text-align:left;">Gemini 3.8 Flash · Muse Spark 1.3 · 电商 Agent 蓝图 · 多 agent 源码控制 · 端侧 4B agent 基准</p>
+  </section>
+</section>
