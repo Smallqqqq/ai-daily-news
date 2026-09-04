@@ -1,0 +1,109 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+  <p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-04</p>
+  ![summary.png](./summary.png)
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">今天两条：一条治本地开发最烦的端口号记忆负担（portless），一条治 AI 编码 agent 的话痨输出（caveman）。</p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">Portless — 端口号，从此有名字</strong></p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">本地开发有一项重复劳动几乎没人写进文档：记端口号。next 起在 3000，Vite 在 5173，同事的项目在 8080，浏览器标签页开多了连哪个 Tab 是哪个服务都分不清。到了 AI 编码 agent 这里问题更严重——它压根不记得上一次是哪个端口，跨 worktree 并发开发时甚至会在同一端口上静默连到另一个分支的服务，你看着页面以为在测自己的改动，实际在测别人的。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Portless 是 Vercel Labs 的一个本地反向代理，把端口号整个替换成命名 URL：<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">portless myapp next dev</code> 之后，访问 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">https://myapp.localhost</code> 就行。原理不复杂：代理进程监听单端口，读每个请求的 Host 头做路由；启动子进程时通过 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">PORT</code> 环境变量给它分配 4000–4999 区间内的随机端口，主机名到端口的映射写进 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">~/.portless</code> 的 JSON 文件。HTTPS 和 HTTP/2 默认开启——首次运行自动生成本地 CA 并写入系统信任库，浏览器不再出警告。对 Next.js/Express/Nuxt 这类读 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">PORT</code> 的框架直接注入，Vite/Astro/Angular/Expo 这类需要 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--port</code>/<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--host</code> 的框架也会自动补参数。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">对 agent 最有价值的点是 worktree 支持：在同一仓库的链接 worktree 里启动，端口会<strong style="font-weight:bold;color:#000;">自动把 git 分支名作为子域名前缀</strong>——<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">fix-ui</code> 分支跑起来就是 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">https://fix-ui.myapp.localhost</code>，多个分支并行开发互不干扰，不会再有"连到分支 B 的页面改分支 A 的代码"这种事故。agent 想知道服务地址也不用猜，一个 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">portless get &lt;name&gt;</code> 返回稳定 URL。Monorepo 里 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">apps/web</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">apps/api</code> 还会自动变成 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">myapp.localhost</code> 和 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">api.myapp.localhost</code>。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">常用子命令：<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">portless list</code> 看当前路由、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">portless alias</code> 把 Docker/PM2 端口映射成命名 URL、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">portless service install</code> 注册开机自启服务（Windows/macOS/Linux 都支持）、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">portless doctor</code> 做连接诊断。<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--tailscale</code>/<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--funnel</code>/<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--ngrok</code> 可把服务分享给团队或公网，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--lan</code> 模式在局域网用 mDNS 的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">.local</code> 地址。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">仓库数据：12.1K stars、394 forks、160 commits，当前版本 v0.15.6（一周前刚发布，更新节奏是每周一版），Apache-2.0，要求 Node.js 24+。README 副标题原话是「Replace port numbers with stable, named .localhost URLs for local development. For humans and agents.」。注意它只适用于本地开发，CI 里要设 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">PORTLESS=0</code>，也不替代进程守护（崩溃恢复交给 PM2 之类）。</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 全局安装
+npm install -g portless
+
+# 起一个命名 URL 的 dev server
+portless myapp next dev
+# 浏览器打开 https://myapp.localhost</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+  <section style="margin:20px 0;">
+    <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Portless（今日推荐）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm install -g portless</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>命名 URL + 自动 HTTPS + worktree 分支子域 + 面向 agent 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">get</code> 命令</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+      <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 12.1K</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Caddy</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">brew install caddy</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>通用反向代理，生产可用，Caddyfile 全手动，无端口管理</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 48K+</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">ngrok</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">brew install ngrok</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>公网临时隧道，Portless 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--ngrok</code> 就是调它</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费额度+付费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>老牌</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">mkcert + 各框架插件</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i -D</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>只解决 HTTPS 证书，管不了端口和命名 URL</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>较小</p>
+    </section>
+  </section>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">选 Portless 而不是 Caddy/ngrok 的理由：它把「寻址」这一件事做到了单一职责——本机反向代理只服务本地开发，worktree 分支自动子域和 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">portless get</code> 是专门为 agent 协作设计的，Caddy 和 ngrok 都做不到；框架自动注入也免去了每个项目手写启动参数的重复。</p>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>⭐ 12.1K · v0.15.6 · Apache-2.0 · GitHub：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/vercel-labs/portless</span></code>
+    <span>&nbsp;·&nbsp;要求：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>Node.js 24+</span></code>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+  <p style="font-size:22px;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-weight:bold;">Caveman — 让 AI 少说三分之二的话，代码一个字节不少</strong></p>
+  ![caveman-demo.gif](./caveman-demo.gif)
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">用 AI 编码 agent 改过代码，多半见过这个场面：让改一个函数，它先感慨三句"好的！我理解了这个 bug 的根源"，再复述一遍需求，然后才给代码。这些叙事性文字占了不少 output token，AI 记账时你付的也是这些 token 的钱。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">Caveman 是开发者 Julius Brussee 做的 Claude Code skill，把 agent 的输出压成"山顶洞人"式极简语——但只压文字，不压代码。它的做法是一个 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">SKILL.md</code> 定义 Ultra-compressed 通讯模式：删冠词、填充词、客套话和犹豫词，允许碎片句，<strong style="font-weight:bold;color:#000;">代码块、错误消息、技术术语、文件路径一字不动</strong>，回答偏好 [问题][动作][原因]。[下一步] 的公式。强度分档：lite（去填充词保全句）、full（默认、允许碎片）、ultra/silence（重度缩写和 X→Y 因果箭头）。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">效果有基准：10 个标准任务下平均输出 token 从 1214 降到 294，省约 <strong style="color:#07c160;">65%</strong>。一个具体例子是 69 token 的解释("The reason your React component is re-rendering...")变成 19 token("New object ref each render. Inline object prop = new ref = re-render. Wrap in <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">useMemo</code>.")。大版本代理还多一层输入压缩：<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">caveman claude</code> 包裹 agent 后按载荷类型压缩它读取的 JSON、日志、diff，API 内部记录了输入 token 平均省 <strong style="color:#07c160;">33.2%</strong>，18/18 个正确性检查全通过，原始内容按字节存本地 SQLite 可恢复。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">配套命令值得一用：<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">/caveman-commit</code> 生成极简 Conventional Commits、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">/caveman-review</code> 一句话 PR 评论、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">/caveman-stats</code> 统计本机省了多少 token、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">/caveman-compress</code> 重写 CLAUDE.md 这类记忆文件再省约 46% 输入 token。cavecrew 系列压缩子代理预设（investigator/builder/reviewer）号称比普通子代理便宜约 60%。安装对 30+ 种 agent 通用（Claude Code、Codex、Cursor、Gemini CLI、Windsurf 等都有适配）。</p>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">两个注意点。其一，README 自己写了反向案例：HTML 面板这类场景输入压缩反而 +9.9%，维护者反复强调「测量的是你自己的配置」，别只盯着别人的数字。其二，压缩对阅读体验有代价——它不解释"为什么另一种修复方案不安全"这类内容，遇到敏感信息时还有 auto-clarity 机制自动降级回正常语气。Telemetry 默认开启但只记命令名和 token 数（不含提示词和代码），<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">caveman telemetry off</code> 可以关。License 上是 skill/CLI MIT 免费、引擎和代理部分 BSL-1.1（2030 年前后转 Apache-2.0）。</p>
+  <pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 方式一：Skill 版（MIT 免费，30+ agent 通用）
+npx skills add JuliusBrussee/caveman
+# 若未自动生效，输入 /caveman 手动切换
+
+# 方式二：Claude Code 插件市场安装
+claude plugin marketplace add JuliusBrussee/caveman
+claude plugin install caveman@caveman</code></pre>
+  <p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+  <section style="margin:20px 0;">
+    <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Caveman（今日推荐）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add JuliusBrussee/caveman</code></p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>输出压 65%、输入压 33%，代码/报错不动，强度可调</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>Skill 免费（引擎 BSL-1.1）</p>
+      <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 103.1K</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Paritok（本日报 8-28 推荐）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>pip 安装</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>4B 压缩模型，压的是<strong style="color:#666;">输入</strong> token</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>较小</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">LM Proxy（本日报 9-02 推荐）</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm 安装</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>网关智能路由换模型省钱，改的是模型不是话术</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅+免费层</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>中</p>
+    </section>
+    <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+      <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">手工提示词 "be concise"</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>—</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>效果不稳定，模型经常阳奉阴违</p>
+      <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+      <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+    </section>
+  </section>
+  <p style="font-size:16px;color:#333;line-height:2.1;margin:0 0 1.4em 0;text-indent:2em;">为什么是 Caveman：上上周（8-28）推的 Paritok 压输入、上周（9-02）推的 LM Proxy 换模型，各管一段，而 Caveman 是目前唯一把<strong style="font-weight:bold;color:#000;">输出叙述</strong>压下来且代码/错误信息零损伤的方案——103.1K stars 直接把同类对手甩开一个量级，所以即便 token 成本这个领域 7 天内已被覆盖，它仍值得今天的推荐位。它也不是"免费省钱魔术"：省的是垃圾叙述，换来的阅读体验下降要自己权衡，建议先 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">lite</code> 档跑一周再决定要不要上 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">full</code>。</p>
+  <p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+    <span>⭐ 103.1K · v2.6.0 · MIT/BSL-1.1 · GitHub：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>github.com/JuliusBrussee/caveman</span></code>
+    <span>&nbsp;·&nbsp;要求：</span>
+    <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>Node.js 22.13+</span></code>
+  </p>
+</section>
