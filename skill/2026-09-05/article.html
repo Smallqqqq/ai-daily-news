@@ -1,0 +1,122 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-05</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你从 GitHub 上看到一个 skill，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add</code> 一条命令装上了。<span style="font-weight:bold;color:#000;">三个月后你想升个级，翻不到那个仓库在哪个文件夹；团队里三个人各装各的版本，你修的 bug 他们根本没拉到。</span>Skill 的分发一直停在"拷贝文件"时代：装好靠运气，升级靠记忆，溯源靠考古。GitHub 官方出的 gh skill 把 npm 那套补了进来，只是这次管的是 AI agent 的技能包。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个命令，从搜索、预览、安装、升级到发布自己写的 skill，全程覆盖。GitHub CLI v2.90.0 起内置，Public preview，官方维护。</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+![ghskill-demo-1](./ghskill-demo-1.png)
+<p style="font-size:14px;color:#999;margin:0 0 16px 0;text-align:left;">（gh skill install 实际运行：指定仓库、技能、agent 类型、版本，终端里完成安装）</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">它解决什么问题</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent Skills 生态 2026 年后爆炸，但工具层一直是空的：技能分散在各人目录里，没有依赖图、没有版本历史、没有完整性校验。你自己做 skill 分发更原始——压缩包、飞书群、README 里贴"复制这段 curl"。收的人装完就断联，你发新版他也不知道。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">gh skill 就是那个缺失的管道层：GitHub 仓库当 npm registry，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">skills/*/SKILL.md</code> 约定当 package.json，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gh skill install</code> 当 npm install。它解决的是安装前的筛选、安装中的位置问题、安装后的升级与溯源，贯通一条链。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">核心原理</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">指令、脚本、资源打包成 SKILL.md，跟随开放 Agent Skills 规范（agentskills.io），跨主机通用：Copilot、Claude Code、Cursor、Codex、Gemini CLI 都能加载，gh skill 只负责"怎么安全地把它们从 GitHub 弄到本地"。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">具体机制三个：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">约定式发现</strong>：仓库按 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">skills/*/SKILL.md</code> 结构自动发现技能，支持嵌套命名空间（如 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">terraform/code-generation/skills/...</code>）。精确路径装技能可跳过全树遍历，大仓库快很多。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">内容寻址的版本追踪</strong>：每次安装记录源目录的 git tree SHA 写进 SKILL.md frontmatter；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gh skill update</code> 对比本地与远程 SHA，检测的是真实内容变更，不是版本号 bump。frontmatter 里的溯源元数据（来源仓库、ref、tree SHA）随文件走——拷贝、搬移、重组都不丢。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">发布侧防篡改</strong>：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gh skill publish</code> 按规范校验并检查 tag 保护、secret scanning、code scanning 等仓库设置，可开启 immutable release——发布后内容连仓库管理员都改不了。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--pin v2.0.0</code> 或 commit SHA 锁定后，update 会跳过已固定的技能，升级成为主动决策。</li>
+</ul>
+![ghskill-demo-2](./ghskill-demo-2.png)
+<p style="font-size:14px;color:#999;margin:0 0 16px 0;text-align:left;">（gh skill search 按主题查找技能，结果即搜即装）</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">安装配置</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">前提：GitHub CLI v2.90.0+ 且已 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gh auth login</code>（search/preview/install/publish 走 GitHub API，需要认证）。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 1. 升级 GitHub CLI（Windows 用 winget/scoop 同义）
+brew upgrade gh            # macOS / Linux
+winget upgrade GitHub.cli  # Windows
+
+# 2. 确认版本 ≥ 2.90.0
+gh --version
+
+# 3. 装一个技能到 Claude Code，用户级全局可用
+gh skill install github/awesome-copilot git-commit --agent claude-code --scope user</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装完技能自动落到对应 host 的正确目录，不用手动找路径。默认 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--scope project</code> 装进当前 git 仓库；Claude Code、Cursor、Codex、Gemini CLI 等多个 agent 在项目级共享 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.agents/skills</code> 目录——多个 host 解析到同一目的地时只装一次。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">使用指南</p>
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景一：搜索并安装一个社区技能</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装之前先搜、先预览，这是官方推荐姿势。GitHub 明确警告：技能可能含 prompt 注入或恶意脚本，它们不被平台验证。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 按主题搜索技能
+gh skill search mcp-apps
+
+# 安装前先看 SKILL.md 全文和目录结构
+gh skill preview github/awesome-copilot git-commit
+
+# 交互式安装（从仓库里挑技能）
+gh skill install github/awesome-copilot
+
+# 直接安装 + 指定 agent
+gh skill install github/awesome-copilot documentation-writer --agent claude-code --scope user</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：技能出现在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">~/.claude/skills/&lt;name&gt;/</code>，frontmatter 里带上了 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">metadata.github-*</code> 溯源字段，下次会话被测到即自动加载。非交互场景下不带技能名只列匹配项，输出是 TSV，可以管道给 grep 挑完再跑。</p>
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景二：锁定版本，让团队装的东西一致</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 固定到 tag 或 commit SHA（二选一）
+gh skill install github/awesome-copilot conventional-commit@v1.2.0 --agent claude-code
+gh skill install github/awesome-copilot conventional-commit --pin 329042b24ec --agent claude-code</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：装到的技能就是那份锁定的内容，后续 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gh skill update --all</code> 会跳过它，直到你显式改 pin。谁想看这份技能到底装的是哪版，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gh skill list</code> 一眼看到来源仓库和 ref。</p>
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景三：发布自己写的技能</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你的团队内部技能也可以走这条管道，内部仓库 + 私有 Release 即可。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 校验规格先跑 dry-run，不真正发布
+gh skill publish --dry-run
+
+# 自动修复元数据问题后发布
+gh skill publish --fix</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：publish 校验通过后生成 GitHub Release，别人 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gh skill install 你的仓库/技能名</code> 就能装。校验会检查 license 等字段，偏好先补全。发布时开启 immutable release 的话，这条供应链才真正闭环。</p>
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景四：agent 自己管理自己的技能（进阶循环）</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>gh skill search &lt;topic&gt; --json skillName,repo,namespace
+gh skill preview &lt;repo&gt; &lt;skill&gt;
+gh skill install &lt;repo&gt; &lt;skill&gt; --agent claude-code --pin &lt;sha&gt;
+gh skill update --all          # 定期刷新</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这个循环可以直接写进你的 agent 指令里：让它自己发现、预览、装、定期升级，你在审批层把关。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">进阶技巧</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">本地仓库分发</strong>：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gh skill install ./my-skills-repo --from-local</code> 把技能从本地目录复制进环境并注入跟踪元数据，团队内不想上远端也能用，还是能被 update 追踪。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--dir</code> 覆盖</strong>：想放到某个特殊目录（如多环境隔离目录）用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--dir</code>，优先级高于 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--agent</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--scope</code>。</li>
+</ul>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">常见踩坑</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">手工 copy 的技能 update 不认</strong>：没走 gh skill 装进环境的技能没有 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">metadata.github-*</code> 字段，update 会跳过并在末尾提示往源装一遍。解决办法：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gh skill install &lt;repo&gt; &lt;skill&gt; --force</code> 重装纳入追踪。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--pin main</code> 是伪锁定</strong>：分支名可被接受但随分支漂移。真正锁死只能 tag 或 commit SHA。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">非交互环境卡在追问</strong>：更新那些无源 metadata 的本地方案技能时，交互式追问会卡住脚本。传技能名（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gh skill update git-commit</code>）或 stdin 关闭（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">&lt; /dev/null</code>）绕过。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">Public preview 状态</strong>：命令和参数随版本变化，升级 gh 后过一眼 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gh skill --help</code>。</li>
+</ul>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类技能对比</p>
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">gh skill（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>GitHub CLI v2.90.0+ 内置</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>官方标准化：搜索/预览/装/升/发布一条链，版本锁定 + 供应链溯源</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>装新技能、团队分发</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>GitHub 官方</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">asm</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx agent-skill-manager</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>盘点、审计、评分已装技能，19 种 agent 覆盖</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>管"装完之后"的库存</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 686</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">npx skills</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx skills add</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>到处装二进制，多框架集合</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>快速试装合集</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>热</p>
+  </section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">gh skill 解决"从哪来、怎么锁、怎么溯源"，asm 解决"装了多少、安不安全";两者不在同一层，建议叠用——gh skill 装，asm 定期审计。GitHub 官方出品，与 GitHub 仓库生态天然一体。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ GitHub 官方</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>v2.90.0+（Public preview）</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>Changelog</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>官方文档</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://cli.github.com/manual/gh_skill</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <span>Agent Skills 规范</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>Changelog</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.blog/changelog/2026-04-16-manage-agent-skills-with-github-cli/</span></code>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">今日小结</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">如果你已经装了不少 skill，或正要给团队做技能分发，这个命令值得今天升级 gh 就用上，一条命令把装技能变成 npm 级的体验。花十分钟升级加试装，换回来的是升级可追溯、版本可锁定、发布可防篡改。唯一要记住的是：GitHub 不审内容，装之前先 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gh skill preview</code>。</p>
+</section>

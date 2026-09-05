@@ -1,0 +1,150 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-05</p>
+![summary](./summary.png)
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三条：一条是在你正在用的 IDE 里就位的编码智能体，一条是写 MCP 服务器的新手感，一条是让 Agent 从单打独斗变成流水线。</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">Qoder CN — JetBrains 里 39,286,381 次下载的编码智能体</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">8 月 26 日推 Antigravity 时说过：编码 Agent 正在搬进普通 IDE。今天这条把结论推到底——Qoder CN（前身通义灵码）在 JetBrains Marketplace 的下载量是 <strong style="color:#07c160;font-size:20px;">39,286,381 次</strong>，插件市场里断层第一，由阿里云直接维护。装完它就是插件本身，IntelliJ IDEA、PyCharm、WebStorm、GoLand、CLion 全覆盖，人不用挪窝。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它跟"补全+聊天"的插件不是一个物种。<strong style="font-weight:bold;color:#000;">Agent 模式</strong>把任务拆给专职专家——官网截图上能看到 Frontend Dev Taylor、Frontend Dev Jay、QA Chris、Backend Dev James 各领一摊，多文件并行改，改完出 diff 面板；配套 Quest Mode 按规格驱动任务流，内存记忆记住项目偏好，MCP 协议能接外部工具，Repo Wiki 沉淀代码库知识。模型不需要 BYOK：接入模型列表里包括 <strong style="font-weight:bold;color:#000;">Qwen3.6-Plus、GLM-5.1、MiniMax-M2.7</strong> 这类国产头部（社区评测），国内直连没有梯子问题。企业侧有 SSO、组织模型与知识库共享。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">具体使用场景：在 PyCharm 里选中一段代码让它重构，Agent 自己翻调用链、改完跑测试把结果贴在任务面板；或者开着 Quest Mode 让它按一份需求文档连续推进多文件改动，你在验收节点上审 diff 而不是盯每一行输入。官方定位是官网首页那句"以编程智能体为核心引擎"，从想法到实现，中间环节由智能体自动化。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据侧：39,286,381 downloads（JetBrains API 实测）、插件本体免费、内置免费额度（社区评测称新客约 2000 credits），模型付费从约 $2/月起步、列表价约 $10/月。版本更新活跃，评分和评价数量在同类中领先。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># JetBrains Marketplace 搜索 Qoder（或 Qoder CN）直接安装
+# 下载地址：https://qoder.com.cn</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Qoder CN（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>JetBrains Marketplace</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>39.3M 下载、内置国产模型、Agent+Quest 模式、企业 SSO</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费，约 $2/月起</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⬇ 39,286,381</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">JetBrains AI Assistant</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>JetBrains 内置</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>厂商原生，模型灵活切换</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>约 $10/月</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">GitHub Copilot for JetBrains</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>插件市场</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>生态最大，补全+Chat</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>约 $10/月</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Sweep</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>JetBrains Marketplace</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>1.5B 开源 next-edit 补全模型</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费+付费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">推荐理由：跟 10 天前推的 Antigravity 相比这是另一个量级的市场存在——39.3M 下载摆在那里，用户验证和持续维护都不是问题；同期 IDE 插件里，它的差异化是模型不用自己接（内置国产模型直连）和企业功能完整。同领域重磅新秀：距上次 IDE 扩展推荐仅 10 天，下载量级碾压同类。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>🏪 JetBrains Marketplace</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>⬇ 39,286,381 次下载</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>插件页</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://plugins.jetbrains.com/plugin/17809</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <span>官网</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://qoder.com.cn</span></code>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">xmcp — 文件路由写 MCP 服务器，热重载，Vercel 零配置</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">写 MCP 服务器的痛点一直很具体：手搭 @modelcontextprotocol/sdk，路由、鉴权、部署各管各的，改一个工具要重启，上线远程要自己拼运输层。xmcp（basement.studio 出品，MIT）把这一整套压成"像写 Next.js 一样写 MCP"。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">核心机制是文件系统路由：<strong style="font-weight:bold;color:#000;">tools/ 目录下的文件自动注册成 MCP tools，prompts/ 目录自动注册 prompts</strong>，改文件即时热重载，开发时不用重启。中间件是内置工具包，鉴权和自定义逻辑都能挂；配置可扩展，可以自定义 MCP server 配置；部署是任何地方都可以，Vercel 零配置（项目挂在 Vercel OSS Program 计划里）。装进已有项目也行：npx init-xmcp 可以直接在现有 Next.js 或 Express 项目里初始化。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">使用场景举例：写一个"查库存"的 MCP 工具，往 tools/ 里放一个函数文件，告诉 agent 用工具列表，完事；想给工具加"只允许特定用户调用"，挂一个中间件，不用动工具函数本身。从建项目到上线，命令不超过三步。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据：1.3K stars、1,992 commits、MIT、npm 包 create-xmcp-app 周下载 811，挂 Vercel OSS Program 2026。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx create-xmcp-app@latest   # 新建项目
+npx init-xmcp@latest         # 在已有 Next.js/Express 项目中初始化</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">xmcp（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx create-xmcp-app</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>文件路由、热重载、中间件、Vercel 零配置</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 1.3k</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">FastMCP</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>pip install fastmcp</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Python 向 MCP 框架，工具 API 全面</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 27k</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">官方 TS SDK</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm i @modelcontextprotocol/sdk</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>规格权威，路由/部署全手写</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Cloudflare 官方模板</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm create cloudflare 模板</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>直达 Workers 的 demo 模板</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费（平台）</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">推荐理由：Python 侧早有 FastMCP 这样的顺手框架，TS 侧一直没有对等的东西——xmcp 补上这个位置，热重载和 Vercel 零配置恰好击中"写完就想让 agent 用上"的节奏。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 1.3k</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>MIT</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>GitHub</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/basementstudio/xmcp</span></code>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">oh-my-claudecode — 38.9K stars，单 Agent 变五阶段团队</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">单个 Agent 干大活有个结构性问题：验证和执行是同一个人。oh-my-claudecode（Yeachan-Heo，底下叫 OMC，MIT，TypeScript）用 teams-first 编排解决它：一条任务指令下去，流水线按 team-plan → team-prd → team-exec → team-verify → team-fix 跑，规划、写规格、并行执行、互相验证、不过关回炉——直到验证者确认没有静默的假完成。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">机制上：<strong style="font-weight:bold;color:#000;">32 个专职 Agent</strong>（架构、研究、设计、测试、数据科学，还有 tier 变体）；自动模型路由，简单任务走便宜模型、复杂推理上贵模型，官方口径省 <strong style="font-weight:bold;color:#000;">30–50%</strong> token；执行层用 tmux 跑真实 CLI 进程——<strong style="font-weight:bold;color:#000;">omc team 2:codex "review auth module"</strong> 会开两个工作面让 Codex 干活，Claude、Gemini、Antigravity、Grok、Cursor 都能当执行者，任务完就退；HUD 状态栏显示编排指标；技能学习从会话里提炼可复用模式写成 SKILL.md（<strong style="font-weight:bold;color:#000;">.omc/skills/</strong> 可提交进仓库共享）。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">使用场景：/team 3:executor "修完所有 TypeScript 错误"——三个执行者并行改，验证者跑 tsc/lint 直到绿；需要第二意见时 /ask codex /ask antigravity 让别的模型交叉审阅，Claude 综合输出；遇到含糊需求先 /deep-interview 苏格拉底式问清楚再动手。自然语言接口是主打，"不用记命令"。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据：约 38.9K stars（多平台快照 36.8K–38.9K）、MIT。注意 Windows 用户需要 WSL2（README 明确 no native Windows without WSL2）。项目与 Anthropic 无关联，是社区项目。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>/plugin marketplace add https://github.com/Yeachan-Heo/oh-my-claudecode
+/plugin install oh-my-claudecode
+# 或 CLI：npm i -g oh-my-claude-sisyphus@latest（注意包名不是 oh-my-claudecode）
+# 装完先跑 /omc-setup</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">oh-my-claudecode（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>插件市场或 npm</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>团队五阶段流水线、32 Agent、模型路由</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 39k</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">CC Workflow Studio</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>插件市场</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>拖拽画布导出工作流</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Blackbox Agent</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>独立安装</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>15 个编码 Agent 一个入口</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>Freemium</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⬇ 2.9M</p>
+  </section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">推荐理由：9 月 2 日推过 CC Workflow Studio（画布式工作流），那是编排的工作流视图；OMC 是运行视图——执行者和验证者互相制衡，为"Agent 交出的活能不能信"提供一个结构解法。距上次编排类推荐 3 天，热度远超前者，同领域重磅新秀。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+  <span>⭐ 38.9k</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>MIT</span>
+  <span>&nbsp;·&nbsp;</span>
+  <span>GitHub</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Yeachan-Heo/oh-my-claudecode</span></code>
+  <span>&nbsp;·&nbsp;</span>
+  <span>npm</span>
+  <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.npmjs.com/package/oh-my-claude-sisyphus</span></code>
+</p>
+</section>
