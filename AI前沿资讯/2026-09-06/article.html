@@ -1,0 +1,195 @@
+<section style="max-width:677px;margin:0 auto;padding:10px 0;font-size:16px;line-height:2.1;color:#333333;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-06</p>
+<section style="background-color:#f0f9eb;border-radius:10px;padding:18px 20px;margin:0 0 28px 0;border:1px solid #c8e6c9;">
+<p style="margin:0 0 10px 0;font-size:15px;color:#2e7d32;line-height:2.0;">本期覆盖 2026-09-05 至 2026-09-06 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Bluesky / Lobsters / arXiv / HF Papers / 知乎 / AI 实验室博客。精选 <strong style="color:#07c160;">6</strong> 条按影响力评分排序。</p>
+<p style="margin:0;font-size:15px;color:#2e7d32;line-height:2.0;">核心主题：<strong style="color:#07c160;">GitHub 趋势榜继续被"技能文件"统治</strong>——ponytail 以 2,845 stars/day 全站第一（连续三日），HumanLayer 官方 skills 首次上热榜，Anthropic 官方技能总库与开源编码 agent opencode 同日回归；HN 头条是 <strong style="color:#07c160;">EEBench V1 首份公开成绩</strong>（383 points / 209 评论），AI 设计电路板首次被严肃量化。</p>
+</section>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">1. ponytail — 2845 stars/day 全站增速第一，"让 agent 不写代码"连续三日霸榜（持续火爆）</strong></p>
+<!-- 跳过源图 ponytail-demo.svg：SVG 格式发布上传接口不支持（同 webp 规则，仅注释说明） -->
+<section style="display:flex;justify-content:flex-start;align-items:center;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.7/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">DietrichGebert 维护的规则集/插件系统：让 AI 编码 agent 动手前爬一道 7 级梯子——跳过不需要存在的东西（YAGNI）→ 复用现有代码 → 用标准库 → 用平台原生特性（如 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">&lt;input type="date"&gt;</code>）→ 用已装依赖 → 单行写法 → 最后才写最小可行代码。关键的边界：一切安全护栏（校验、错误处理、安全、无障碍）明确不裁剪，agent 读代码的深度也不打折。以插件/适配器形式覆盖 20+ agent（Claude Code、Codex、Copilot CLI、Gemini、Cursor、Windsurf 等）。README 自带可复现基准：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">npx promptfoo eval -c benchmarks/promptfooconfig.yaml</code>（single-shot）或仓库 benchmarks/ 工具。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code：
+/plugin marketplace add DietrichGebert/ponytail
+/plugin install ponytail@ponytail
+# Codex：
+codex plugin marketplace add DietrichGebert/ponytail &amp;&amp; codex plugin add ponytail@ponytail
+# 之后用 /ponytail [lite|full|ultra|off] 切换强度，默认 full</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方 agentic 基准（Claude Code 会话改造 full-stack-fastapi-template，12 个功能票，Haiku 4.5，n=4，对比无技能基线）：LOC 减 <strong style="color:#07c160;">54%</strong>、token 减 <strong style="color:#07c160;">22%</strong>、成本减 <strong style="color:#07c160;">20%</strong>、耗时减 <strong style="color:#07c160;">27%</strong>，安全 <strong style="color:#07c160;font-size:20px;">100%</strong>（对照组"YAGNI + one-liners"提示词只有 95%）。极端案例：日期选择器 404 → 23 行，颜色选择器 287 → 23 行（改用原生 &lt;input&gt;）。README 直言"ponytail 是唯一所有指标都下降、且安全性 100% 的对比组"。8/26、9/3 已两度收录，今日 <strong style="color:#07c160;font-size:20px;">2,845/day</strong> 是三天内的新峰值——"AI 写代码"红利期后，社区对"克制"的需求还在上涨。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">README 口号被反复引用："The code you never wrote scales infinitely. Zero bugs, zero CVEs, 100% uptime since forever."</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">与 caveman 的分工是社区共识点：caveman 压缩文字表达，ponytail 压缩代码量，官方 FAQ 明确"两条可以同时用"</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+<span>来源：</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/DietrichGebert/ponytail</span></code>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">2. humanlayer/skills — HumanLayer 官方 5 个技能：把"人来控制 agent"做成可执行流程</strong></p>
+<section style="display:flex;justify-content:flex-start;align-items:center;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.2/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">HumanLayer（做 human-in-the-loop agent 审批层的公司）首次把内部 workflows 开源成 5 个 Claude Code skills：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">improve-claude-md</code>（用 &lt;important if&gt; 块重写 CLAUDE.md，提升指令遵循度）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">narrow-react-prop-types</code>（把 React prop 类型收窄到真实运行路径，剔除 Storybook/mock 状态）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">build-iterated-agentic-loop</code>（脚手架生成"仓库级技能 + 迭代 agent 的 GitHub Actions 工作流 + 记忆文件 + 模板"）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">design-control-loop</code>（访谈式设计 agent 控制环：传感器/控制器/执行器/扰动，并落成可运行组件加定时工作流）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">show-me</code>（用图表、代码形状草图、聚焦的 HTML 产物解释当前主题）。MIT 许可，12 个 commits，说明是刚开源不久的原生仓库。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>npx skills add humanlayer/skills --skill improve-claude-md
+npx skills add humanlayer/skills --skill design-control-loop
+# 安装后项目内直接以斜杠命令调用：/improve-claude-md、/narrow-react-prop-types 等</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">本周 GitHub 热榜的"技能文件"潮里，绝大多数是"让 agent 更会写代码"；humanlayer/skills 的方向不同——它解决的是"agent 的决策该在哪里停下来等人类批准"。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">build-iterated-agentic-loop</code> 把 CI 里 agent 迭代循环与 GitHub Actions 打通，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">design-control-loop</code> 把控制论概念（传感器/执行器/扰动）落成可运行组件；对已经在 agent 工作流上加人工审批层的团队，这是直接可 fork 的参考实现。<strong style="color:#07c160;">2.7k</strong> 星一天 <strong style="color:#07c160;">442</strong> 涨幅，起点不低。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HumanLayer 的一贯立场："agent 出错不可怕，可怕的是没人知道它出错了"——这组 skills 的选材（CLAUDE.md 指令遵循、prop 类型收窄、审查循环）都是人机协作里最常出问题的环节</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">社区关注点：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">narrow-react-prop-types</code> 是少见的"agent 反向清理人工代码"类技能，与主流"agent 生成、人审"方向相反</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+<span>来源：</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/humanlayer/skills</span></code>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">3. anthropics/skills — Anthropic 官方技能总库：从 docx/PDF 到企业工作流的 175K 星仓库回归热榜</strong></p>
+<section style="display:flex;justify-content:flex-start;align-items:center;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.9/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Anthropic 的 Agent Skills 公共仓库：每个技能一个自包含文件夹（SKILL.md 带 YAML frontmatter：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">name</code> + <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">description</code> 两个必需字段），覆盖创意应用（艺术、音乐、设计）、技术任务（Web 应用测试、MCP 服务器生成）、企业工作流（沟通、品牌）、以及驱动 Claude 文档能力的生产级文档技能（docx/pdf/pptx/xlsx）。多数技能 Apache 2.0；文档技能为 source-available（参考实现，非笼统开源）。这个仓库同时是 Agent Skills 标准的官方落地——标准本身见 agentskills.io。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>/plugin marketplace add anthropics/skills
+# 然后 Browse and install plugins → anthropic-agent-skills → document-skills / example-skills → Install now
+# 或直接：
+/plugin install document-skills@anthropic-agent-skills
+/plugin install example-skills@anthropic-agent-skills</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent Skills 是 2026 年 agent 生态的标准件：Claude.ai、Claude API（可上传自定义技能）、Claude Code 全链路支持。本周热榜上 <strong style="color:#07c160;font-size:20px;">10</strong> 个 AI 仓库里 <strong style="color:#07c160;font-size:20px;">6</strong> 个是"技能文件"类（ponytail、humanlayer/skills、mattpocock、humanizer、diagram-design 等），而 anthropics/skills 是这一切的分发基准——它定义了"什么样的技能文件夹结构才合法"。<strong style="color:#07c160;">475/day</strong> 的热度说明技能生态的参与者（写技能的、卖技能的、买技能的）都在回看官方规范。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">仓库声明：这些技能"仅供演示与教育用途"，生产使用需自行测试——但 docx/pdf/pptx/xlsx 四个文档技能已被大量团队用作生产级基线，是社区公认"直接从官方抄最稳"的部分</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">开发者的高频操作：先看官方结构写 SKILL.md，再看商业技能包的差异——官方仓库成了新技能作者的"语法书"</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+<span>来源：</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/anthropics/skills</span></code>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">4. opencode — 204K 星开源编码 agent 回归，build/plan 双 agent 桌面端 beta</strong></p>
+![opencode-demo](./opencode-demo.png)
+<section style="display:flex;justify-content:flex-start;align-items:center;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.7/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">anomalyco 开源的 AI 编码 agent，本次热度回归时主打双 agent 结构：Tab 切换的 build agent（完整权限做开发）与只读 plan agent（分析/探索，默认禁写文件、执行 shell 前先请求许可），另有 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">@general</code> 子代理做复杂搜索和多步任务。桌面版进入 beta（macOS/Windows/Linux 全平台安装包）。MIT 许可，README 译成 20+ 种语言，15,681 个 commits。项目口号就打一句："The open source AI coding agent."</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>curl -fsSL https://opencode.ai/install | bash
+# 或：npm i -g opencode-ai@latest / brew install anomalyco/tap/opencode
+# Windows: scoop install opencode · Arch: sudo pacman -S opencode
+# 桌面版 beta: https://opencode.ai/download</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#07c160;font-size:20px;">204K</strong> 星、15.6K commits 的开源编码 agent 常年是"闭源 agent 的备份选项"，本周 725 stars/day 说明一件事：Claude Code 2.0 与 Cursor 的流量红利让很多人重新评估"能否不依赖单一厂商的 CLI"。计划/执行双 agent 隔离（plan agent 只读、执行前申请）与主流厂商 2026 年下半年在推的"plan gate"是同一思路的开源实现——不花钱就能拿到这套权限模型。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">社区反复对比的差异化：opencode 是唯一"任何厂商模型都能接"的终端 agent（provider 无锁定），配合 magnitude 这类本地推理服务器即可全链路离线跑</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">桌面版 beta 发布后，社区评论焦点是"是否替代 IDE agent"——20+ 语言 README 显示它的全球接受度在提升</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+<span>来源：</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/anomalyco/opencode</span></code>
+<span>&nbsp;·&nbsp;</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://opencode.ai</span></code>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">5. EEBench 首份公开成绩：AI 能设计电路板了吗？— "部分能，但尚不敢让人装起搏器"</strong></p>
+<section style="display:flex;justify-content:flex-start;align-items:center;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.4/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">atopile 团队（声明式电路设计工具 atopile 的创建者）发布 EEBench V1：13 个电路设计任务，AI 以声明式代码（atopile DSL）直接操作元件、连接与电气约束——不用 GUI 点击式 CAD，作者认为这才测得电子工程能力而非"计算机操作能力"。评分完全确定性：构建设计 → 生成电路图与 BOM → 跑 SPICE 仿真与设计检查 → 每项要求产出带上下限的测量值，作者把它类比为"给 coding agent 一个编译器和测试，只是测试在量电压"。成绩：Claude Opus 5 <strong style="color:#07c160;font-size:20px;">61.6%</strong> 第一，Grok 4.6 57.1%，Claude Fable 5.1 56.4%，GPT-5.5 42.3%，GPT-5.6 Sol 39.4%，GPT-6 Astra 未测。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># EEBench 本身是可运行基准；提交设计用 atopile DSL
+pip install atopile
+atopile build my_design.ato     # or: ato v2 路径走 new CLI
+# 基准说明与模型卡成绩：https://eebench.org/blog/can-ai-design-circuit-boards-yet/</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">第一个量化"AI 设计电路板"能力的公开基准。关键结论：模型对电子学的认知远超其在传统 CAD 工具里的表现（GUI 操作浪费上下文）；但真实世界"很脏"——报告里的典型失败案例：一个提交设计标注 22 µF 电容，在 4.7 V 偏压下有效容值只有 <strong style="color:#07c160;">11.4 µF</strong>（陶瓷电容偏压效应），远低于设计所需的 545 µF；受保护电源轨 0.85 ms 后跌破 3 V 阈值，而要求是维持 20 ms，原话是"the source built successfully; the circuit still failed the job"。xAI 已把 EEBench 写进 Grok 4.6 模型卡的"工程加速"板块，与 3D 建模、参数化 CAD 并列——工程能力度量正在被行业接受。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 高赞讨论方向：仿真评分机制本身是亮点——确定性、带上下限的测量值，"一次性替代了人工打分的主观性"，且同一套评分后训练阶段可作 RL 奖励信号</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">评论区拿代码类比：EEBench 对"电路工程师"约等于 SWE-bench 对"软件工程师"，都是第一代 agentic 工程基准；V1 只覆盖仿真层面（布局、制造、整机调试未含），作者明确"还在路上"</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+<span>来源：</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://eebench.org/blog/can-ai-design-circuit-boards-yet/</span></code>
+<span>&nbsp;·&nbsp;</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/</span></code>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">6. LLMs as a Cognitive Virus — 论文把 LLM 传播建模成"病毒扩散"：越过临界点就倒不回来</strong></p>
+<section style="display:flex;justify-content:flex-start;align-items:center;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 6.2/10</span>
+</section>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Solé、Krakauer 等 9 位物理/计算生物学家的跨学科论文：把 LLM 使用当作在"认知空间"传播的病毒建模，用户状态分未耦合、耦合、持续依赖三档。核心模型结果：采用率的非线性集体相变——一旦越过临界阈值，小幅采用增长即触发向"持续依赖"的快速转变，伴随 "abrupt losses"（认知能力的突变性损失，原文引述约 30 字符）；社会传播、恢复与集体强化互相耦合。论文同时给出"认知免疫"条件：降低传播率 + 保留可逆性（facilitate reversibility），即让使用者随时能退出。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 论文全文与后续讨论可直接阅读
+# https://arxiv.org/abs/2609.03344
+# 无代码产物；理论建模论文，用于理解"依赖如何不可逆"</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">HN 今日收到 <strong style="color:#07c160;">182</strong> points——讨论点不在模型能力，而在"依赖的退出边界"：如果采用曲线是相变而非渐进的，那"先用起来再说"的理性决策模型就失效了，因为你不知道阈值在哪。它对 agent 开发者是直接的问题：当团队把推理、记忆、工作流全部外包给一个模型，你的"可逆性"成本在哪里？论文把"可逆性"提为免疫策略的核心变量，是从认知科学侧给"模型锁定"提供了模型化依据。与本周 GPT-6 Astra 发布、agent 平台化扩散的背景放在一起看，它被推上 HN 首页不是偶然。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 讨论分歧：一边认为"纯理论、无实证、经验模型参数缺失"，一边认为"把'技术锁定'从直觉变成可计算的结构，本身就是贡献"</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">链接贴（Lobsters 4 points）将它与"AI 是否正在让我们变笨"讨论合并，焦点是：依赖的可逆性个人能控制，还是平台设计者说了算</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+<span>来源：</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://arxiv.org/abs/2609.03344</span></code>
+<span>&nbsp;·&nbsp;</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/</span></code>
+<span>&nbsp;·&nbsp;</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://lobste.rs</span></code>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">其他值得关注</strong></p>
+<section style="margin:0 0 10px 0;">
+<p style="margin:0;font-size:17px;font-weight:bold;color:#222222;">mattpocock/skills<span style="font-size:14px;color:#999999;font-weight:normal;">（GitHub +2,692 stars/day；已在 9/3 首录，今日持续火爆）</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">TypeScript 圈顶流 Matt Pocock 的工程技能集，"Skills for Real Engineers"——今日全站增速第二，与 ponytail 平分技能文件潮</p>
+</section>
+<section style="margin:0 0 10px 0;">
+<p style="margin:0;font-size:17px;font-weight:bold;color:#222222;">ECC<span style="font-size:14px;color:#999999;font-weight:normal;">（GitHub +1,314 stars/day；已在 8/24、9/2 两次主榜）</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">agent harness 性能优化系统，Plan Canvas v2.1、Memory Vault 跨 harness 记忆；本次仅数据更新，不再展开</p>
+</section>
+<section style="margin:0 0 10px 0;">
+<p style="margin:0;font-size:17px;font-weight:bold;color:#222222;">humanizer<span style="font-size:14px;color:#999999;font-weight:normal;">（GitHub +990 stars/day；已在 9/4 首录）</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">35 个 AI 写作痕迹模式的去 AI 味技能，v2.11.2，总星 43.5K</p>
+</section>
+<section style="margin:0 0 10px 0;">
+<p style="margin:0;font-size:17px;font-weight:bold;color:#222222;">diagram-design<span style="font-size:14px;color:#999999;font-weight:normal;">（GitHub +855 stars/day；已在 9/5 首录）</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">39 种编辑级图表模板，今日再创新高</p>
+</section>
+<section style="margin:0 0 10px 0;">
+<p style="margin:0;font-size:17px;font-weight:bold;color:#222222;">magnitude<span style="font-size:14px;color:#999999;font-weight:normal;">（GitHub +674 stars/day，总星 3,238；已在 9/4 首录）</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">本地推理服务器，较首录日 +161 单日增幅约 4 倍，暴涨型持续关注</p>
+</section>
+<section style="margin:0 0 10px 0;">
+<p style="margin:0;font-size:17px;font-weight:bold;color:#222222;">NousResearch/hermes-agent<span style="font-size:14px;color:#999999;font-weight:normal;">（GitHub +575 stars/day；已在 5/16 首录）</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">跨终端与 IM 网关的常驻 agent，本周连续第四天登热榜</p>
+</section>
+<section style="margin:0 0 10px 0;">
+<p style="margin:0;font-size:17px;font-weight:bold;color:#222222;">KC-Bench<span style="font-size:14px;color:#999999;font-weight:normal;">（arXiv 2609.03588，9/3-9/4）</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">238 条手工筛选题的 LLM agent 知识冲突动态评测，附带开源自然语言评估器；测了 DeepSeek-V4-Flash、GLM-5.2、MiniMax-M3，无模型能稳过全部冲突类型</p>
+</section>
+<section style="margin:0 0 10px 0;">
+<p style="margin:0;font-size:17px;font-weight:bold;color:#222222;">知乎 AI Works 一键部署<span style="font-size:14px;color:#999999;font-weight:normal;">（9/4-9/5 中文渠道）</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">知乎 AI 项目平台补上"云端构建+部署"，2600+ AI 项目可直接从 demo 走向产品</p>
+</section>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<section style="background-color:#f5f7fa;border-radius:8px;padding:14px 18px;margin:24px 0 0 0;">
+<p style="font-size:17px;font-weight:bold;color:#333;text-align:left;margin:0 0 8px 0;">本期关键词</p>
+<p style="font-size:15px;color:#555;text-align:left;margin:0;">技能文件潮 · ponytail · HumanLayer skills · opencode 回归 · EEBench V1 · 认知病毒模型</p>
+</section>
+</section>

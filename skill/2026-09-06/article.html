@@ -1,0 +1,112 @@
+<section style="max-width:677px;margin:0 auto;padding:10px 0;font-size:16px;line-height:2.1;color:#333333;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-06</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">多数仓库的 README 停留在创建那天。文档烂尾比代码烂尾更普遍：迁移表结构的人不会同步更新数据流说明，加接口的人不会回去改 API 文档，AI 助手规则文件（CLAUDE.md、AGENTS.md）更是从来没人写过。divar-ir 把这个活交给了多 Agent 系统：5 个分析 Agent 并发扫描仓库的五个维度，生成阶段再派 2 个 Agent 把分析结果写成 README 和 AI 助手规则。753 stars，MIT，Claude Code 插件两条命令装好，也能按 CronJob 挂在 GitLab 上自动干活。</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+![aidocgen-demo](./aidocgen-demo.png)
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;">（GitHub 仓库页面：divar-ir/ai-doc-gen，753 stars，MIT，最近提交是 Claude Code skills 插件打包）</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">它解决什么问题</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">代码文档有一个反人性的事实：写一次的成本高，持续维护的成本更高。新功能上线两周后，代码变了 40%，文档还停在原地。团队接手一个新仓库，读代码靠人肉翻，上 GitHub 找 README，发现 README 讲的还是三年前的架构。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AI 助手让这个问题的后果扩大了。Claude Code 改一个项目，靠的是它自己读仓库 + CLAUDE.md 里的约定。CLAUDE.md 没写，它就靠猜；猜错了，改完的代码和项目实际风格脱节。文档不只是给人看的，也变成了 AI 的上下文。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ai-doc-gen 的定位是把"分析"和"写文档"拆开。分析是确定性的活（这个模块被谁引用、数据从哪流到哪、API 契约是什么），适合并发跑；写文档是根据分析结果组织语言，一个生成 Agent 就够了。拆开后，两个阶段各自能独立跑、独立重试，也方便你把分析结果留在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">.ai/docs/</code> 里当团队共享事实源。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">核心原理</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">整套系统是"分析—生成"两段流水线，用 pydantic-ai 写成的多 Agent：</p>
+<ol style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">分析阶段</strong>：AnalyzerAgent 调度 5 个分析 Agent 并发执行（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">asyncio.gather</code>，单个 Agent 失败不影响其他，只要有一个成功就算通过），各自负责一个维度，产出写到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">.ai/docs/</code>：
+<ul style="padding-left:24px;margin:6px 0 0 0;line-height:2.0;">
+<li style="margin-bottom:4px;font-size:14px;color:#666;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">code-structure.md</code> — 文件树与模块关系</li>
+<li style="margin-bottom:4px;font-size:14px;color:#666;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">data-flow.md</code> — 状态与数据穿越路径</li>
+<li style="margin-bottom:4px;font-size:14px;color:#666;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">dependencies.md</code> — 包/模块导入拓扑</li>
+<li style="margin-bottom:4px;font-size:14px;color:#666;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">request-flow.md</code> — API 调用链路</li>
+<li style="margin-bottom:4px;font-size:14px;color:#666;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">api-endpoints.md</code> — 接口定义与输入输出契约</li>
+</ul>
+</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">生成阶段</strong>：两个 Agent 并行。DocumenterAgent 消费分析结果生成 README.md（章节可配置，支持 Mermaid/C4 图和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">--use-existing-readme</code> 把旧 README 当上下文）；AIRulesGeneratorAgent 生成 CLAUDE.md、AGENTS.md 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">.cursor/rules/*.mdc</code>，明细级别有 minimal / standard / comprehensive 三档，文件已存在时默认跳过不覆盖。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">自动化模式</strong>：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">cronjob analyze</code> 接 GitLab，扫描活跃项目、跑分析、开 Merge Request（分支 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">ai-analysis-YYYY-MM-DD</code>，提交带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">[AI]</code> 前缀），文档由维护者 review 后点合并——不强制生效，只提建议。</li>
+</ol>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">配置分三层，优先级 Pydantic 默认值 &lt; <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">.ai/config.yaml</code> &lt; CLI 参数。每个 Agent 可以单独配模型和 endpoint，都走 OpenAI 兼容 API（OpenAI、Anthropic 网关、OpenRouter、本地模型都行）。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">安装配置</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">方式一：Claude Code 插件（推荐，无需 API key，无需 Python 环境）</strong></p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>/plugin marketplace add divar-ir/ai-doc-gen
+/plugin install ai-doc-gen@divar</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装完获得三个 skill：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">analyze-codebase</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">generate-readme</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">generate-ai-rules</code>，命令式调用即可。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">方式二：源码安装（可以 CLI 跑、接 CronJob）</strong></p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/divar-ir/ai-doc-gen.git
+cd ai-doc-gen
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv sync                                  # Python 3.13 + uv 是前置条件
+cp .env.sample .env                      # 填 LLM 的 base_url 和 key
+mkdir -p .ai && cp config_example.yaml .ai/config.yaml
+uv run src/main.py analyze --repo-path .
+uv run src/main.py generate readme --repo-path .
+uv run src/main.py generate ai-rules --repo-path .</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">并发度用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">ANALYZER_MAX_WORKERS</code> 控制，0 表示按 CPU 数自动检测。团队部署有 Dockerfile 和 Helm Chart（K8s CronJob）。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">使用指南</p>
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景一：接手陌生仓库，先让 5 个 Agent 探路</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">git clone 到一个新项目后，直接：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>uv run src/main.py analyze --repo-path . --repo-name new-repo</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">.ai/docs/</code> 下出现五份分析文档。先读 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">code-structure.md</code> 搞清楚模块边界，再翻 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">request-flow.md</code> 看请求从入口到 DB 的链路。五个维度的分析并行跑，比单 Agent 通读全仓库快得多，每个维度还不互相污染上下文。读完分析再让 agent 改代码，它一上来就带着结构认知。</p>
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景二：给老项目补 README，保留旧文语境</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">仓库有十几年前的 README，直接覆盖生成风险太大：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>uv run src/main.py generate readme --repo-path . --use-existing-readme</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">旧 README 作为上下文传给 DocumenterAgent，新生成的文档会延续原来的叙述风格和术语，只补上缺口（架构总览、启动方式、API 清单）。生成前可以先把 README 里确定过时的大段描述删掉，避免它被当成"事实"吸收进新文档。</p>
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景三：GitLab 上挂 CronJob，文档自动提 MR</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">想根治"README 永远滞后"，在 GitLab 上配一个定时任务：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>uv run src/main.py cronjob analyze --max-days-since-last-commit 14</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">每 14 天扫描一次活跃仓库，自动分析并开 MR。MR 由工程师 review，合并即生效。它不做强推，文档变化被当成代码评审的一部分，不占用谁的额外时间。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">进阶技巧</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">每个 Agent 用不同模型</strong>。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">.ai/config.yaml</code> 里给 API 契约分析配贵一点的模型（输出质量要紧），给文件树分析配本地小模型省成本。所有模型走 OpenAI 兼容接口，per-agent 独立配置，一套配置混着用。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">CLAUDE.md 会越写越长，控制长度</strong>。生成 ai-rules 时用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">--detail-level standard --max-claude-lines 600</code> 限制行数，CLAUDE.md 太长会让每次会话都背上冗余上下文，600 行以内够用。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">观测成本</strong>。项目内置 OpenTelemetry 和 Langfuse 集成，团队跑 cronjob 时可以看每次分析花多少钱、哪个 Agent 慢，决定要不要给某个维度换小模型。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">常见踩坑</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Python 版本要求 3.13</strong>。pip install 的方式能装上，但跑起来报语法错误——仓库用 Python 3.13 的语法特性。低版本机器建议直接用插件方式安装，或者用 uv 安装的隔离 Python。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">生成前先备份人工维护的内容</strong>。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">generate ai-rules</code> 对已存在的文件默认跳过，但 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">generate readme</code> 会覆盖 README.md。给重要仓库先跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">git commit</code> 或者把旧 README 留在 git 历史里，翻车了 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">git checkout</code> 回来。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">CronJob 模式权限不足</strong>。gitlab token 只有读权限的话，MR 创建会失败。需要 api scope 的 token，且账号要有目标仓库的开发权限。</p>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类技能对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">ai-doc-gen（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>/plugin marketplace add divar-ir/ai-doc-gen</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>5 Agent 并发分析，README+CLAUDE.md+AGENTS.md 一次产出，GitLab 自动 MR</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>仓库文档从无到有、持续维护</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 753</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">code-documentation（bytedance/deer-flow）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx skills add</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>生成 README、API 参考、Mermaid 架构图</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>想用轻量 skill 不出仓外</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 77k（平台仓库）</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">readme-generator（jeremylongshore）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx skills add</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>单一技能，触发式生成</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>小项目补个 README</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 1k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">readme（Shpigford/skills）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx skills add</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>深度代码探索后写 README</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>重视文风与探索质量</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 218</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">同类里 ai-doc-gen 是唯一把"分析与生成拆成两段、多个维度并发跑"并支持自动发 MR 的。deer-flow 仓库的 code-documentation 热度更高，但那是平台仓库的 77k stars，技能本身是其中一项；ai-doc-gen 是这个领域里专门做到底的开源项目。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+<span>⭐ 753</span>
+<span>&nbsp;·&nbsp;</span>
+<span>v0.x</span>
+<span>&nbsp;·&nbsp;</span>
+<span>MIT</span>
+<span>&nbsp;·&nbsp;</span>
+<span>GitHub</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/divar-ir/ai-doc-gen</span></code>
+<span>&nbsp;·&nbsp;</span>
+<span>博客</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.blog.brightcoding.dev/2025/08/12/ai-makes-documentation-from-code</span></code>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">今日小结</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">团队扩张期，新同学进仓库自己翻两周代码，比任何 README 都慢。ai-doc-gen 把"了解仓库"变成一条命令，顺手把 CLAUDE.md 和 Cursor 规则也补齐——现在读你仓库的 AI 比你清楚。插件方式两条命令，5 分钟装完，值得今天试。</p>
+</section>

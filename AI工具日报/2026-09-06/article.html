@@ -1,0 +1,191 @@
+<section style="max-width:677px;margin:0 auto;padding:10px 0;font-size:16px;line-height:2.1;color:#333333;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-06</p>
+![summary](./summary.png)
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三条，一条让 Agent 读懂仓库，一条让 Agent 换任意模型，一条把语音合成搬回本地。</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">Graphify — 110K stars，把代码库变成可以问的知识图谱</strong></p>
+![graphify-demo](./graphify-demo.png)
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">编码 Agent 进新仓库的冷启动一直靠 grep 兜底：搜到一个名词，顺着引用下一个，读三五个文件才大概摸清模块关系，token 烧掉大半还经常猜错。Graphify 换了个交付物——它把整仓（含文档、SQL schema、PDF、图片）一次性解析成一个可查询的知识图谱，Agent 直接问"auth 是怎么连到数据库的"，它返回图里那条路径。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">原理是树。代码部分用 tree-sitter AST 全量本地解析（覆盖 33-40 种语言），不依赖向量库，也不把代码发给任何云；文档、PPT、PDF、图片这类非代码内容才交给你的 LLM 抽取语义。跑一次 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">/graphify .</code> 生成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">graphify-out/</code>：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">graph.html</code> 是浏览器里可交互的图谱可视化，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">graph.json</code> 是全量图快照，后续 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">graphify query "what connects auth to the database?"</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">graphify path UserService DatabasePool</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">graphify explain RateLimiter</code> 都是对这个快照做图查询。它同时提供 MCP server（stdio 本地、HTTP 8080 团队共享），工具是 query_graph、get_node、get_neighbors、shortest_path 这类，Claude Code、Cursor、Codex、Gemini CLI 等 20+ 客户端开箱即用。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">典型场景两个。一是 Agent 接手老项目：先 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">/graphify .</code> 建图，再问"这个项目里有哪几个模块互相耦合"，回答带连接路径，比逐个文件读快一个量级。二是维护者沉淀 onboarding：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">GRAPH_REPORT.md</code> 里自动列出关键概念、意外连接和"值得问的问题"，新人入手看报告而不是翻着目录猜。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据侧：110K+ stars（OSS AI Hub 8 月 29 日同步 112,132），近 30 天涨了 <strong style="color:#07c160;font-size:20px;">35,231</strong> 颗，进了本周 GitHub 周增榜前排。v1 分支线，MIT 协议，要求 Python 3.10+。唯一坑：PyPI 包名叫 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">graphifyy</code>（双 y），命令行还是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">graphify</code>，别装错。</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 安装（注意 PyPI 包名是 graphifyy，命令是 graphify）
+uv tool install graphifyy
+
+# 注册到 Claude Code（Cursor/Codex/Gemini 等有对应 install 子命令）
+graphify install
+
+# 在项目目录里建图（PowerShell 下用 graphify . 不加斜杠）
+/graphify .
+
+# 图查询
+graphify query "what connects auth to the database?"
+graphify path UserService DatabasePool</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Graphify（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>uv tool install graphifyy</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>全库知识图谱 + graph.html 可视化 + graph.json 查询 + MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 110K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Serena（8-29 推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>claude mcp add serena</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>LSP 符号级导航，find refs/rename 精确到符号</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（JetBrains 版付费）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 28.5K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">CodeMate C0（9-02 推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code 扩展</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>代码库知识库面板，agent 与 IDE 共享上下文</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费+订阅</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⬇ 83K 安装</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">JetBrains Context（官方早鸟）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>一行脚本</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>官方语义索引，多仓库，随 AI 订阅</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅内免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">claude-context</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>uvx</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>向量库语义搜索，需要 Milvus</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 10.6K</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Serena 处理的是"谁调用谁"这种符号级精确问题，Graphify 处理的是"整仓长什么样"——一个是显微镜一个是地图，不冲突。选它而不选做语义向量搜索的 claude-context，是因为 AST 建图不需要向量库和嵌入 API，一次 uv 命令装完就能跑，图还能导出 .json 复查和复用。JetBrains Context 也强，但是官方订阅制的平台能力，本地开源这边 Graphify 是天花板。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+<span>⭐ 110K</span>
+<span>&nbsp;·&nbsp;</span>
+<span>v1</span>
+<span>&nbsp;·&nbsp;</span>
+<span>MIT</span>
+<span>&nbsp;·&nbsp;</span>
+<span>GitHub</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/safishamsi/graphify</span></code>
+<span>&nbsp;·&nbsp;</span>
+<span>官网</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://graphify.net/</span></code>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">OpenClaude — 把 Claude Code 的交互语义搬到任意模型上</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Cursor 绑定自家模型，Claude Code 绑定 Anthropic，Gemini CLI 绑定 Google——每家编码 agent 都锁着自己一家的 API。OpenClaude 是社区从 Claude Code 派生重写的多提供商版本，命令行那一套交互不变：bash、文件读写、grep/glob、agents、tasks、MCP、slash command，底层模型换谁都行。官方定位一句话："runs anywhere, uses anything"。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它支持的范围相当宽：OpenAI 兼容接口、Gemini、GitHub Models、Codex OAuth、Ollama、Bedrock/Vertex/Foundry、Cloudflare Workers AI、Fireworks，加上各大 API 网关。代码智能上带一个 repo map（PageRank 排序的代码图，启用后自动注入），WebSearch 默认走 DuckDuckGo 免 key，WebFetch 带 HTML 转 markdown。命令行层面有后台会话（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">--bg</code> + <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">ps</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">logs</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">attach</code>）、会话恢复与分叉（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">--resume</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">--continue</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">--fork-session</code>），以及 agentModels/agentRouting——按 agent 路由不同的模型，团队网关跑一个、本地 Ollama 跑另一个都行。嵌 CI 的 headless gRPC server 和配套 VS Code 扩展也在包里。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">典型场景：用 GitHub Models 的免费额度跑日常 Agent；或者在只能出网到内部网关的公司环境里，不碰任何外部 API。项目本身 <strong style="color:#07c160;">32.7K</strong> stars、9.1K forks、1,201 commits，MIT（派生自 Claude Code，Anthropic 的原始部分版权归 Anthropic），需要 Node.js 22+。上次推开源替代品是 8 月 21 日的 OpenCursor（6K stars，仿 Cursor），这个热度整整高出一个量级，功能面也更完整。</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 全局安装
+npm install -g @gitlawb/openclaude
+
+# 启动后 /provider 选择模型提供方（或 /onboard-github 直接接 GitHub Models）
+openclaude</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">OpenClaude（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm install -g @gitlawb/openclaude</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>多提供商任意模型 + repo map + 后台会话</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 32.7K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">OpenCursor（8-21 推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm i -g @opencursor</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>开源 Cursor 替代，语义搜索本地</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 6K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Claude Code</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm i -g @anthropic-ai/claude-code</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>官方体验最完整，生态最大</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅制</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Codex CLI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm i -g @openai/codex</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>OpenAI 官方，绑定自家模型</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅制</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Gemini CLI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm i -g @google/gemini-cli</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>免费额度友好，绑定 Google 模型</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅制</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">选它不选官方 CLI 的理由就一个：模型不锁死。官方工具好，但把模型换到 GitHub Models 或本地 Ollama 的成本为零，这是它最大的差异点；OpenCursor 换的是交互范式，这个换的是后端，方向正好互补。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+<span>⭐ 32.7K</span>
+<span>&nbsp;·&nbsp;</span>
+<span>MIT</span>
+<span>&nbsp;·&nbsp;</span>
+<span>GitHub</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/gitlawb/openclaude</span></code>
+<span>&nbsp;·&nbsp;</span>
+<span>要求 Node.js 22+</span>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong style="font-size:22px;font-weight:bold;">VoiceStudio — 本地 ElevenLabs 替代，16 个 TTS 引擎一个壳</strong></p>
+![voicestudio-demo](./voicestudio-demo.png)
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ElevenLabs 好用，但语音合成按字符计费，配音、克隆、转写都要联网上云。VoiceStudio 把这条链路全部搬回本地：语音克隆、语音设计、视频配音、听写、转写、有声书，646 种语言，不要 API key、不要账号、不依赖云。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它是个多引擎工作站。Tauri v2 桌面壳（Rust）包一个 React UI 和一个 FastAPI 本地后端（localhost:3900，SQLite 存数据），模型层面内置 <strong style="color:#07c160;font-size:20px;">16</strong> 个 TTS 引擎（CosyVoice、GPT-SoVITS、VoxCPM2、IndexTTS 2.5 等）和 <strong style="color:#07c160;font-size:20px;">11</strong> 个 ASR 引擎（WhisperX、Faster-Whisper、MLX 等），状态栏一键切换。功能拼图上，3 秒音频可以做零样本克隆，视频配音是完整管线——喂一个 YouTube 链接，转录、翻译、重新配音、出 MP4；另有 Demucs 人声分离、Pyannote 说话人分离、批量队列、AudioSeal 不可见水印。对开发者最关键的是它自带 MCP server 和 OpenAI 兼容音频 API，Claude Code、Cursor 可以直接把它当 TTS 工具调。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">用例：给播客批量生成本地配音；把团队视频翻成中文配音不花钱；或者做语音产品开发时用它在本地 Mock TTS 流程。数据：15.0K stars（9 月初），近 30 天 +1,286；v0.5.0 beta；AGPL-3.0；最低 8GB 内存、4GB VRAM（自动卸载到 CPU），首次运行拉约 10GB 模型权重。</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 桌面端：GitHub Releases 下载 Windows MSI / macOS DMG / Linux AppImage·deb
+
+# 或者 Docker 一键（GPU 服务器加 --gpus all）
+docker run -d --name omnivoice \
+  -p 127.0.0.1:3900:3900 \
+  -v omnivoice-data:/app/omnivoice_data \
+  -v ~/.cache/huggingface:/root/.cache/huggingface \
+  palashdeb/omnivoice-studio:latest</code></pre>
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">VoiceStudio（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>安装包 / Docker</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>16 TTS+11 ASR 引擎可切换，克隆/配音/转写全家桶，MCP+OpenAI API</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（AGPL-3.0）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 15K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">ElevenLabs</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>云服务</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>质量标杆，闭源，按字符计费</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>约 $5/月起</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Coqui XTTS</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>pip</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>老牌开源克隆，项目维护放缓</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>中</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">GPT-SoVITS / fish-speech</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>pip/源码</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>单模型方案，各有擅长语言</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>小-中</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">跟 ElevenLabs 比质量它在多数场景接近 v2.5 水平，但这不是重点——重点是引擎可换和全本地：16 个引擎里总有一款适合你的语种和音色，MCP 接口又能直接接进 agent 的工作流，这在云服务里是做不到的。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">
+<span>⭐ 15K</span>
+<span>&nbsp;·&nbsp;</span>
+<span>v0.5.0</span>
+<span>&nbsp;·&nbsp;</span>
+<span>AGPL-3.0</span>
+<span>&nbsp;·&nbsp;</span>
+<span>GitHub</span>
+<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/debpalash/VoiceStudio</span></code>
+</p>
+</section>
