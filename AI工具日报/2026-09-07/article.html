@@ -1,0 +1,175 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-07</p>
+
+![summary](./summary.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三条各有角度：一条把后端基础设施整个变成 MCP 工具集，一条让本地模型不用再凭感觉选配，一条是研发绕不开的专利刚需。前两条工程向，第三条增值向。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">InsForge — 12.9K stars，把后端变成 MCP 的 agent-native 平台</p>
+
+![insforge-demo](./insforge-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">编码 Agent 现在能写代码、跑测试、开 PR，一碰后端就卡壳：数据库表要人建、存储桶要人配、函数要人部署。InsForge 把这一步直接收进 Agent 手里——它是一整套 agent-native 后端（Postgres、认证、S3 存储、边缘函数、模型网关、实时订阅、Stripe 支付、托管），全部通过一个 MCP server 和 CLI 暴露给 Agent 调用，编码 Agent 自称后端工程师的短板就这样被填上了。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">原理上像 Supabase 换了个视角：把给人用的控制台，换成给 Agent 用的 API。CLI 创建项目时（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx @insforge/cli create</code>）会自动给支持的编码代理装上官方 agent skills。MCP 的 fetch-docs、list-tables、list-functions 这类工具把后端真实状态（schema、函数、存储桶、日志）喂给 Agent，决策基于事实而不是猜。官方还做了数据库分支和可逆写入，Agent 改表可以安全试错。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">典型场景：跟 Agent 说“给我起一个带登录和文件上传的 app”，它自己建 auth、建表、开存储桶，你连控制台都不用打开。数据侧：<strong style="color:#07c160;">12.9K stars</strong>、1.2K forks，YC 2026 春季班（$4M pre-seed），上线当天拿过 Product Hunt #1；官方 MCPMark 基准里对比 Supabase MCP 是 <strong style="color:#07c160;">1.6 倍</strong>速度、省约 <strong style="color:#07c160;">30% token</strong>（Claude Sonnet 4.5 下 47.6% vs 28.6% 的 Pass 率）。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 云端版本（几步就完）：
+npx @insforge/cli login
+npx @insforge/cli create
+
+# 自托管（Docker Compose）：
+curl -fsSL https://raw.githubusercontent.com/InsForge/InsForge/main/deploy/setup.sh | sh -s ~/insforge</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">InsForge（推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx @insforge/cli create</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>原生按 Agent 交互设计，MCPMark 1.6× 速度、省 ~30% token</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费层 500MB DB / Pro $25/月</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 12.9K</p>
+  </section>
+
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Supabase + MCP</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>官方 MCP 配置</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>生态最全，MCP 层是后期补的，Agent 上下文偏重</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费层 / Pro $25/月</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 成熟项目</p>
+  </section>
+
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Butterbase</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx @butterbase/mcp</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>40+ MCP 工具覆盖最广（含 RAG、realtime）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源/托管</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3.2K</p>
+  </section>
+
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">CloudBase AI Toolkit</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>MCP/Plugin 配置</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>腾讯云官方，国内接入快</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>厂商定价</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 中等</p>
+  </section>
+
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">推荐理由就一条：它从零就是按 Agent 交互设计的，MCPMark 官方基准跑赢 Supabase MCP；而 Supabase 的 MCP 是后补的，Agent 要吃更多无用上下文。想要国内接入的话顺手用腾讯那套，但体验是另一路。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 12.9K</span><span>&nbsp;·&nbsp;</span><span>Apache-2.0</span><span>&nbsp;·&nbsp;</span><span>TypeScript/Deno</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/InsForge/InsForge</span></code><span>&nbsp;·&nbsp;</span><span>官网：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://insforge.dev</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Magnitude — 本地模型推理服务器，Agent 不再盲猜</p>
+
+![magnitude-demo](./magnitude-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">给 Agent 接本地模型的痛点在于选型：机器能跑什么模型、什么量化档位、上下文开多大，Ollama 把选择甩给你自己猜。Magnitude 先给硬件画像（芯片、内存、带宽），据此推荐模型和量化档并给出预估 tok/s，再自动下载、调优、运行，模型按需加载，空闲或内存紧张自动卸载。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">技术侧是 Rust 写的专用推理引擎，带投机解码（speculative decoding）和并发调优。对外暴露 OpenAI 兼容（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/inference/v1</code>）和 Anthropic 兼容（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/inference/anthropic</code>）双端点，跑在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">127.0.0.1:10100</code>——现有 agent（Claude Code、Codex、OpenClaw、Cline 等）不用改配置，安装时它直接写好 harness 配置。全离线，没有 API key，没有 token 计费。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">典型场景：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">magnitude setup</code> 交互走一遍，Agent 接着就用本地模型干活；装了 CLI 之后再跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">magnitude docs onboarding</code>，让 Agent 自己读文档完成配置。本周它刚爆发：单周涨了 <strong style="color:#07c160;">1.9K stars</strong> 到 <strong style="color:#07c160;">3.7K</strong>。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>npm i -g @magnitudedev/cli
+magnitude setup</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Magnitude（推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm i -g @magnitudedev/cli</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>硬件画像自动推荐模型+调优，双协议端点，Agent 可自配置</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费 / Cloud $20/月</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3.7K（周增 +1.9K）</p>
+  </section>
+
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Ollama</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>brew/npm 安装</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>生态最大，模型选型全靠手</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 很高</p>
+  </section>
+
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">LM Studio</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>桌面 App</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>图形界面友好，非 CLI/Agent 优先</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费/Pro</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 中</p>
+  </section>
+
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">llama.cpp</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>源码编译</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>底层能力最强，配置最原生态</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 很高</p>
+  </section>
+
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">选它的理由就是 README 那句话：你的 Agent 直接配 Ollama 等于在猜（Your agent would be guessing）——它把硬件画像、量化推荐、写 harness 配置串成一条引导流程，这是 Ollama 和 LM Studio 都没做的事。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 3.7K</span><span>&nbsp;·&nbsp;</span><span>Apache-2.0</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/magnitudedev/magnitude</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">中国专利 skill — 把研发的专利发明人一栏写上名字</p>
+
+![patent-demo](./patent-demo.jpg)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">做了多年核心研发，专利发明人一栏从没写过自己的名字——这是多数研发的现实。这个技能包拆成 6 个子技能，覆盖专利全流程：交底书（发明/实用/外观分模板成文+查新）、申请文件（权利要求书/说明书/摘要/附图）、读专利（公开号或 PDF 转通俗笔记连入库 Obsidian 图库）、审查答复（案例分析+向量检索）、著录检索（按发明人/申请人/分类号查国知局）、政策简报（政策雷达）。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">比较能打的是技术部分：从产品图/结构图/CAD 提取线稿并标部件序号引出线（外观和实用新型附图的关键），mermaid 流程图直接渲染进 Word 交底书，国知局检索脚本落盘到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">outputs/patent-search/</code>。依赖是 Python 3.9+ 加 Playwright，浏览器就绪探测一条命令验证。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code（Cursor 装到 ~/.cursor/skills/ 同理）：
+git clone https://github.com/handsomestWei/patent-disclosure-skill.git .claude/skills/patent-disclosure-skill
+pip install -r requirements.txt</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">中国专利 skill（推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>git clone + pip install</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>6 子技能全流程，附图线稿/国知局检索/Word 出稿</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 7.9K</p>
+  </section>
+
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">直接让通用 LLM 写交底</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>无</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>没查新没格式门禁，附图全手工</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>看模型</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">商业专利工具</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>订阅</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>面向代理机构，不面向研发个人</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>高</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这个品类几乎没有开源竞品：给研发个人的专利全流程技能包，我没搜到第二个（README 自己也是这么定位的）。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 7.9K</span><span>&nbsp;·&nbsp;</span><span>MIT</span><span>&nbsp;·&nbsp;</span><span>Python 3.9+</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/handsomestWei/patent-disclosure-skill</span></code></p>
+
+</section>

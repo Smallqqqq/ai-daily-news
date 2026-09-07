@@ -1,0 +1,167 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-07</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你让 AI 加一个日期选择器。它装了 flatpickr、写了包装组件、加了样式表，然后聊起了时区问题。404 行。而资深开发者看到的只是：浏览器十年前就自带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">&lt;input type="date"&gt;</code>，一行。ponytail 就是把这个“懒”硬塞给 AI agent 的 skill，不是偷懒，是知道什么才是必要的。<strong style="color:#07c160;">129.5k stars</strong>，本周涨了 19,480，MIT，Claude Code 两条命令装好，Codex、Copilot CLI、Gemini、Cursor 等 20 多种 agent 宿主都有官方安装方案。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<!-- 图片 ponytail-demo.svg 为 SVG 格式，目标平台不支持，已跳过 -->
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;">（官方基准图：12 个功能任务、真实 Claude Code 会话，vs 无技能基线的各项对比，代码行数 -54%，安全率 100%）</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AI 写代码的第一本能是“满足”。要日期选择器就装最流行的库，要过滤就写通用管道，需求还没说完就开始抽象。结果一行能写的写了五十行，为不存在的需求建了接口。代码量膨胀直接烧钱：token、耗时、上下文全涨。ponytail 专治这个：方向是“写得更少”，把 agent 拉到“最懒的资深开发者”的尺度——The best code is the code you never wrote。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">作者把话也说在前面：懒的是解决方案，读问题从不懒。理解任务、追踪真实流程是爬阶梯的前提；信任边界的校验、数据丢失处理、安全、可访问性永远不在砍掉范围里。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ponytail 是一套规则集（SKILL.md + 钩子），核心是写代码前必须过的 <strong style="font-weight:bold;color:#000;">7 级决策阶梯</strong>——agent 停在第一个成立的台阶上：</p>
+
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #e8e8e8;">
+  <thead>
+    <tr>
+      <th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">级别</th>
+      <th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">问自己</th>
+      <th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">结果</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">1</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">这东西需要存在吗？</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">不需要 → 跳过（YAGNI），一句话说明</td>
+    </tr>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">2</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">代码库里已经有了吗？</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">复用，不重写</td>
+    </tr>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">3</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">标准库能做吗？</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">用标准库</td>
+    </tr>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">4</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">平台原生特性覆盖吗？</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">用 &lt;input type="date"&gt;，别装库</td>
+    </tr>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">5</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">已安装的依赖解决吗？</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">用它，不新增依赖</td>
+    </tr>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">6</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">能一行搞定吗？</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">一行</td>
+    </tr>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">7</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">只有走到这一步</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">写最小可用的那一段</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">配合几条硬规则：不建只有一个实现的接口、不为一种产品建工厂；修 bug 改根因（先 grep 所有调用者，在共享函数里加守卫比每个调用者打补丁更小）；刻意的简化（全局锁、O(n²) 扫描）必须用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ponytail:</code> 注释标出已知上限和升级路径；任何时候不得砍校验、错误处理、安全和无障碍。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">效果数据来自作者的真实测试：12 个功能任务、无头 Claude Code 会话、编辑真实开源仓库（tiangolo/full-stack-fastapi-template），按 git diff 评分——代码行数 <strong style="color:#07c160;">-54%</strong>（单任务上限 -94%）、token <strong style="color:#07c160;">-22%</strong>、成本 <strong style="color:#07c160;">-20%</strong>、时间 <strong style="color:#07c160;">-27%</strong>，对抗性测试安全率 100%。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">安装配置</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Claude Code 插件市场（两条命令，分开发）：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>/plugin marketplace add DietrichGebert/ponytail
+/plugin install ponytail@ponytail</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">其他宿主：Codex 是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">codex plugin marketplace add DietrichGebert/ponytail</code> + <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">codex plugin add ponytail@ponytail</code>（要在 /hooks 里信任钩子）；Copilot CLI 是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">copilot plugin install ponytail@ponytail</code>；Gemini CLI 是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">gemini extensions install https://github.com/DietrichGebert/ponytail</code>；OpenCode 在 opencode.json 加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">{"plugin": ["@dietrichgebert/ponytail"]}</code>。纯指令类宿主（Cursor、Windsurf、Cline、Aider 等）直接复制对应的规则文件。注意：Claude Code 插件模式要求 Node 在 PATH 里，钩子脚本靠它跑。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">强度默认 full，随时切换：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/ponytail lite</code>（按要求的建，但点出更懒的替代方案）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/ponytail ultra</code>（YAGNI 极端派，先删后加）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/ponytail off</code> 报告当前级别。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">使用指南</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景一：日期选择器——从 404 行到 1 行</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发：让 agent 加一个日期选择字段。普通 agent 会装 flatpickr、写 wrapper 组件、加样式表。ponytail 模式下它停在阶梯第 4 级——平台原生特性——输出：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>&lt;!-- ponytail: browser has one --&gt;
+&lt;input type="date"&gt;</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：3 行，原生控件，零依赖。颜色选择器同理，287 行降到 23 行（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">&lt;input type="color"&gt;</code>）；倒计时器从 190 行动画仪表盘降到 13 行。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景二：/ponytail-review——审你的 diff，给删除清单</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发：代码写完，想看看哪些是过度设计。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/ponytail-review</code> 审查当前 diff 的过度工程部分，返回可以直接删掉的清单；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/ponytail-audit</code> 审查整个仓库。预期结果：拿到一份“这些可以删”的清单（每条都有阶梯依据），比人工 review 快得多。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景三：复杂需求先交懒版本，再当场确认边界</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发：需求本身复杂（“做一个完整的 X”）。ponytail 先交付懒版本，同时追问“做了 Y；X 的部分是否覆盖？需要完整 X 就说”。预期结果：你明确说“要完整版”它才铺开，否则就用最小实现。这个对话习惯能挡住大多数 agent 自我加戏。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">和 caveman 并用</strong>：caveman（8 月 12 日推过）压缩 agent 的措辞，ponytail 压缩代码，规则互不重叠，装一起各管各的。<strong style="font-weight:bold;color:#000;">子代理注入控制</strong>：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">PONYTAIL_SUBAGENT_MATCHER</code> 环境变量用正则控制哪些子代理带 ponytail 规则——主代理保证风格，探索型子代理可以不带。<strong style="font-weight:bold;color:#000;">默认强度统一</strong>：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">PONYTAIL_DEFAULT_MODE</code> 环境变量或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.config/ponytail/config.json</code> 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">defaultMode</code> 字段，团队统一配置不需要改每个人的提示词。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">常见踩坑</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">推理模型上成本可能反升</strong>：OpenAI 推理模型内部多步反思跟“先复用”指令冲突，作者明确标注成本反而可能变贵；指令遵循弱的小模型（llama3.2 3B 这类）结果不稳定，装了效果打折。<strong style="font-weight:bold;color:#000;">两条安装命令必须分开发</strong>：marketplace add 和 install 是两条独立命令，粘成一条不生效。<strong style="font-weight:bold;color:#000;">教程新旧问题</strong>：早期版本以“80-94% 代码缩减”为宣传口径（虚高），新版已改口为修正后的 -54%；看到旧数字的教程基本是旧版内容。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">ponytail（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>/plugin marketplace add ×2</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>7 级决策阶梯，防过度工程，少写代码</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>所有 agent 日常写码</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 129.5k</p>
+  </section>
+
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Superpowers（obra）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>plugin 安装</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>开发纪律：头脑风暴→TDD→审查</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>需要强流程约束的团队</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 200k+</p>
+  </section>
+
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">caveman</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>plugin/文件</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>压缩回复措辞，省 65% 输出 token</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>agent 话太多</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>社区热门</p>
+  </section>
+
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">react-doctor</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>SKILL.md</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>专挑 React 代码的毛病</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>React 代码把关</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>社区热门</p>
+  </section>
+
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">addyosmani/agent-skills</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npx/skills</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>SDLC 全过程质量门禁清单</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>提交前把关</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 42k</p>
+  </section>
+
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">推荐理由：其他几个是“流程级”——教 agent 怎么做；ponytail 是“代码量级”——直接决定产出多少代码。它跟任何流程 skill 都不冲突，装上立刻见效：你写的每一行都被阶梯审过一遍，烧掉的 token 立减。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 129.5k</span><span>&nbsp;·&nbsp;</span><span>v0.1.x</span><span>&nbsp;·&nbsp;</span><span>MIT</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/DietrichGebert/ponytail</span></code><span>&nbsp;·&nbsp;</span><span>深度文档：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://deepwiki.com/DietrichGebert/ponytail</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">适合所有用 AI 写代码的人，尤其是被“AI 写得多但大部分没用”折磨过的。配置一分钟：两条插件命令，重启生效。换来的是 diff 体积减半、成本 -20%，以及“agent 不再自我加戏”这个最值钱的东西——它替你否决掉本来不该存在的代码。</p>
+
+</section>
