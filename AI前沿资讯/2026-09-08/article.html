@@ -1,0 +1,356 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-08</p>
+
+<section style="background-color:#f0f9eb;border-radius:10px;padding:18px 20px;margin:0 0 28px 0;border:1px solid #c8e6c9;">
+  <p style="margin:0 0 10px 0;font-size:15px;color:#2e7d32;line-height:2.0;">本期覆盖 2026-09-07 ~ 2026-09-08 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Bluesky / Lobsters / arXiv / HF Papers / 知乎 / AI 实验室博客。精选 10 条按影响力评分排序。</p>
+  <p style="margin:0;font-size:15px;color:#2e7d32;line-height:2.0;">核心主题：<strong style="color:#1b5e20;">agent harness 生态持续霸榜，微软 markitdown 886 stars/day 回归、HeyGen 开源 HTML 转视频框架；WeatherNext 3 登上 HN 首页。</strong></p>
+</section>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. ECC — agent harness 性能优化系统（已在 2026-09-02 首次收录）</p>
+
+![ecc-demo](./ecc-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.3/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">affaan-m 开发的 agent harness 性能优化系统，口号是 "Optimize the context window. Persist everything else." 它给 Claude Code / Codex / Cursor 等编码 agent 配上 <strong style="font-weight:bold;color:#000;">68 个专用 agents</strong>、<strong style="font-weight:bold;color:#000;">286 个 skills</strong> 和 <strong style="font-weight:bold;color:#000;">94 个命令 shim</strong>，覆盖规划、测试验证、换新上下文自我审查、记忆留存全流程。v2.2 新增面向 Claude Code、Codex、Kimi Code 的 guided 安装向导；v2.1 发布 Plan Canvas，可以在浏览器画布里点计划、批注、批准或驳回；v2.0（6 月）定位升级为 "The Agent Harness Operating System"，加入跨 harness 毕业、工作区生命周期服务。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code 推荐路径（插件方式）
+/plugin marketplace add https://github.com/affaan-m/ECC
+/plugin install ecc@ecc
+
+# 或统一引导安装（Claude Code / Codex / Kimi Code 多选）
+npx ecc-universal install --guided</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#07c160;">1,897 stars/day</strong> 是今天 GitHub 全站 AI 类收入第一名，总星数 <strong style="color:#07c160;">252,908</strong>。从 2026 年 1 月 18 日 4 万星涨到现在翻了 6 倍多，是今年增长最快的 agent 基础设施之一。内部 997 项测试全部通过；跨 harness（Claude Code、Codex、Cursor、OpenCode、Gemini、Zed、Qwen、Kimi Code、OpenClaw 等十余家）提供统一安装路径，避免每个 agent 各配一套。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">README 多处强调只从官方渠道安装（GitHub 仓库、npm 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">ecc-universal</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">ecc-agentshield</code>、GitHub App、插件 slug <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">ecc@ecc</code>、官网 ecc.tools），并警告第三方镜像可能含恶意软件；项目已经火到有人冒名出镜像</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">官方反复提醒：每个 harness 只选一条安装路径，不要叠加安装</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/affaan-m/ECC</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. microsoft/markitdown — 微软官方文件转 Markdown，886 stars/day 回归热榜</p>
+
+![markitdown-demo](./markitdown-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.0/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">微软官方开源的轻量 Python 工具，把 PDF、PPTX、Word、Excel、图片（EXIF 元数据 + OCR）、音频（转写）、HTML、CSV/JSON/XML、ZIP、EPub、YouTube 链接统一转成 LLM 友好的 Markdown。支持用 LLM Vision 插件对嵌入图片做 OCR，也可以接 Azure Content Understanding / Document Intelligence 走云端高精度转换。它解决的问题很朴素：LLM 原生"说"Markdown，且 Markdown 比原始格式 token 更省。文档喂给 LLM 之前，先过一遍 markitdown 是标准动作。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>pip install 'markitdown[all]'
+markitdown path-to-file.pdf &gt; document.md   # 或 -o document.md
+cat path-to-file.pdf | markitdown</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">9 月 4 日发布 0.1.8b1 预发布版，一版含约 <strong style="font-weight:bold;color:#000;">50 个 PR</strong> 的修复：长文件 ASCII 字符集误判导致的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">UnicodeDecodeError</code>、CSV 的 BOM/空行/管道符转义、数学公式 OMML→LaTeX 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">\underleftarrow</code> 等转换 bug、DOCX/PPTX/EPUB/RSS/Outlook <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.msg</code>/YouTube 的健壮性修复。这些修复<strong style="font-weight:bold;color:#000;">没有</strong>新功能。微软自己都说"大量修复值得谨慎发布"，结果 9 月 7-8 日社区用 <strong style="color:#07c160;">886 stars/day</strong> 投票：文档处理管线已经成熟到"修 bug 就能炸热榜"，是给 LLM 喂文档最主流的入口级工具。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">release 注记里作者 afourney 对 50 个 PR 的体量明确提示 "warrants a cautious rollout"，约 19 人对该预发布版做出反应</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">今日热榜第 2 的位置也很直观："文件进 LLM 前的转换器"这个环节已有事实标准，默认工具就是它</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/microsoft/markitdown</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. hyperframes — HeyGen 开源 "Write HTML, Render Video"，built for agents</p>
+
+<!-- 图片 hyperframes-demo.webp 为 WebP 格式，目标平台不支持，已跳过 -->
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.8/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">HeyGen 开源的框架，把网页原生资源变成确定性 MP4 视频，定位一句话：Write HTML. Render video. Built for agents. 一个合成（composition）本质是一份带时间属性（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">data-start</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">data-duration</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">data-track-index</code>）的 HTML 文档，元素加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">class="clip"</code> 映射到时间线。GSAP/CSS/Lottie/Three.js/Anime.js/WAAPI 等运行时注册成可逐帧 seek 的暂停时间线，引擎在 headless Chrome 逐帧 seek、FFmpeg 编码，输出确定性（"same input, same frames, same output"）。关键取舍：不用 React/JSX（Remotion 那套）也不用私有时间线格式。agent 和人直接写 HTML 就完事，没有构建步骤，同一份 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">index.html</code> 浏览器里原样播放。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>npx hyperframes init my-video
+npx hyperframes preview     # 浏览器实时预览
+npx hyperframes render      # 渲染出 MP4
+
+# 给 agent 装技能包（内置 20 个 agent-loadable skills）
+npx skills add heygen-com/hyperframes</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">tldraw、TanStack 等已经在用并贡献例子的前提下，HeyGen 把生产级能力开源；渲染有 Puppeteer + FFmpeg 双保险，产出可复现。相比之下 Remotion 要求 React/JSX 构建链，对 agent 是负担；hyperframes 走 plain HTML，正是 agent 最流利的输出格式。它自带 <strong style="font-weight:bold;color:#000;">20 个 skills</strong> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/hyperframes</code> 路由器（"capability map"）：产品发布视频、PR 转视频、幻灯片、动效字幕等任何 "make me a…" 请求都能路由到对应工作流，和 Claude Code、Cursor、Gemini CLI、Codex 都兼容。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">社区例子里 tldraw、TanStack 直接用它在生产做 HTML 动画渲染，验证了"无构建步骤 HTML→视频"这条路在非玩具场景也走通了</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">skills 设计反响：20 个 agent-loadable skills + 非交互 CLI，agent 跑通"规划→写 HTML→接动画→加素材→lint→预览→渲染"整条流水线不需要人盯着</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/heygen-com/hyperframes</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. deer-flow — 字节跳动开源长时程 SuperAgent harness</p>
+
+![deer-flow-demo](./deer-flow-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">字节跳动开源的长时程 SuperAgent harness，全称 Deep Exploration and Efficient Research Flow，处理"分钟到小时级"的任务。2.0 是基于 LangGraph/LangChain 的地面重写：编排 sub-agents、memory、sandbox（本地 / Docker / K8s provisioner / E2B）；skills 是按需渐进加载的（"only when the task needs them"）。渠道层直接接 Telegram、Slack、飞书/Lark、微信 iLink、企业微信、钉钉、Buzz，中文办公生态全覆盖。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/bytedance/deer-flow.git
+cd deer-flow
+make setup      # 交互式向导，约 2 分钟生成 config.yaml + .env
+make doctor     # 验证环境
+make dev        # http://localhost:2026</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方推荐搭配模型：Doubao-Seed-2.0-Code、DeepSeek v3.2、Kimi 2.5。本地最低 4 vCPU/8GB 即可跑，推荐 8vCPU/16GB。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#07c160;">81.9K star</strong>、MIT 协议，是国产开源 harness 里的头部；和 DeepSeek Harness（<strong style="color:#07c160;">21 万星</strong>）同时被中文社区列入"开源 Agent 座次重排"的讨论。它的差异化最实际：国外 harness 接不了飞书/企业微信/钉钉，deer-flow 开箱即用；sandbox 三档可升级（本地→Docker→K8s），从个人机到生产集群不用换项目。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">中文社区热文《开源Agent座次重排，22天21万star的Harness之后，谁在吃GitHub的红利？》把 deer-flow 与 DeepSeek Harness、ruflo 放在同一张座次表里比较，讨论长时程 harness 的公共基础设施（sandbox、message gateway、memory）正在快速标准化</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">README 给的接入姿势：让编码 agent（Claude Code/Codex/Cursor/Windsurf）克隆后一句 "bootstrap it for local development" 即可按 Install.md 完成本地开发配置</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/bytedance/deer-flow</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. context-mode — MCP 上下文窗口优化，实测省 98%</p>
+
+![context-mode-demo](./context-mode-demo.jpg)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.3/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">面向 AI 编码 agent 的上下文窗口优化方案，作者自称 "The other half of the context problem"。本质是一个 MCP server：沙箱工具把原始数据挡在上下文窗口之外（官方示例 "315 KB becomes 5.4 KB"，<strong style="color:#07c160;">98%</strong> 减少）；文件编辑、git 操作、任务、错误、用户决策统统落 SQLite，压缩会话时不把数据倒回上下文，索引进 FTS5、用 BM25 按需取回。核心理念 "Think in Code"：让模型写脚本做分析、只把结果输出进上下文，而不是把一堆文件读进来。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code 推荐（插件市场）
+/plugin marketplace add mksglu/context-mode
+/plugin install context-mode@context-mode
+
+# 其余平台（支持 hooks 的 17 家：Gemini CLI、Copilot、Cursor、
+# Codex CLI、Kimi Code、Qwen Code、OpenClaw 等）
+npm install -g context-mode</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">工具级实测数据摆在 README 里：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_batch_execute</code> <strong style="color:#07c160;">986 KB → 62 KB</strong>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute</code> <strong style="color:#07c160;">56 KB → 299 B</strong>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute_file</code> <strong style="color:#07c160;">45 KB → 155 B</strong>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_index</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_fetch_and_index</code> <strong style="color:#07c160;">60 KB → 40 B</strong>；读 47 个文件约 700 KB 的场景，换成一次 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute()</code> 只剩 <strong style="color:#07c160;">3.6 KB</strong>。启用 hooks 时整体约 <strong style="color:#07c160;">98%</strong> 上下文被节省，只有指令文件（无 hook 路由）时约 <strong style="color:#07c160;">60%</strong>。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">官方发布一键演示视频（youtube.com/watch?v=QUHrntlfPo4），"315KB→5.4KB"的数字对比是社区讨论最多的一张图</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">它和 ECC 走了两条路线：一个靠"蒸馏记忆+规避上下文"，一个靠"沙箱外挂+按需召回"。同一天都进热榜，上下文工程已经分岔出两个流派。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/mksglu/context-mode</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. lightpanda — 用 Zig 从零写的 headless 浏览器，9 倍快 16 倍省</p>
+
+![lightpanda-demo](./lightpanda-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.2/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Lightpanda 是专为 AI agent 和自动化从零写的 headless 浏览器，100% Zig 实现，不依附任何现有内核（无图形渲染引擎）；口号 "Not a Chromium fork. Not a WebKit patch. A new browser, written in Zig." 内置 agent 模式（自然语言描述任务，浏览器内建代理导航/点击/填表/抽数）、PandaScript 导出（会话转成 JavaScript 脚本，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">lightpanda run</code> 确定性回放，无需运行时 LLM）、原生 MCP（stdio/HTTP 双传输）、CDP 和 WebDriver Bidi 服务器。模型层支持 Anthropic/OpenAI/Gemini/Mistral/HF/Vercel AI Gateway 及任何 OpenAI 兼容端点，还能 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--no-llm</code> 用纯 REPL。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>brew install lightpanda-io/browser/lightpanda
+./lightpanda agent --task "top story on news.ycombinator.com?"
+./lightpanda fetch --obey-robots --dump markdown https://example.com
+# MCP（Claude Code 等消费）
+{"mcpServers": {"lightpanda": {"command": "/path/to/lightpanda", "args": ["mcp"]}}}</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">基准在 AWS EC2 m5.large 上抓取 <strong style="font-weight:bold;color:#000;">933 个真实网页</strong>，对比 headless Chrome（Playwright/Puppeteer 的底层）：内存峰值 100 页时 <strong style="color:#07c160;">123MB vs Chrome 约 2GB</strong>（约 <strong style="color:#07c160;">16 倍省</strong>），执行时间 <strong style="color:#07c160;">5s vs 46s</strong>（约 <strong style="color:#07c160;">9 倍快</strong>）。痛点很实际：Chrome 启动要数秒，服务器上每 spawn 一个进程就翻倍，这个组合在云端批量部署 agent 时直接决定账单。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">用户推文说 "11x faster execution than Chrome"（官网标注 9x，取保守值），社区对数字的争论集中在"933 个网页的样本是否代表真实工作负载"</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">AGPL-3.0 许可、默认收集遥测（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">LIGHTPANDA_DISABLE_TELEMETRY=true</code> 可关）也在讨论里被点名："内存省了但许可证你要接受"</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/lightpanda-io/browser</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. WeatherNext 3 — DeepMind 首个逐时全球天气预报模型，HN 236 分</p>
+
+![weathernext-demo](./weathernext-demo.jpg)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Google DeepMind 最新的全球天气预报模型，是<strong style="font-weight:bold;color:#000;">第一个每小时生成预报的全球天气模型</strong>。它作为集成模型直接从原始卫星影像取数（不需要依赖传统初始场），表面变量做 5km 站点级温度/湿度、10km 风/辐射/云量预测，即使在训练中没见过的位置也能保持精度。主打用途是可再生能源：风电场、光伏场直接拿到辐射和云量变量。已接入 Google Search、Maps 和 Gemini，数据通过 BigQuery、Earth Engine、Google Maps Platform、Google Cloud Storage 开放。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 数据访问（任选一）：BigQuery / Earth Engine / GCS
+bq query --use_legacy_sql=false 'SELECT * FROM `weathernext.forecasts` LIMIT 10'
+# 开发者文档：https://developers.google.com/weathernext/guides/models
+# 实验性交互平台 Weather Lab 可在线体验</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">上一代 WeatherNext 2（2025 年 11 月）主打日级预报，WeatherNext 3 把纬度拉满到"每小时的每一天"；卫星直采省掉了 ECMWF 那种数值同化管线，5km/10km 双档分辨率覆盖站点和区域两个尺度。NHC 案例：Hurricane Melissa 牙买加登陆预报全程使用该模型。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">HN 昨晚 <strong style="color:#07c160;">236 分 57 条评论</strong>，讨论集中在"和 ECMWF NWP 的精度差距到底有多大""通过 GCS 开放的数据口径是什么"，今天仍在首页</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">有用户复投 9 分（9/7），讨论热度跨出了首发日</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://deepmind.google/science/weathernext/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. Harbor Adapters + Harbor-Index — 从 6,627 个任务里蒸馏出的 82 题"地狱级"基准</p>
+
+![harbor-demo](./harbor-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.6/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Terminal-Bench 团队（harbor-framework 组织）发布的 agent 评测统一基础设施。Harbor Adapters：80+ 基准适配器，完成 8 模型 × 54 基准的大规模评测（每个模型搭配 Terminus-2 与 3 种原生 harness）；Harbor-Index：从 <strong style="color:#07c160;">6,627</strong> 个候选任务里，经难度过滤、LLM 坏任务筛查、人工审计和 reward hacking 监督三层漏斗，蒸馏出 <strong style="font-weight:bold;color:#000;">82 个任务</strong>（覆盖 29 个基准），横跨软件工程（SWE-Bench Verified/Pro、SWESmith）、安全（CyberGym）、科研（SciCode、LabBench）、数学（OmniMath、HLE）、数据分析、优化（AlgoTune、GSO speedups）。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 基于 uv 工具链
+uv run harbor run -c job-config.yaml -a &lt;agent&gt; -m &lt;provider/model&gt; ... --upload --public
+# 补传结果和提交榜单 PR：
+uv run harbor upload ./jobs/&lt;job-dir&gt; --public
+uv run lb submit https://hub.harborframework.com/jobs/&lt;uuid&gt;</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">没有模型配置能超过 <strong style="color:#07c160;">30%</strong>。最强的是 GPT-5.5 + Codex CLI（<strong style="color:#07c160;">28.1%</strong>），Claude Opus 4.8 + Claude Code <strong style="color:#07c160;">20.7%</strong>。评测全池烧掉 <strong style="color:#07c160;">226B token</strong>、超 <strong style="color:#07c160;">30 万美元</strong>算力；而 Harbor-Index 本身跑一次只花前沿 agent 几百美元，"难到打不过，便宜到人人能跑"成为社区共识。1,476 次 rollout 里只有 <strong style="color:#07c160;">9 次（0.6%）</strong>被标记为 verifier gaming，漏斗筛选基本吃掉了奖励黑客。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">中文社区《配了三个月 AI Agent 评估，今天才发现一直在用错方式》专题讨论"基准把不同来源的效应折叠进一个分数"问题，Harbor 方法被当作正面解法</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">论文方自己泼冷水（对应 What Does Multi-Harness RL Learn? 一文的视角）：现有证据不足以支持"跨 harness 自动演化有用"，评测 harness 才是主导变量：平均通过率 <strong style="color:#07c160;">2.14%→9.27%（4.3 倍）</strong>全都来自 harness 选择</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/harbor-framework/harbor-index</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://arxiv.org/abs/2609.04298</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. TALA — D2 的自动布局算法开源，专治 agent 画图的"线路路由"弱项</p>
+
+<!-- 图片 tala-demo.svg 为 SVG 格式，目标平台不支持，已跳过 -->
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.4/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Terrastruct 把 D2 声明式图表语言内置的自动布局算法 TALA（Terrastruct's AutoLayout Algorithm）以 MPL-2.0 开源。它是专为软件架构图设计的<strong style="font-weight:bold;color:#000;">正交布局引擎</strong>：布局更接近白板上手画的画法，而不是逐层向下生长的 DAG 布局，优化目标直接对标美学维度（对称性、中位距离、流向、同类节点聚类）。博文明确点出 agentic 场景："模型擅长在二维空间摆位置，但连线路由仍然薄弱，TALA 正好补上这个短板。"随 D2 v0.9.0 捆绑，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--layout=tala</code> 即用。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>brew install d2    # 或 scoop install d2
+d2 --layout=tala document.d2 out.svg
+# 在线体验（已预置示例，100% 客户端运行）：
+# https://play.d2lang.com</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">与 Dagre、ELK 同台对比（7 个真实公开 D2 文件仅换布局引擎），TALA 的正交布线更接近人类架构师的手感；支持完全自定义坐标（top/left 锁定节点）和混合定位（部分节点钉死、其余交给引擎），贴合了 AI 画图的真实工作方式：模型定锚点，引擎补路由。局限也摆在明处：算法有随机性（默认 3 个种子跑多次取最优，加一个节点可能整体大变），长流程 DAG 作者本人仍偏好 Dagre/ELK。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">HN 作者 alixanderwang 亲自发帖发布，社区关注点：随机性与稳定性 tradeoff（"加一个节点就可能重排"）、大图运行时间非线性增长（官方另开 d2-benchmarks 基准仓库）</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">博文作者坦诚长流程场景宁可选 Dagre/ELK，没有回避局限性</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://d2lang.com/blog/tala-is-open-source/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">10. Iris — 冲向搜索前沿：两阶段 SFT-LR 爬坡，开源同参数搜索最强</p>
+
+![iris-demo](./iris-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.0/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AllSpark Research 发布的搜索代理，<strong style="font-weight:bold;color:#000;">35B-A3B 和 397B-A17B</strong> 两档。方法是 "SFT-RL climbing"：先反向从网页超链接结构构造多跳任务，做轨迹级 + 轮次级过滤后 SFT，再对实时搜索做 RL。两阶段交替爬坡，让"搜索能力"和"任务难度"互相抬升。结果：在 BrowseComp、BrowseComp-ZH、DeepSearchQA、HLE 上刷新开源同参数范围最强成绩。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 论文与代码/权重入口：
+# 论文：https://arxiv.org/abs/2609.04304（权重与仓库以论文页链接为准）</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">搜索是 agent 的流量入口，"推理再强、搜不到东西"是当前 agent 最大瓶颈之一；Iris 证明搜索能力可以靠"难度自举"训练出来，且 <strong style="color:#07c160;">35B</strong> 档就能追平更大的模型。对预算有限的团队，这是"搜索代理"方向最值得盯的论文。公开数据点：BrowseComp 及其中文版同参数开源最强。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">HF Daily Papers <strong style="color:#07c160;">50 upvotes</strong> 当日上榜，属于"代码/权重开放前热度先行"的典型论文</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">双档（35B/397B）设计的类比讨论：把搜索训练从"万人级 RL"往下压到"几十卡可复现"，是社区对这篇论文兴趣的核心</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://arxiv.org/abs/2609.04304</span></code></p>
+
+<p style="text-align:center;margin:32px 0;color:#07c160;letter-spacing:8px;font-size:12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">openai/skills</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">OpenAI 官方 Codex Skills Catalog，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">$skill-installer</code> 一键装；但仓库标注 deprecated，现行内容迁到 OpenAI Plugins（developers.openai.com/codex/plugins/build），追新者认后者</p>
+  <p style="margin:0;font-size:13px;color:#999999;">351 stars/day</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">camofox-browser</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">基于 Camoufox（Firefox 分支、C++ 层指纹伪造）的 stealth headless 浏览器服务器，宣称可绕过 Google/Cloudflare 等 bot 检测，15 秒内元素引用稳定、无障碍快照比原始 HTML 小约 90%；<strong style="font-weight:bold;color:#000;">双用途工具</strong>，是否合规使用请按所在地区法律与目标站点条款自行评估</p>
+  <p style="margin:0;font-size:13px;color:#999999;">135 stars/day</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">MaxKernel</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">Google 发布的 TPU agentic 内核生成多代理系统，HITL/全自动/图搜索三种范式，JaxBench 50 任务匹配专家手调基线，已开源</p>
+  <p style="margin:0;font-size:13px;color:#999999;">arXiv 2609.04523 · HF 9 upvotes</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">python-iceberg</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">用 Python 复刻 macOS 桌面即视感的 Iceberg：ai 时代"画出来也要好看"的趣味跨界</p>
+  <p style="margin:0;font-size:13px;color:#999999;">Lobsters 27 points · vibecoding 标签</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Motion-Omni</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">端到端语音 + 全身动作联合生成，讲一句话连口型、表情、肢体一起出来，虚拟人方向的底层能力</p>
+  <p style="margin:0;font-size:13px;color:#999999;">HF 36 upvotes · 北京大学</p>
+</section>
+
+<section style="background-color:#f5f7fa;border-radius:8px;padding:18px 20px;margin:24px 0 0 0;">
+  <p style="margin:0 0 10px 0;font-size:17px;font-weight:bold;color:#333333;">本期关键词</p>
+  <p style="margin:0;font-size:15px;color:#555555;line-height:2.0;">ECC <span>&nbsp;·&nbsp;</span>markitdown <span>&nbsp;·&nbsp;</span>hyperframes <span>&nbsp;·&nbsp;</span>deer-flow <span>&nbsp;·&nbsp;</span>context-mode <span>&nbsp;·&nbsp;</span>lightpanda <span>&nbsp;·&nbsp;</span>WeatherNext 3 <span>&nbsp;·&nbsp;</span>Harbor-Index <span>&nbsp;·&nbsp;</span>TALA <span>&nbsp;·&nbsp;</span>Iris</p>
+</section>
+
+</section>
