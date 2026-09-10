@@ -1,0 +1,201 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-10</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你花钱买的技术书，读完三个月就忘光了。想把书里的东西喂给 Claude Code，要么把 PDF 整个塞进上下文，200 页吃掉 7.5 万 token，聊两句窗口就满了；要么直接问模型，它对没读过的书只会编。book-to-skill 给了第三条路：把书拆成一套结构化的技能文件，agent 用到哪一章就读哪一章。<strong style="color:#07c160;">29.4k stars</strong>，MIT，一条命令装好。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<!-- 图片 book-to-skill-demo-1.webp 为 WebP 格式，目标平台不支持，已跳过 -->
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">技术书的宿命是读完即忘。真到要用的时候，你打开 PDF 搜索一个关键词，返回的是二十个页码，你还得自己翻；你把 PDF 丢给 AI 助手，它要么编造，要么回你一句"我没有这本书的内容"；你当年划的重点笔记，躺在某个笔记软件里再也没打开过。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">换个思路：把书当知识库看，而不是当文件看。book-to-skill 做的事就是把一本书拆解成 agent 能按需读取的结构：核心框架、决策规则、反模式、术语表、速查表，各归各位。以后写代码时遇到相关问题，agent 自己去翻对应章节，你不用再回去翻书。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这个 skill 的设计原则是一句话：<strong style="font-weight:bold;color:#000;">提取结构，不做摘要</strong>（Extract structure, not summaries）。摘要读完就没了，结构才能被反复调用。所以它提取的是五类东西：具名框架（named frameworks）、可执行原则（actionable principles）、具体技术（techniques）、反模式（anti-patterns）、以及作者的表述精度（voice calibration）。最后这条指的是保留作者原话里的判断句，比如"当 X 超过 Y 时用 Z"，而不是改写成"Z 通常是个不错的选择"。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">流程分两半。前半段是确定性的 Python 提取器 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">scripts/extract.py</code>：文档进来，干净文本和元数据出去，产出一个 workdir，里面有 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">full_text.txt</code>（各来源用分隔符隔开）和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">metadata.json</code>（合并后的页数、字数、估算 token 数、每个来源的明细）。后半段是 agent 按 SKILL.md 的规范做结构化：先读前 8000 字符拿到标题、作者、章节结构，读目录，然后逐章生成文件。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">产出物的结构是这样：</p>
+
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #e8e8e8;">
+  <thead>
+    <tr>
+      <th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">文件</th>
+      <th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">内容</th>
+      <th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">体积预算</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">SKILL.md</code></td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">核心框架 + 章节索引 + 主题索引，agent 主入口</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">&lt; 4,000 tokens</td>
+    </tr>
+    <tr>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">chapters/ch01-*.md</code></td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">逐章文件，含核心思想、框架、心智模型、反模式、要点</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">800–3,000 tokens/章</td>
+    </tr>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">glossary.md</code></td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">术语表，按字母序</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">≤ 1,500 tokens</td>
+    </tr>
+    <tr>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">patterns.md</code></td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">模式库，按 When / How / Trade-offs 三段式</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">≤ 2,000 tokens</td>
+    </tr>
+    <tr style="background-color:#fafafa;">
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">cheatsheet.md</code></td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">速查表，优先放决策规则和阈值</td>
+      <td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">≤ 1,200 tokens</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">SKILL.md 前重后轻</strong>是这里最关键的设计——上下文压缩是从末尾开始截断的，所以最核心的约 2,000 token 框架内容必须放在最前面，章节索引和辅助说明往后放。chapter 文件平时不加载，agent 只在需要时读特定的那一章。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">有 50k token 以上的书还有个细节处理：不把全文一次性交给 agent 读，而是教它用 REPL 式访问。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">wc -w</code> 量体量，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">grep -n</code> 定位章节偏移，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">sed -n 'start,endp'</code> 抽片段，带 offset/limit 的 Read 做有界读取。理由很直白：一本 200 页的书约 7.5 万 token，如果每生成一章就重读一遍全文，25 章下来就是 <strong style="color:#07c160;">200 万输入 token</strong>。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">安装配置</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">跨 agent 的 skills CLI 一条命令：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>npx skills add virgiliojr94/book-to-skill</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">或者手动 clone（会自动注册 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/book-to-skill</code> 命令）：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">不同宿主的技能目录不一样：Copilot CLI 用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.copilot/skills/</code>，Amp / Codex 用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.agents/skills/</code>，Claude Code 用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.claude/skills/</code>，Hermes Agent 用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">${HERMES_HOME:-$HOME/.hermes}/skills/&lt;category&gt;/</code>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装完先跑一次体检，看看各格式的提取器齐不齐（这一步只打印报告，不处理文件）：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>python3 scripts/extract.py --check</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">PDF 提取的依赖按书的类型选：纯文字书用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pdftotext</code>（poppler 包，快）或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pypdf</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pdfminer.six</code>；带代码、表格、公式的技术书用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">docling</code>（结构感知，约 1.5 秒/页）；扫描版 PDF 需要先 OCR 再处理：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>ocrmypdf input.pdf output.pdf</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">使用指南</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景一：把一本技术书变成随叫随到的参考</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">最基础的用法，给一个路径就行：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>/book-to-skill ./designing-data-intensive-applications.pdf ddia</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它会先问你一个问题：这本书是技术型（含代码、表格、公式、图表）还是文字型（以叙述为主）？不确定就选"not sure"，会按文字型处理。然后是一轮成本估算确认，列出页数、字数、估算的输入/输出 token、预计耗时和将要生成的文件数。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">确认后进入生成流程。以一本 25 章的技术书为例，产出大致是：一个 4,000 token 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">SKILL.md</code>、25 个章节文件（每章 2,000–3,000 token）、加上术语表、模式库、速查表。整个过程在本机跑，不联网。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装好之后，你写代码时随口问：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>用 ddia 书里讲的一致性模型，看看我这个分布式锁的设计有什么问题</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 会自动加载 ddia 技能，去读对应章节，然后基于书里的实际内容回答，依据全是原文。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景二：先分析再决定要不要花钱生成</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一本书值不值得做成技能，你未必一上来就清楚。这时候用分析模式，只跑到结构分析那一步就停：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>/book-to-skill ./some-book.epub --analyze-only</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">或者直接说"just extract"、"先分析一下"。它会输出一份提取报告，最后附一张章节表：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>| # | Title | Main Frameworks |
+|---|-------|-----------------|
+| 1 | Why Data Systems Matter | 可靠性/可扩展性/可维护性三支柱 |
+| 2 | Data Models | 关系模型 vs 文档模型决策树 |
+...</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">看完这张表你就能判断：这本书的框架密度够不够高、值不值得花 token 做完整转换。如果报告显示某几章只是车轱辘话，也可以只用后面的增量模式补进来。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景三：把第二本书折进已有技能</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">手上有本讲同一主题的旧书，想补充进来，不想另起一个技能：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>/book-to-skill ./new-book-on-caching.pdf ddia</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">slug 匹配到已存在的技能目录时，它会进入 <strong style="font-weight:bold;color:#000;">Update / Fold-in</strong> 模式，走六步合并流程。先读现有的 SKILL.md 索引和所有章节文件，把新文本分类成"对已有章节的修订"还是"新增内容"。新增章节从现有最大编号往后接着编。术语表重新按字母序合并，每个词条追加章节引用（形如 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">(Ch 4, Ch 13)</code>）。模式库合并后保持在 2,500 token 以内。最后重新生成 SKILL.md，更新章节数、页数、日期，把新框架折进 4,000 token 的上限里。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">结果是一本融合书：同一个主题下两本书的知识互相补位，索引统一。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景四：把内部文档变成团队技能</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这套流程不只吃书。SKILL.md 明确列了其他适用对象：内部文档、品牌 / 设计系统、研究资料集、规范与标准。团队的设计规范散在十几个 Confluence 页面里，或者一套内部 API 标准散在一堆 README 里，都可以打包成一个目录丢进去：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>/book-to-skill ./our-api-standards/ our-api-standard</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">生成出来的技能，团队每个人装同一个版本，agent 给出的建议就遵循同一份规范。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">章节 token 预算分两档。</strong> <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">DEPTH=reference</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">DEPTH=study</code> 生成的内容厚度不同。第 4 步会问你用途：是要"应用框架"、"用书里的心智模型思考"、"当参考资料查"，还是全都要。只有选了纯参考资料才走 reference 档，其余都按 study 档生成。两档差别在预算表里写得很清楚：文字型书的 study 档每章 1,000–1,800 token，比 reference 多出工作示例的篇幅。注意这是目标值，不是上限，写得薄的章节宁可低于下限也不注水。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">注入前先过一遍安全扫描。</strong> 第 9.5 步会跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">tools/scan_generated_skill.py</code> 扫描生成的技能。这个设计是因为书里的文本会被原样带进技能文件，如果来源文档里混了 prompt 注入内容，扫描会拦下来。非零退出码意味着停下来人工审查，不要直接加载或发布。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">发布默认私有。</strong> 第 11 步可以一键推到 GitHub，但版权闸门在：书衍生出来的技能默认建私有仓库，除非来源是你自己的作品、开放许可、或者明确获得再分发授权。可见性判断也极其严格，只有回答里出现光秃秃的 "public" 这个词才建公开仓库，任何转述、整句话、沉默或者推测，一律落到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--private</code>。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">常见踩坑</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">我通读了一遍它的 SKILL.md，这份文档对边界情况的交代比预想的细，下面几条是最容易踩的。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">扫描版 PDF 直接进去是空的。</strong> 提取器拿到的是图片层，OCR 之前没有文本可提。先跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ocrmypdf input.pdf output.pdf</code> 补一层文字，再交给 book-to-skill。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">含大量代码和表格的技术书，别用默认提取器。</strong> 默认的文本提取会把表格结构压平、代码缩进吃掉。第 1.5 步那个问题老老实实选"Technical"，它会切到 docling 做结构感知提取，代价是约 1.5 秒/页。一本 400 页的书大概多花十分钟，但代码和公式能保住。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">docling 没装时不会报错，会静默降级。</strong> <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--install-missing ask</code> 会在缺少更好的提取器时询问你，但非交互式会话（比如你在脚本里跑）默认走 fallback，不装也不提示。跑之前先 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--check</code> 看一眼，比事后发现表格全坏了要省事。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">workdir 别手动删错。</strong> 每次运行会产生一个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">&lt;tempdir&gt;/book_skill_work-&lt;pid&gt;/</code> 工作目录，清理逻辑只删本次运行创建的那个（从输出的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Workdir -&gt;</code> 行或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">metadata.json</code> 里的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">workdir</code> 字段取）。早期版本的固定路径 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">book_skill_work</code> 已经废弃，现在是空操作，别去找它、也别删它以外的东西。想固定工作目录位置就设环境变量 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">BOOK_SKILL_WORKDIR</code>。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">book-to-skill（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add virgiliojr94/book-to-skill</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>确定性提取器 + 规范驱动生成，产出结构化技能包，token 省 24–51 倍</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>技术书、内部文档转 agent 知识</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 29.4k</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">planning-with-files</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add OthmanAdi/planning-with-files</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>把任务计划落盘成 Markdown，抗上下文压缩</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>长任务规划与恢复</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 26.7k</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">pdf2skill 类转换器</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>各不相同</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>单文件 PDF 转技能，通常不做逐章拆分</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>轻量 PDF 提取</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 28.3k</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">手动塞 PDF 进上下文</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>无</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>一次性加载，用完即弃</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>临时查一段内容</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">推荐理由：和只做"PDF 转 markdown"的工具不同，book-to-skill 的真正产出是一套按需加载的索引结构。它的 token 经济性来自架构而非压缩：章节文件平时躺在磁盘上不占上下文，agent 靠主题索引定位到具体章节才去读。这一点上，它和本地文档检索方案解决的问题相近，但交付形态是 agent 原生的技能包，不用额外跑一个服务。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 29.4k</span><span>&nbsp;·&nbsp;</span><span>MIT</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/virgiliojr94/book-to-skill</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">book-to-skill 适合这样的人：书架上有几本翻过但记不住的技术书、团队规范散在一堆文档里没个准话、或者你已经在用 Claude Code 但发现它对你所在领域的专业内容只能泛泛而谈。配置时间取决于书的类型：纯文字书装完就能跑，技术书多花几分钟装 docling。换来的是一个随叫随到的专业参考库，问什么，agent 去翻对应的章节，用书里的原话回答你，而不是编一段听起来差不多的东西。</p>
+
+</section>

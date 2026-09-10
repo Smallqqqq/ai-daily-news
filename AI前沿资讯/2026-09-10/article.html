@@ -1,0 +1,410 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-10</p>
+
+<section style="background-color:#f0f9eb;border-radius:10px;padding:18px 20px;margin:0 0 28px 0;border:1px solid #c8e6c9;">
+  <p style="margin:0 0 10px 0;font-size:15px;color:#2e7d32;line-height:2.0;">本期覆盖 2026-09-09 ~ 2026-09-10 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Bluesky / Lobsters / arXiv / HF Papers / 知乎 / AI 实验室博客。精选 10 条按影响力评分排序。</p>
+  <p style="margin:0;font-size:15px;color:#2e7d32;line-height:2.0;">核心主题：<strong style="color:#1b5e20;">Agent Skills 生态从"个人装技能"走向"团队分发技能"，腾讯 teamai-cli 和 OpenAI 官方插件市场同天冲上热榜；端侧模型集体爆发，Desert Ant Labs 一口气发布 18 个专用小模型，面壁 MiniCPM5-2B 把训练配方一起开源。</strong></p>
+</section>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. Tencent/teamai-cli — 用一个 git 仓库给全团队分发 agent 技能</p>
+
+![teamai-cli-demo](./teamai-cli-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.3/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">腾讯开源的 CLI（MIT），解决的问题是：团队里每个人各装各的 skills，规范无法统一。TeamAI 把 skills、rules、docs、hooks、MCP 配置集中放在一个共享 git 仓库里，通过 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">push → review &amp; merge → pull</code> 流程同步到每个成员本地的 Claude Code / Codex / Cursor / OpenCode / CodeBuddy 等工具。装好之后 SessionStart hook 自动拉取最新版本，成员不用手动更新。分三层：Team Execution、Team Context（beta）、Team Improvement（beta）。可选开启的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">teamai-recall</code> 子 agent 用 BM25 + 图增强检索团队知识库。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">teamai codebase --extract</code> 还能用 WASM 版 tree-sitter 把代码库解析成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">teamwiki/</code> 知识图。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>npm install -g teamai-cli
+teamai init https://github.com/yourorg/yourrepo    # 项目级
+teamai init https://github.com/yourorg/yourrepo --scope user   # 用户级
+
+teamai pull          # 拉取团队配置
+teamai push          # 提交自己的改动
+teamai recall enable # 开启团队知识检索
+teamai codebase --extract   # 生成代码库知识图</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent Skills 生态过去一周的爆发（mattpocock/skills、archify、ponytail、hyperframes 单周涨幅都在 <strong style="color:#07c160;">1.2 万星以上</strong>）暴露出一个新问题——技能是个人资产，团队无法治理。teamai-cli 首次把"技能分发"做成有版本、有评审、有归属的工程流程，兼容 <strong style="color:#07c160;">12 种 agent</strong>（Claude Code、Codex、Cursor、CodeBuddy、WorkBuddy、OpenCode、OpenClaw、Hermes、DeepSeek Harness、Qoder、ZCode）。README 未提供 benchmark 数据，能力矩阵表显示部分 agent 尚不支持 hooks。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">热榜评论区关注点集中在"多 agent 共存"：一个团队里同时有人用 Claude Code、有人用 Codex，过去技能配置完全割裂，teamai 这类"技能包管理器"填补了空缺</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">有开发者指出 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">teamai source</code> 订阅第三方仓库的能力等于把 skills 变成了 npm 包——可以按团队、按角色组合订阅</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Tencent/teamai-cli</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. openai/plugins — OpenAI 官方 Codex 插件市场开张</p>
+
+![openai-plugins-demo](./openai-plugins-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.1/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">OpenAI 官方的 Codex 插件示例集合。每个插件放在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">plugins/&lt;name&gt;/</code> 下，必须包含 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.codex-plugin/plugin.json</code> manifest，可选附带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">skills/</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.app.json</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.mcp.json</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agents/</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">commands/</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">hooks.json</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">assets/</code>。默认市场文件是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.agents/plugins/marketplace.json</code>，API key 登录的用户走独立的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.agents/plugins/api_marketplace.json</code>。已收录插件覆盖 figma（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">use_figma</code>、Code to Canvas、Code Connect）、notion（规划、研究、会议、知识留存）、build-ios-apps / build-macos-apps / build-web-apps、expo（React Native 与 EAS 工作流）、netlify、remotion、google-slides。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/openai/plugins.git
+cd plugins
+
+# 插件结构
+plugins/&lt;name&gt;/
+├── .codex-plugin/plugin.json   # 必需 manifest
+├── skills/                     # 可选
+├── .mcp.json                   # 可选 MCP 配置
+└── hooks.json                  # 可选钩子
+
+# 市场文件
+.agents/plugins/marketplace.json       # 默认
+.agents/plugins/api_marketplace.json   # API key 用户</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">前作 openai/skills 仓库已被标记 deprecated，内容全部迁移至此——这是 OpenAI 把插件从"技能目录"升级成"带 manifest、带市场文件、带 MCP 集成"的分发体系。对照 Anthropic 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">anthropics/skills</code>（<strong style="color:#07c160;">175K 星</strong>）走的是技能合集路线，OpenAI 这边直接做市场机制 + 生态接入（Figma、Notion、Netlify、Expo 都是首批官方合作方）。6,217 星里 <strong style="color:#07c160;">498</strong> 是今天新增的，说明市场模式比单点技能更受关注。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">开发者讨论焦点是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.codex-plugin/plugin.json</code> 与 Claude Code 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.claude-plugin/plugin.json</code> 是否会出现格式分裂——两边 manifest 结构高度相似但互不兼容</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">有人注意到 API key 用户走独立市场文件，推测是为企业版做隔离准备</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/openai/plugins</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. PI-Desktop — Electron + Rust 的本地优先编码 agent 桌面端</p>
+
+<!-- 图片 pi-desktop-demo.webp 为 WebP 格式，目标平台不支持，已跳过 -->
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.9/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">vastsa 开发的本地优先 AI 编码 agent 桌面工作台（LGPL-3.0），处于 Early Preview，当前 0.14.x。架构分四层：React 渲染层（无 Node 集成）→ Electron 主进程 → Rust host core（权限、文件系统、SQLite、密钥管理）→ pi Agent Sidecar（agent 循环、模型调用、流式输出），基于 pi-mono 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pi-ai</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pi-agent-core</code>。三种 agent 模式：Agent（默认循环）、Plan（先出不可变实现计划、审批后执行）、Goal（锁定结果与验收标准，agent 自己选路径）。权限层拦截所有特权操作。支持从 Claude Code、Codex、OpenCode、Pi 导入历史会话。模型侧兼容 OpenAI、Anthropic、OpenAI-compatible、Ollama、LM Studio。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 从 GitHub Releases 下载预编译包（macOS / Windows x64 / Linux）
+# https://github.com/vastsa/PI-Desktop/releases
+
+# 从源码构建（需 Node &gt;=22.19、pnpm &gt;=10、stable Rust）
+git clone https://github.com/vastsa/PI-Desktop.git
+cd PI-Desktop
+pnpm install
+cargo build -p host-core
+pnpm build:js
+pnpm dev
+
+# 外部 MCP 控制（默认关闭，仅 loopback）
+PI_DESKTOP_MCP_CONTROL=1</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">"桌面端 + Rust 核心 + 权限隔离"这套组合把 agent 从终端里解放出来。对照同类：Claude Code 是 CLI-only，Cursor 是编辑器绑定，PI-Desktop 主张"No editor lock-in"——不绑定编辑器、不需要账号、不强制中转。密钥存 OS keychain、会话存本地 JSONL + SQLite 索引、无遥测。插件系统用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.piplug</code> 分发，插件进程与渲染层权限隔离。README 无 benchmark 数据；作者在致谢表里披露项目由 gpt-5.6-luna、claude-opus-5、grok-4.5 等模型累计消耗 <strong style="color:#07c160;">271 亿 token</strong> 构建。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">社区把它和 lightpanda、OpenClaude 放在一起讨论："2026 年 9 月的主题是给 agent 换壳——从别人的 IDE 里搬出来，自己控制运行时"</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">争议点在 Early Preview 阶段就提供 MCP 外部控制接口（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">mcp-control.json</code> 里的 bearer token），有人担心调用方 agent 拿到"桌面级权限"而 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">confirm: true</code> 不弹用户确认</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/vastsa/PI-Desktop</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. pascal editor — 在浏览器里盖房子，让 AI 直接改 3D 场景</p>
+
+![pascal-editor-demo](./pascal-editor-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.8/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">pascalorg 开源的本地优先 3D 建筑编辑器（MIT），React Three Fiber + WebGPU 渲染。核心设计是语义场景图——建筑以节点树存在扁平字典里（Site → Building → Level → {Wall→Item, Slab, Ceiling→Item, Roof, Zone, Scan, Guide}），几何由响应"脏标记"的 systems 生成，配空间网格管理器做放置与碰撞校验。这个结构让建筑对人类和 AI agent 都可读。参数化门窗用 three-bvh-csg 做布尔切割，家具按放置面自动吸附。撤销栈 50 步，场景存 IndexedDB。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 一条命令起本地编辑器 + MCP 服务（需 Node 22.13+）
+npx @pascal-app/cli editor     # 项目存在 ~/.pascal/data/pascal.db
+
+# 把 agent 接到平面图上
+pascal mcp connect
+pascal mcp setup claude        # 或 setup codex
+
+# 装官方技能
+npx skills add pascalorg/editor --skill pascal-3d --skill furniture-fit
+
+# Claude Code 插件方式
+/plugin marketplace add pascalorg/editor
+/plugin install pascal-agent-skills@pascal</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">@pascal-app/mcp</code> 暴露约 <strong style="color:#07c160;">30 个</strong>自然语言工具：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">create_room</code>（用多边形生成房间）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">add_door</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">add_window</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">furnish_room</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">measure</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">check_collisions</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">undo</code>，还有 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">from_brief</code> 提示词把"80 平米两居室"一句话变成一系列编辑操作。MCP 服务写本地 SQLite，编辑器页面订阅事件流——agent 干活时你能看着墙一堵堵长出来。图片读取工具走 MCP 的 sampling 能力，由客户端模型看图。局限也明确：它定位是方案设计工具，不做结构计算和施工图，IFC 互操作尚未验证，WebGPU 排除老设备。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">Korben 的评价是"平面图自己画出来了，Claude 只是在干活"——他强调价值不在 AI 生成 3D，而在 agent 的每一步修改都落到可编辑的语义节点上，不是生成一坨死网格</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">中文社区（知乎 2.1 万星报道）关注点是把"vibe coding 的对象从代码扩展到空间设计"</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/pascalorg/editor</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. text-to-cad — 用自然语言造机械零件与机器人模型</p>
+
+![text-to-cad-demo](./text-to-cad-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.7/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">earthtojake 维护的 CAD / CAE / CAM 技能库（MIT），把机械工程从建模到打印拆成 <strong style="color:#07c160;">11 个</strong>独立 skill：CAD（自然语言或图片生成模型，主输出 STEP，可导出 STL / 3MF / GLB）、CAD Viewer（本地浏览器预览）、step.parts（找现成 STEP 标准件：螺丝、轴承、电机、连接器）、DXF（2D 图纸、垫片、切割排版）、URDF（机器人结构文件：links、joints、limits、inertials）、SRDF（给 URDF 加 MoveIt 规划组、末端执行器、碰撞规则）、SDF（仿真模型与世界：坐标系、物理、传感器、灯光）、SendCutSend（上传前检查）、DfAM Check（按打印工艺算壁厚、悬垂、支撑体积、朝向）、G-code（调用真实切片器 CLI 出 FDM 打印文件）、Bambu Labs（干跑、上传、谨慎启动本地打印）。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 技能 CLI（推荐）
+npx skills add earthtojake/text-to-cad
+
+# Codex（需 0.142.0+）
+codex plugin marketplace add earthtojake/text-to-cad
+codex plugin add cad@text-to-cad
+
+# Claude Code
+claude plugin marketplace add earthtojake/text-to-cad
+claude plugin install cad@text-to-cad</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这是 agent skills 第一次覆盖到"从需求到物理零件"的全过程——生成模型、检查可打印性、切片、上传打印机。过去 CAD 领域的 AI 工具止步于生成网格，打印师拿到的还是需要返工的模型。11 个 skill 各自有独立 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">requirements.txt</code> 钉住 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">cadgen</code> 版本，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">models/</code> 测试模型走 LFS 指针且不需要拉取即可使用。README 提醒一个坑：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx skills update</code> 只刷新 lockfile 里已有的 skill，新增的会静默漏掉。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">Show 出来的 GIF 演示里，CAD skill 生成几何后能直接联动 URDF skill 出机器人描述，再进 MoveIt2 做逆运动学验证——三个 skill 串成一条流水线</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">社区讨论点是"agent 生成 STEP 而不是 STL"的意义：STEP 是参数化格式，下游可以继续改，这是工程可用与玩具的分界线</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/earthtojake/text-to-cad</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. Desert Ant Labs — 18 个端侧模型，2MB 语言识别打赢 293MB</p>
+
+![desert-ant-demo](./desert-ant-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.6/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">欧洲新成立的端侧 AI 实验室，主张用一堆任务专用小模型替代云端大模型 API。首发 <strong style="color:#07c160;">18 个模型</strong>（12 稳定 + 6 beta），按任务一模型的方式通过统一 SDK 交付，支持 Swift、Kotlin、JavaScript。代表作：Voz（语音转写，iPhone 上 10 分钟音频 2 秒转完，带词级时间戳）、Clear（9MB 音频增强，5 分钟笔记本录音 1 秒变成录音棚音质）、Redact（27 种语言的姓名、地址、卡号实时脱敏）、Tongue（2MB 语言识别，84 种语言，3 个词就能判定）、Clips（284MB，10 分钟视频 5 秒切成十几条短片）。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># SDK 在 GitHub 开源，模型可在 Mac 用 CLI 试用
+# 或在浏览器里通过 Hugging Face 试跑
+# https://github.com/desertant
+
+# 免费额度：每月 10 万个活跃设备以内免费，无 token 计费、无需登录</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据本身够狠：Tongue 用 <strong style="color:#07c160;font-size:20px;">2MB</strong> 达到 0.933，打败 293MB 的检测器（0.887）；Redact 12MB 抓到 <strong style="color:#07c160;">88.8%</strong> 的个人信息，逼近 2.3GB 的 GLiNER-PII（91.1%）；Clear 在 iPhone 16 Pro 上跑到 <strong style="color:#07c160;">302 倍</strong>实时，M5 MacBook Pro 上 345 倍；Voz 在 M3 Ultra 上 319 倍实时，对比 Apple SpeechAnalyzer 78 倍、Whisper large-v3-turbo 50 倍。Clips 对 Claude Sonnet 是 10 倍速、能耗低 470 倍、质量相当。团队引用英伟达研究者的估计：agent 系统里 <strong style="color:#07c160;">40%~70%</strong> 的大模型调用可以被小专用模型接管。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">HN 高赞质疑集中在"任务专用模型的可组合性"——单个任务表现好，但真实产品需要模型之间协商（比如转写后要脱敏再摘要），论文里的 benchmark 覆盖不到这种串联成本</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">也有人指出定价模式值得注意：按活跃设备而不是按调用次数收费，等于把成本结构从"用多少付多少"换成"部署规模"</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://desertant.com/blog/introducing-desert-ant-labs/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. awesome-gpt-image-2 — 705 stars/day，提示词模板库连续三日霸榜（已在 2026-08-24 首次收录）</p>
+
+![gpt-image-2-demo](./gpt-image-2-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.4/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">freestylefly 维护的 GPT-Image2 提示词引擎（MIT），思路是"Prompt as Code"：把社区案例逆向工程成结构化提示词资产，按 13 个类别归档 <strong style="color:#07c160;">544 个</strong>案例（海报排版 90、摄影写实 78、UI 界面 73、插画艺术 59）。提示词被拆成主体、光照、材质、布局、视觉细节等可组合原子，配 20+ 套工业级模板，全文在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">docs/templates.md</code>。产物 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">gpt-image-2-style-library</code> 是可安装的 agent skill，数据从 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">data/style-library.json</code> 共享。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>npx skills add freestylefly/awesome-gpt-image-2 --skill gpt-image-2-style-library
+
+# 或 npm CLI
+npm install -g gpt-image-2-style-library
+gpt-image-2-style-library install all
+
+# 使用示例："使用 gpt-image-2-style-library 技能，帮我生成介绍 Codex 的信息图"</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">首次收录时是 401 stars/day（8/24），今日 <strong style="color:#07c160;">705</strong>——热度没降反升。项目新增了 2.5 spotlight 区域，专门覆盖 Sunburst 和 Flare 两个新变体的复现案例，说明它跟着 OpenAI 的模型迭代同步更新。同类库也在涨（YouMind-OpenLab 9.4K、indreamai 7K+ prompts 日更），GPT-Image-2 提示词工程已经稳定成一个独立生态。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">站点 gpt-image2.canghe.ai 支持登录后直接生成，把"抄提示词→改提示词→出图"压缩到同一个界面里</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">README 明确声明只收集公开可访问的社区提示词和图片用于学习研究，第三方内容的商用可用性不做保证</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/freestylefly/awesome-gpt-image-2</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. Xiaomi MiMo Desktop — 能直接交付成果的桌面 Agent</p>
+
+![mimo-desktop-demo](./mimo-desktop-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.2/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">小米 9 月 8 日开放的桌面 AI 客户端邀测（invite-only），搭载 MiMo-X-Pro-Preview 和 MiMo-X-Flash-Preview 两个预览模型。定位不是聊天机器人，是完成长流程工作并输出可编辑交付物的 agent 工作台。可以直接拖入 PDF、表格、图片、视频、录音、未解压压缩包，不用预先转换格式；自然语言下指令后自动拆解步骤、调用工具，输出文档、PPT、表格、网页、图片、音视频、3D 模型甚至 App 工程。成果支持会话内交互式预览（可点击操作，不是静态截图），支持框选局部内容定向修改、多版本回退对比。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 访问官方邀测页面提交申请
+# https://mimo.xiaomi.com
+# 优先向 MiMo 开放平台老用户开放，限时限量免费</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方给出的成本优化数据：同会话缓存命中率最高 <strong style="color:#07c160;">99%</strong>，跨会话最高 95%，配合模型路由和局部编辑三重优化。Smart 智能调度会识别办公、编程、设计、调研任务类型，在标准/旗舰模型和对应 agent 工作流间自动路由，大任务拆给多角色 agent 协同。浏览器自主操控能力允许它在生成网页成果时自己打开页面自检关键交互。目前未公布模型参数、上下文长度和基准成绩——这是判断其真实水平的缺口。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">中文社区关注"从 V2.5 直接跳到 MiMo-X"的命名，认为是为对标 GPT-6 与 Fable 5 的代际叙事做准备</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">讨论最集中的是"3D 模型和软件工程直接交付"这类宣称，缺少第三方实测，评论区多持观望态度</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://mimo.xiaomi.com</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. Nex-AGI Nex-N2.5 — 1.6T 参数的智能体模型家族，Mini 已开放权重</p>
+
+![nex-agi-demo](./nex-agi-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.1/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Nex-AGI 联盟（上海创智学院、上海期智之風、墨芯智能、夸父科技合作，团队以 @NexEcosystem 账号运作）9 月 8 日发布的智能体模型家族，三档定位：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">Mini</strong>：约 350 亿总参、每 token 约 30 亿激活，多模态（图像+文本），面向可视化电脑操作与浏览，已按 Apache-2.0 在 Hugging Face 开放权重（16 个 BF16 分片约 70GB），参考部署双 H100</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">Pro</strong>：约 3970 亿总参、约 170 亿激活，多模态，面向重型 computer-use，参考部署 8×H100，<strong style="color:#07c160;">权重标注 coming soon，尚不可下载</strong></li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">Max</strong>：<strong style="color:#07c160;">1.6 万亿总参</strong>、约 490 亿激活的纯文本 MoE，基于 DeepSeek-V4-Pro-Base，据称是"首次在万亿参数规模完成的完整 Agent 后训练"，参考部署跨两节点 16×H200</li>
+</ul>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Mini 权重（Apache-2.0）
+huggingface-cli download Nex-AGI/Nex-N2.5-Mini   # 双 H100 可部署
+
+# Pro / Max 目前只能通过官方渠道申请，权重未公开</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">自报成绩：Max 在 BrowseComp 拿下 <strong style="color:#07c160;">92.6</strong>（自报最高分），Pro 在 OSWorld-G 拿下 87.4、OSWorld-2 得 56.4，Max 在 AutomationBench v1.0.6 得 50.2。官方演示里 Pro 在《Pokemon Platinum》中完成 468 步连续操作、编辑 Blender 场景、生成可交互 HTML 游戏，主打靠屏幕视觉反馈自我修正，而非单纯问答。关键限制：这些分数均为供应商自报，第三方尚未复现，且对比行里引用的部分"顶尖模型"名称不对应任何已公开发布的版本。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">英文社区（runtimewire）标题直接点出"leaves Pro weights pending"——三档只放了一档权重，被质疑是"开源 Mini 做营销，Pro/Max 留作 API 变现"</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">Mini 的模型卡报告 BrowseComp 83.4，与 Max 的 92.6 不是同一模型，有报道把两者混用造成误读</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://runtimewire.com/article/nex-n2-5-open-agent-models-35b-1-6t</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">10. MiniCPM5-2B — 2B 端侧模型登顶 4B 以下开源榜，训练配方全公开</p>
+
+![minicpm5-demo](./minicpm5-demo.png)
+
+<section style="margin:0 0 14px 0;">
+<span style="display:inline-block;background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+</section>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">是什么：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">面壁智能联合 OpenBMB 于 9 月 8 日开源的新一代端侧语言基座，约 2.52B 总参、128K 上下文，支持工具调用、深度搜索、代码生成。除权重外还开源了强化学习框架 Meshy、RL 策略 JustRL II、完整训练配方与 UltraData / UltraX 系列数据集。INT4 量化后约 <strong style="color:#07c160;">1.2GB</strong>，6GB 内存设备可跑，英特尔、瑞芯微、Arm 已完成 Day0 适配。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">怎么用：</p>
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 模型主仓库
+git clone https://github.com/OpenBMB/MiniCPM
+
+# RL 框架
+git clone https://github.com/OpenBMB/Meshy
+
+# 权重与数据集
+# https://huggingface.co/collections/openbmb/minicpm5</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">为什么重要：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Artificial Analysis 榜单综合能力 23 分，位列全球 <strong style="color:#07c160;">4B 以下开源模型第一</strong>；Agentic Index 得 20 分，同级模型（LFM2.5-2.6B、Granite 4.2 3B、Mistral 3 3B）均低于 10 分。34 项基准平均 53.9 分，超过 Qwen3.5-4B。真实任务评测 <strong style="color:#07c160;">891 分</strong>（人类基线 1000），高于 6 倍参数量的 Gemma 4 12B（647 分）和 Qwen3.5 9B（645 分）。MiniCPM 系列累计下载量在 2026 年 8 月突破 <strong style="color:#07c160;">5000 万次</strong>。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">讨论现场：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">中文社区把"权重 + 数据 + RL 框架 + 训练配方"四件套称为"L4 级真·开源"，对比同期的 Nex-N2.5 只放了 Mini 权重，反差明显</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">有开发者实测把它接到 DeepSeek Harness 上跑，认为 2B 模型做端侧工具调用已具备可用性，但深度搜索场景仍需更大模型兜底</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/OpenBMB/MiniCPM</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="text-align:center;margin:32px 0;color:#07c160;letter-spacing:8px;font-size:12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">TradingAgents</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">TauricResearch 的 LangGraph 多 Agent 金融交易框架重回热榜（已在 2026-08-26 收录）。v0.4.0 修了 FRED 宏观数据、社交情绪、决策日志记忆的前视偏差问题，新增 GPT-5.6 与 GLM-5.3 支持。注意：backtest 数字（如年化 30.5%）为自报，未经独立审计；同一 ticker 同一天跑两次结果可能不同</p>
+  <p style="margin:0;font-size:13px;color:#999999;">GitHub 367 stars/day，总 104,003 星，9/7 HN 100 分 / 72 评论</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">DeepSeek 降价并预告 V4.1 Flash</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">9/10 12:00 生效：V4-Flash 与 V4-Flash-Vision-Exp 两款模型同标准降价，空闲时段缓存命中输入从 0.05 元降到 0.02 元（−60%）、未命中从 1.5 元到 1 元（−33%）、输出从 4.5 元到 4 元（−11%），高峰时段（周一至周五 9:00-12:00、14:00-18:00）为两倍价。V4.1 Flash 已在官方群开放中间版本内测，原生支持多模态，改模型名即可调用，官方称性能/费用/速度全面超越 V4 Pro</p>
+  <p style="margin:0;font-size:13px;color:#999999;">9/10 12:00 生效</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">HN 上的数学事件</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">NYU Courant 的 Tristan Buckmaster 发布个人声明，宣称与 Levent Alpöge（哈佛 / Anthropic）在 LLM 辅助下完成 Euler 方程有限时间爆破等三项结果，首个 LLM 生成证明 8 月 22 日通过 Lean 形式化验证，帖子上到 HN 第一（606 分 / 324 评论）。同期 OpenAI 发布 Navier–Stokes 千禧年问题相关文章（532 分 / 370 评论），据称动用约 1 万个并发 agent、88 小时、27 亿条 agent 间消息、约 1300 亿输出 token。争议点在作者署名与模型训练数据是否包含用户草稿。<strong style="font-weight:bold;color:#000;">需要澄清的事实：这些问题不是千禧年奖真正要求的无强迫 Navier–Stokes 正则性，"AI 解出千禧年难题"的说法不准确。</strong></p>
+  <p style="margin:0;font-size:13px;color:#999999;">HN 606 points / 324 comments</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Qwen 3.8 疑似蒸馏 GPT-5.5 Pro</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">wsxiaoys 发布 reasoning prefill 实验 v1.1，用 GPT-5.5 Pro 的前 1% 推理内容做种子，测各模型答案与教师的 n-gram 重合度。Qwen3.8 A95B 从 16.79% 涨到 34.97%（+18.18 个百分点，STEM 类 +26.99），是唯一出现大幅迁移的模型；Kimi K3 基线最高（31.11%）但增量最小（+4.54），DeepSeek V4 Flash 反而微降 1.17。作者结论是数据"暗示 Qwen 可能学自 GPT-5.5 Pro 而非 Opus"</p>
+  <p style="margin:0;font-size:13px;color:#999999;">HN 178 分 / 72 评论</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">openai/skills 已废弃</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">仓库迁移至本期的 openai/plugins，后者新增市场机制与 MCP 集成，订阅旧仓库需要更新来源</p>
+  <p style="margin:0;font-size:13px;color:#999999;">官方仓库迁移</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">i-have-adhd</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">昨日收录的"不让 agent 把答案埋起来"技能单日再涨 4,650 星，总星从 30,745 涨到 34,807（已在 2026-09-09 收录）</p>
+  <p style="margin:0;font-size:13px;color:#999999;">GitHub 4,650 stars/day，总 34,807 星</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">LLM Attention Visualization</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">注意力机制可视化项目热度维护中，仍是当日最有信息量的教学向 Show HN</p>
+  <p style="margin:0;font-size:13px;color:#999999;">Show HN 131 分，9/9 收录</p>
+</section>
+
+<section style="background-color:#f5f7fa;border-radius:8px;padding:18px 20px;margin:24px 0 0 0;">
+  <p style="margin:0 0 10px 0;font-size:17px;font-weight:bold;color:#333333;">本期关键词</p>
+  <p style="margin:0;font-size:15px;color:#555555;line-height:2.0;">Agent Skills 团队分发 <span>&nbsp;·&nbsp;</span>插件市场机制 <span>&nbsp;·&nbsp;</span>端侧专用小模型 <span>&nbsp;·&nbsp;</span>语义场景图 <span>&nbsp;·&nbsp;</span>CAD 全链路技能 <span>&nbsp;·&nbsp;</span>万亿参数 agent 后训练 <span>&nbsp;·&nbsp;</span>训练配方开源 <span>&nbsp;·&nbsp;</span>推理蒸馏取证</p>
+</section>
+
+</section>

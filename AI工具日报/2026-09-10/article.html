@@ -1,0 +1,189 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-10</p>
+
+![summary](./summary.png)
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">HyperFrames — HeyGen 官方开源，写 HTML 出 MP4，为 Agent 设计</p>
+
+![hyperframes-demo](./hyperframes-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这两年 AI 生成视频的路线基本是"模型直接吐像素"，代价是每次渲染结果都不一样，没法进 CI，也没法做回归测试。HeyGen 把内部生产用的另一条路线开源了：用 HTML/CSS 描述画面，用数据属性标注每个元素的起止时间，再用 headless Chrome 逐帧 seek、用 FFmpeg 编码。<strong style="color:#07c160;">同样的输入永远得到同样的输出</strong>，这件事对工程团队比"生成质量高"更重要。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">具体机制是给普通 HTML 加标记：元素加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">data-start</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">data-duration</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">data-track-index</code> 就变成一条轨道上的剪辑，容器加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">data-composition-id</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">data-width</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">data-height</code> 就成了一段合成。不需要 React，也不需要构建步骤，那个 HTML 文件直接在浏览器里就能预览。动画走适配器，GSAP、CSS 动画、Lottie、Three.js、Anime.js、WAAPI 都能接，也能自己写运行时。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">给 Agent 的准备做得比较实。CLI 默认非交互，配套发布了 <strong style="color:#07c160;">19 个 skills</strong> 教模型走完整生产流程：先规划、再写 HTML、接动画、加素材、lint、预览、渲染，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/hyperframes</code> 是路由入口。所以典型用法不是你自己写 HTML，而是丢一句话给 Claude Code 或 Cursor，比如"用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/hyperframes</code> 做一个 10 秒产品开场，标题淡入，背景视频，加一点背景音乐"，剩下的它自己跑。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 让 Agent 装上 skills（Claude Code / Cursor / Codex / Gemini CLI 通用）
+npx skills add heygen-com/hyperframes
+
+# 或者手工走 CLI
+npx hyperframes init my-video
+cd my-video
+npx hyperframes preview     # 浏览器里带热重载预览
+npx hyperframes render      # 渲染成 MP4
+
+# 需要 Node.js &gt;= 22 和 FFmpeg</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">HyperFrames（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add heygen-com/hyperframes</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>HTML 原生、确定性输出、面向 Agent 的 skills 体系</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>Apache 2.0 免费</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 47.7K · npm 247,701/周</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Remotion</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i remotion</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>React 组件模型，Lambda 云端渲染，有可嵌入 Player</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>雇工 ≤3 人才免费，否则 $25/月/席起</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 21K+</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Motion Canvas</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i @motion-canvas/core</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Generator 函数控制动画，像素级精确</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 16K+</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Revideo</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i revideo</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Motion Canvas 的 fork，加了 Node 渲染与 REST API</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 2K–3.7K</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Remotion 的生态更大、组件更成熟，但许可证是把多数团队挡在门外的：公司人数超过三人就要买商业授权。HyperFrames 用 Apache 2.0 铺开，没有按次渲染费也没有商用门槛，同时把"确定性渲染"当成一等公民——同输入同输出意味着渲染结果可以进 CI 做像素级回归。如果你的场景是"Ai 生成、程序化批量出片、要求可复现"，它的适配度比 Remotion 高；如果是要在网页里嵌一个可交互播放器，Remotion 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">@remotion/player</code> 还是更现成。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 47,736</span><span>&nbsp;·&nbsp;</span><span>v0.9</span><span>&nbsp;·&nbsp;</span><span>Apache 2.0</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/heygen-com/hyperframes</span></code><span>&nbsp;·&nbsp;</span><span>🏪 npm 247,701 次/周</span></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Context Mode — 把工具输出挡在上下文窗口外面，315 KB 压到 5.4 KB</p>
+
+![context-mode-demo](./context-mode-demo.jpg)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">编码 Agent 的上下文正在被自己的工具输出吃掉。一次 Playwright 快照 56 KB，二十条 GitHub issue 59 KB，一个日志文件 45 KB，三十分钟就能把这些垃圾烧掉窗口的四成。业界常规解法是往窗口里塞进更多上下文，这个项目反过来做：判断哪些进来的工具输出该隔离、该持久化、该改道。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">做法是把高产出工具整个挪出主进程。通过 MCP 加平台 hooks 拦截 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">read_file</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">grep_search</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">run_shell_command</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">web_fetch</code> 这类调用，在真正执行前就重定向到沙箱子进程，原始输出留在沙箱里，只有摘要和索引回到窗口。README 给的数字是 <strong style="color:#07c160;">315 KB 压到 5.4 KB</strong>。分工具的账更细：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute</code> 56 KB 变 299 B，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute_file</code> 45 KB 变 155 B，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_batch_execute</code> 986 KB 变 62 KB。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它同时换了模型的思考方式。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute</code> 让模型写一段脚本、只把 stdout 拿回来，一段脚本替代十次工具调用，省掉读一个文件、再读一个、再改一次这种来回。配合 SQLite 存事件、FTS5 建索引、BM25 检索、倒数排名融合和邻近重排序，压缩或恢复会话时用一份不超过 2 KB 的分级快照把状态接回去，不用重新探索代码库。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code 走插件（推荐，hooks 和 MCP 一起装好）
+/plugin marketplace add mksglu/context-mode
+/plugin install context-mode@context-mode
+
+# 只装 MCP
+claude mcp add context-mode -- npx -y context-mode
+
+# 其他平台统一走 npm
+npm install -g context-mode
+
+# 装完先体检
+context-mode doctor</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Context Mode（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/plugin marketplace add mksglu/context-mode</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>沙箱化工具输出 + SQLite 会话记忆，17 个平台一套配置</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>Elastic License 2.0</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 21.4K · npm 16,044/周</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Headroom</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install headroom</code> 或 MCP</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>覆盖日志、RAG、对话历史、图片的多格式压缩，可逆</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>Apache 2.0</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 24K+</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">CRUX</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>单 Rust 二进制</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>12 层流水线，read cache + AST 图 + 沙箱执行</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>较新</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">TrimPrompt</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i -g trimprompt</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>PATH shim 代理，拦截 shell 执行，按命令类型过滤</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>较少</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这一类工具的架构已经趋同：拦截工具输出、本地压缩、加持久记忆。差异主要在部署形态和覆盖广度。Context Mode 的覆盖面是目前最宽的一档，17 个平台从 Claude Code、Cursor、Codex 一直铺到 Kiro、Zed、Kimi Code，而且走的是 hooks 而不是代理进程，不需要改你的网络配置。需要留意两点：README 徽章里那些"微软、谷歌、Meta 在用"没有任何可验证来源，腾讯云的分析文章也明确提示不要当企业案例看；另外压缩工具输出会让调试时的原始证据链变短，重要仓库上之前先跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">context-mode doctor</code> 和 benchmark 确认。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 21,373</span><span>&nbsp;·&nbsp;</span><span>v1.0.71</span><span>&nbsp;·&nbsp;</span><span>Elastic License 2.0</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/mksglu/context-mode</span></code><span>&nbsp;·&nbsp;</span><span>🏪 npm 16,044 次/周</span></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">M3E Canvas — 在浏览器里拼好界面，让 AI 写出你真正想要的代码</p>
+
+![m3e-canvas-demo](./m3e-canvas-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让 AI 写前端，卡点往往不在模型能力，而在你没法用语言描述清楚想要什么。"一个圆角卡片，上面有个浮起的按钮，点击后从底部弹出"——这种描述给到 Agent，出来十次有十次不一样。设计稿能解决这个问题，但 Figma 转码管线是另一个工程。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这个工具的思路是把设计规格变成提示词。左边拖组件、右边调主题，拼完之后一键导出成一段自然语言描述，粘到 Claude Code、Codex、Cursor 里。组件库是真按 Material 3 Expressive 画的，按钮、FAB、split button、chips、app bar、floating toolbar、tabs、search bar、sliders 全都有，形状变形的 loading 指示器和波浪进度条是从 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">material-components-android</code> 移植过来的。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">拼装时有一些细节做了工程化处理。相邻组件会"磁吸"粘连成一组，组内边角自动软化；多个手机屏幕之间可以连线，标注滑动、淡入、展开等转场；导出提示词时会把重叠关系和并排关系一起写进去，所以 Agent 拿到的不只是"有哪些组件"，还有"它们怎么摆放、怎么跳转"。主题面板覆盖颜色、形状、字体、动效四个轴，可以指定 seed color 生成完整 M3 配色、切换明暗、调对比度，也能选 Roboto Flex / Roboto Serif 和强调字重。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">输出语言支持日文、英文、中文、韩文，目标平台可选 Android 或 Web。整个应用是纯静态的 Next.js 导出，数据存在浏览器 localStorage，没有后端。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 直接用线上版（推荐，无需安装）
+# https://lnkiai.github.io/m3e-canvas
+
+# 本地跑
+git clone https://github.com/lnkiai/m3e-canvas
+cd m3e-canvas
+npm install
+npm run dev     # http://localhost:3000</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">M3E Canvas（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>开网页即用</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>拖拽出 M3 Expressive 界面，导出自然语言提示词</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 免费</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 5.2K · Trending 黑马</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">json-render（Vercel Labs）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i @json-render/react</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>运行时生成 UI，Zod schema 约束组件目录，流式渲染</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>Apache 2.0</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 15.2K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">v0</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>网页</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>文字生成 React 组件，可直接部署</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费额度 + 订阅</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>商业产品</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">AionUi</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm install aionui</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>20+ CLI Agent 的统一 GUI 壳，桌面端</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>Apache 2.0</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 32.5K</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这几个不是同一层的东西，别混着比。json-render 解决的是"生产环境运行时按需渲染受约束的界面"，面向最终用户；m3e-canvas 解决的是"开发阶段先把设计规格定下来"，面向写需求的人。它的产物是一段话，不是 JSON 也不是组件树，这个选择很关键——自然语言提示词能直接喂给任何编码 Agent，不绑定框架。AionUi 那 32.5K stars 是 CLI 客户端的壳，跟设计无关。如果团队在用 Material 3，并且想减少"AI 写出来的 UI 跟设计稿对不上"的返工，这个值得先花十分钟试一遍。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 5,212</span><span>&nbsp;·&nbsp;</span><span>MIT</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/lnkiai/m3e-canvas</span></code><span>&nbsp;·&nbsp;</span><span>在线使用：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://lnkiai.github.io/m3e-canvas</span></code></p>
+
+</section>
