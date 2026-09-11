@@ -1,0 +1,143 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-11</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">写代码的 agent 越来越能干，管项目的方式却没跟上。ccpm 把「想法 → PRD → Epic → GitHub Issue → 并行 agent → 代码」串成一条查得到头的流水线，让 AI 干的每一步都能对回原始需求。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<!-- 图片 ccpm-demo.webp 为 WebP 格式，目标平台不支持，已跳过 -->
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">用 Claude Code 做稍大一点的功能，很快会撞上三个麻烦。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">需求只活在对话里。聊了半小时，你说「按刚才说的做」，agent 开始写，写到一半上下文压缩了，它记不得你要什么，你也记不得自己说过什么。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">并行不起来。一个 issue 里其实塞着数据库迁移、服务层、API 接口、前端、测试好几块，但你只能串着让 agent 一件件做，因为没人理得清哪几块互不依赖。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">做完没有留痕。翻提交记录看不出哪次提交对应哪条需求，code review 只能靠回忆。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ccpm 的作者把这三个麻烦收敛成一条规则：<strong style="color:#07c160;">每一行代码都必须能追溯到一份规格说明</strong>。实现方式很朴素：把项目管理那套纪律塞进 agent 的工作流，并用 GitHub Issues 当人和 AI 共同的真相来源。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ccpm 是一个 Agent Skill，仓库里绝大部分是 bash 脚本和 Markdown，没有 SDK、没有第三方运行时，遵循 agentskills.io 的开放标准，所以 Claude Code、Codex、OpenCode、Cursor、Amp、Factory 都能用。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它把工作拆成五个阶段。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Plan</strong>：agent 先引导你做一轮结构化头脑风暴，把模糊想法逼成一份 PRD，落在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.claude/prds/&lt;名字&gt;.md</code>；再把 PRD 解析成 epic，写清架构决策和技术路线。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Structure</strong>：epic 拆成编号任务文件（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">001.md</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">002.md</code>……），每个任务带验收标准、工作量估计，以及三个关键字段——<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">depends_on</code>（依赖谁）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">parallel</code>（能否并行）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">conflicts_with</code>（和谁抢同一个文件）。默认一个 epic 不超过 10 个任务，超了就说明这个 epic 本身该拆。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Sync</strong>：推成 GitHub 上的 epic issue 加子 issue，本地任务文件名从 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">001.md</code> 重命名成真实 issue 号（比如 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">1234.md</code>），同时建一个专用 git worktree。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Execute</strong>：这部分是它跟普通任务管理工具的分水岭。ccpm 不把 issue 当原子单位——一个「实现密钥使用追踪」的 issue 会拆成迁移、服务逻辑、API 端点、UI、测试五条独立工作流，在同一个 worktree 里由多个 agent 同时推进。提交信息统一带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Issue #N:</code> 前缀，事后能直接对回 issue。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Track</strong>：状态、站会、搜索、验证全部走 bash 脚本，仓库里一共 14 个（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">status.sh</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">standup.sh</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">blocked.sh</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">next.sh</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">validate.sh</code> 等）。这部分刻意不经过 LLM，零 token 成本，输出格式也稳定。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">GitHub 那边它只认 labels 和 milestones，不用 Projects API。本地文件先更新，同步到 GitHub 是显式动作，所以你断了网也能继续规划。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">安装配置</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 1. 克隆
+git clone https://github.com/automazeio/ccpm.git
+
+# 2. 挂进 Claude Code（软链接，之后升级只需 git pull）
+ln -s /path/to/ccpm/skill/ccpm .claude/skills/ccpm
+
+# 3. 可选但建议：装上 gh 的 sub-issue 扩展，父子 issue 关系才完整
+gh extension install yahsan2/gh-sub-issue</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Windows 上没有 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ln -s</code>，改用符号链接或直接复制目录：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>New-Item -ItemType SymbolicLink -Path ".claude\skills\ccpm" -Target "C:\path\to\ccpm\skill\ccpm"</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">前提只有三个：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">git</code>、已经 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">gh auth login</code> 过的 GitHub CLI、一个 GitHub 仓库。没有 GitHub 仓库的话它跑不起来，这点要先确认。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">使用指南</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ccpm 用自然语言触发，不需要背命令。以下场景里的引号内容是你说的话。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景一：把模糊想法做成 PRD</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你说「我想给项目加一个操作审计日志」，agent 会进入 Plan 阶段，一轮轮问你：谁产生日志、要记哪些字段、保留多久、谁能查。问完把结论写成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.claude/prds/audit-log.md</code>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：PRD 落盘，你可以在编辑器里直接改。改完再让它「把这个 PRD 转成 epic」，它输出一份带架构决策和技术路线的 epic 文件。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景二：拆任务并同步到 GitHub</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">说「break down the audit-log epic」，它把 epic 拆成带依赖关系的任务文件；说「sync the audit-log epic to GitHub」，它创建 epic issue 和全部子 issue，把本地文件名改成 issue 号，建好 worktree。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：打开 GitHub 就能看到像截图里那样的一棵 issue 树，epic 的正文列着 Core Components 和 Integration Points，每个子 issue 带勾选框形式的验收标准。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景三：让一个 issue 真正并行跑起来</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">说「start working on issue 19」，ccpm 先分析这个 issue 里哪些工作流互不依赖，再把它们分派给多个 agent 同时执行，每个 agent 只碰自己那几条文件。完成后按 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Issue #19: 描述</code> 的格式提交。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：原本串行要跑五轮的活，一轮并发做完。README 里那张对比表写得很直白：串行 1 个 agent 花 5 倍墙钟时间，5 个 agent 并行花 1 倍。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景四：每天开工先看板</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">说「standup」，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">standup.sh</code> 直接读 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.claude/epics/</code> 下的本地状态，输出昨天完成了什么、今天该做哪个、哪些被卡住。说「what's blocked」走 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">blocked.sh</code>，说「what's next」走 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">next.sh</code>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：秒回，且不消耗 token。这三个查询你可以挂在每天早上第一件事做。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">我自己用下来，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">conflicts_with</code> 字段最值得专门填。多个 agent 并行时最容易翻车的地方是两个 agent 同时改同一个文件，写这个字段等于提前把冲突标注出来，ccpm 调度时会避开。任务拆得越细，这个字段的价值越大。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">worktree 是可以横向扩展的。ccpm 默认给一个 epic 建一个 worktree，但你可以给同一仓库开多个 worktree、每个挂不同的 epic，做到多人多 agent 同时推进而不互相踩。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/task fleet</code> 那类跨 worktree 的汇总视图在同类工具里也有对应实现，思路是一样的。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">常见踩坑</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">没装 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">gh-sub-issue</code> 扩展时，父子 issue 关系会退化成正文里的一个 task list 复选框。功能不算坏，但 GitHub 侧的层级结构就丢了，用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">gh issue list --label task</code> 也筛不出归属。装扩展是一行命令的事，别省。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">任务文件改名这件事要提前知道。同步之前文件叫 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">001.md</code>，同步之后叫 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">1234.md</code>。如果你自己写了脚本去遍历 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.claude/epics/</code>，得按 issue 号去匹配，按 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">00X</code> 编号匹配会全部落空。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个 epic 默认最多 10 个任务，这是设计约束不是 bug。如果你发现拆到第 10 个还没拆完，说明这个 epic 承载的东西太多了，应该先拆 epic。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">ccpm（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>git clone + 软链接</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>GitHub Issues 当真相源，一 issue 多 agent worktree 并行</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>多人协作的并行交付</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 8.4k</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">mattpocock/skills</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">claude plugins install mattpocock-skills</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">to-spec</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">to-tickets</code>，讲的是规格与工单的写法</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>个人工程纪律</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 259k</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Spec-Driven Develop</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/plugin marketplace add zhu1090093659/spec_driven_develop</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>七阶段流水线，带 drift_score 漂移控制</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>大型改造与迁移</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 979</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">claude-gh-task-manager</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx claude-gh-task-manager install</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>统计会话时长与上下文词数，量化人工审查负担</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>想量化 ROI 的团队</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 1</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">mattpocock/skills 热度高得多，但它解决的问题偏「怎么写规格、怎么拆工单」，落点是文档本身；ccpm 往后多走了一大步，管到 issue 同步和 agent 并行调度。如果你只想要纪律不要 GitHub 集成，选前者；如果你要的是「一个需求进来、多个 agent 并行出去」的流水线，ccpm 更贴。Spec-Driven Develop 的漂移控制在长周期重构里更实用，但生态成熟度还不如 ccpm。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 8.4k</span><span>&nbsp;·&nbsp;</span><span>MIT</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/automazeio/ccpm</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ccpm 适合已经在用 GitHub 管项目、并且开始让 agent 接手成规模开发的团队。配置成本很低，克隆加一条软链接，装个 gh 扩展就完事。换来的是一件事：需求不再是聊天记录里的过期指令，而是一条从 PRD 到那次 commit 都查得到的记录，同时把原本串行的活真正摊开并行。如果你的项目还停留在「改个 bug、加个按钮」的粒度，它反而是负担，先别装。</p>
+
+</section>
