@@ -1,0 +1,158 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-15</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Claude Code 跑一次跨八个文件的重构要十几分钟，这段时间你不敢走开，走过去又只能盯着屏幕等。agent-notifications 把 agent 的状态翻译成手机上的推送：跑完了、卡住了、要你点头了，都会告诉你，点一下还能直接跳回对应的那个终端窗口。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+![agent-notifications-alert](./agent-notifications-alert.png)
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 干活的时间和你的注意力之间有个错配。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">任务跑起来了，你不知道它要跑多久。三分钟能结束的，你去泡了杯咖啡回来发现它卡在权限确认上等你；要跑二十分钟的，你守在屏幕前刷了十九分钟手机。真正需要你介入的时刻只有那么几个：它做完了、它有问题要问、它的计划需要你批准、它的 session 额度用完了、它报了 API 错误。剩下的时间都是白等。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">桌面通知解决了一部分，前提是你一直坐在工位前。但现实是你要开会、要离开工位、要在另一个房间，agent 卡在"要不要删掉这个文件"上等你半小时，回来才发现它一动不动。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent-notifications 做的事就是把这几类状态识别出来，推到系统通知中心、你的手机、或者团队 IM 里。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它是一组注册到 Claude Code / Codex 上的 hooks，用 Go 写成，仓库里还有一份 Swift 写的原生通知组件。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">难点不在"发通知"，在<strong style="font-weight:bold;color:#000;">怎么知道该发哪条通知</strong>。最省事的做法是 Stop hook 一响就推一句"任务完成了"，但 Stop 触发的场景太多了——Claude 只是回答了你一句话、只是读了一遍代码给你解释，这些都不值得打断你。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它的做法是在 Stop / SubagentStop 的 payload 上跑一个状态机，看这轮对话到底动了什么。出现过 Write、Edit、Bash 这类动手的工具，判定为<strong style="font-weight:bold;color:#000;">任务完成</strong>；只用了 Read、Grep、Glob 这类只读工具，并且最后是一段超过 200 字的文字回复，判定为<strong style="font-weight:bold;color:#000;">代码审查结束</strong>；"session 额度用完"是去最近三条 assistant 消息里找那行特定文本；<strong style="font-weight:bold;color:#000;">API 错误</strong>则直接读 JSONL 里的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">isApiErrorMessage</code> 字段。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">另外三类不走 Stop hook。<strong style="font-weight:bold;color:#000;">提问</strong>走 PreToolUse 的 AskUserQuestion 或者 Notification hook；<strong style="font-weight:bold;color:#000;">计划待批</strong>走 PreToolUse 的 ExitPlanMode，也就是它刚写完 plan 等你确认的那一秒；<strong style="font-weight:bold;color:#000;">权限请求</strong>是 Codex 那边的 PermissionRequest hook。七种状态凑齐了。</p>
+
+![agent-notifications-site](./agent-notifications-site.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">识别出来之后每条走两条通道。桌面端是系统通知加自定义声音，点击聚焦这一步做得比同类细：点通知能跳回发出这条消息的终端，而且认得标签页和分屏，Ghostty、iTerm2、Warp、tmux、kitty、WezTerm 都单独适配过。同时开着三个 agent 时，这一下省的事不少。webhook 那边接 Slack、Discord、Telegram、飞书、Teams、ntfy、PagerDuty，或者你自己写的端点，内置了重试、限流和熔断。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">安装配置</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">前提是 Claude Code 和/或 Codex CLI 已经装好，外加 Python 3.6 以上、命令名必须是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">python3</code>。Windows 用户要用 Git Bash 配原生 Windows Python。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>(
+  set -euo pipefail
+  repo=777genius/agent-notifications
+  tag=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" | python3 -I -c 'import json,re,sys; v=json.load(sys.stdin).get("tag_name",""); re.fullmatch(r"v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)",v) or sys.exit("Invalid stable release tag"); sys.stdout.buffer.write((v+"\n").encode("ascii"))')
+  commit=$(curl -fsSL "https://api.github.com/repos/$repo/commits/$tag" | python3 -I -c 'import json,re,sys; v=json.load(sys.stdin).get("sha",""); re.fullmatch(r"[0-9a-f]{40}",v) or sys.exit("Invalid release commit"); sys.stdout.buffer.write((v+"\n").encode("ascii"))')
+  raw="https://raw.githubusercontent.com/$repo/$commit/bin"
+  curl -fsSL "$raw/bootstrap.sh" | env BOOTSTRAP_RELEASE_TAG="$tag" BOOTSTRAP_RELEASE_COMMIT="$commit" INSTALL_SCRIPT_URL="$raw/install.sh" bash
+)</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这段命令不是故弄玄虚。它先从 GitHub API 拿最新稳定 tag，用正则卡死 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">vX.Y.Z</code> 格式，再把这个 tag 解析成完整的 40 位 commit SHA，最后从那个精确 commit 拉安装脚本。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这样脚本绑定的是一次不可变的发布。中间人换包或者 tag 被移动，都骗不过去。装完重启 Claude Code 即可；Codex 还要打开 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/hooks</code> 把装进去的 hooks 信任一次。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">配置在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">config.json</code> 里，官方 schema 给出的 webhook 段落长这样：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>"webhook": {
+  "enabled": true,
+  "preset": "slack",
+  "url": "https://hooks.slack.com/services/xxx/yyy/zzz",
+  "chat_id": "",
+  "format": "json",
+  "headers": {},
+  "payloadFields": {}
+}</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">常用的几个开关：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">notifyOnSubagentStop</code> 默认关，子 agent 干完活不打扰你；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">suppressForSubagents</code> 默认开，避免子 agent 的 Stop 事件冒上来当成主任务完成；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">notifyDelaySeconds</code> 默认 0，可以延迟几秒再推；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">suppressFilters</code> 默认空数组，能按状态、git 分支、文件夹三个维度做过滤。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">使用指南</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景一：跑长任务时去开会</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件是你准备启动一个耗时超过五分钟的任务，比如全量重构、跑完整测试套件、批量生成文档。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">操作是正常发指令，然后放心离开工位。任务完成时手机会收到一条 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">Completed</code>，标题里带着项目名和 git 分支，正文是 Claude 的收尾总结加一句 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">3 edited · 35s</code>，告诉你改了几个文件、花了多久。中途它需要你做决定时会单独推一条 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">Question</code>，不会等你三十分钟。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果是你能在会议间隙用手机判断"这个要不要现在处理"，而不是散会回来发现它原地等了四十分钟。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景二：同时开三个 agent 时精准跳回</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件是你并行跑着多个 Claude Code 会话，通知响了但你不知道是哪个窗口发出来的。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">操作是直接点那条通知。系统会自动切到发出这条消息的终端，并且定位到具体的标签页或 tmux 分屏，不是笼统地把终端拉到前台。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">支持的终端列表目前是 Ghostty、iTerm2、Warp、tmux、kitty、WezTerm。用其他终端的话通知照常推，只是点击跳转这一步退化成打开应用。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景三：接进团队 IM</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件是你希望 agent 的状态不止自己知道，团队其他人也能看到进展，或者你习惯在飞书/Slack 里处理消息。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">操作是打开 webhook，把 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">preset</code> 设成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">slack</code>（Discord、Telegram、飞书同理），填上你的 webhook URL。如果还想在通知里带自定义字段，用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">payloadFields</code> 往请求体里塞。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果是任务完成的推送直接落到对应频道，长任务的后台进度对团队可见。注意 webhook 走的是独立通道，不受桌面端的免打扰、延迟、聚焦检测这些设置影响。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">用聚焦检测把噪音压到零。</strong> <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">notifyOnlyWhenUnfocused</code> 打开后，只有当那个终端窗口不在前台时才推桌面通知。你人就在窗口前看着，通知自动静音；人走开了，通知照推。配合 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">notifyDelaySeconds</code> 设个 3 到 5 秒，还能过滤掉那种一闪而过、你其实已经看到的完成。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">按分支过滤，只在关心的地方被打扰。</strong> <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">suppressFilters</code> 支持按 git 分支和文件夹做屏蔽，规则之间是 AND 关系，没写的字段匹配任意值。比如只想在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">main</code> 分支和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">~/work/backend</code> 目录下的会话被提醒，其他实验分支和临时目录全部闭嘴。空字符串的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gitBranch</code> 专门用来匹配不在 git 仓库里的会话。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">同一份配置对 Claude 和 Codex 生效，但可以各自覆盖：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">AGENT_CONFIGURATION.md</code> 里说明了两边能分别设自己的 webhook 和桌面端开关。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">常见踩坑</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Windows 上装错地方。</strong> 这个坑踩的人最多，我读安装文档时也在这里卡了一下：命令必须在 Git Bash 里跑，而且要用原生的 Windows Python，不能是 WSL 里的 Python。如果你在 PowerShell 或 Windows Terminal 里执行，而那里的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">bash</code> 指向的是 WSL，它会老老实实把插件装到 Linux 路径去，Claude Code 那边什么都不会发生。另外 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">python</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">py</code> 这两个命令都不算数，必须是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">python3</code>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">仓库名和插件名对不上，不是装错了。</strong> 仓库现在叫 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">agent-notifications</code>，但 Claude Code 的 marketplace、plugin 和命令命名空间被冻结成了 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">claude-notifications-go</code>。所以你敲 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/claude-notifications-go:settings</code> 是对的，看到旧名字不要以为装错了版本——这是作者为了让老用户能平滑升级刻意保留的。手动安装时对应的命令是：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>/plugin marketplace add 777genius/agent-notifications
+/plugin install claude-notifications-go@claude-notifications-go</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Codex 用户的两点额外要求。</strong> 需要 v1.42.0 或以上的正式发布版本，装了之后必须重启 Codex 并打开 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/hooks</code> 手动信任一次，否则 hook 不会生效。安装器把注册这步自动化了，但信任这一步官方明确说留给你自己判断。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">改了配置不生效。</strong> 配置路径的选择规则是"显式指定的优先，否则用已存在的老路径，否则用新路径"。如果你机器上还留着 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">~/.claude/claude-notifications-go/config.json</code>，那么往新路径 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">%APPDATA%\agent-notifications\config.json</code> 写的东西会被忽略。两边都存在时老路径赢，哪怕新文件更新。想用新路径，得把环境变量 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">AGENT_NOTIFICATIONS_CONFIG</code> 在每一处都设上。用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">agent-notifications config path</code> 确认当前生效的是哪个文件最省事。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">agent-notifications（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>一行 shell / plugin marketplace</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>七种状态识别 + 点击聚焦回精确终端 + 十路 webhook，Go 单二进制</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>长任务监控、多 agent 并行</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 809</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">ntfy-agent</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i -g ntfy-agent</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>单个 POSIX shell 脚本，零运行时零账号</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>只想要手机推送，越简单越好</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>新项目</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">agents-router</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx agents-router setup</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Rust 本地优先，10 种 agent × 12 个平台路由</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>多种 CLI agent 统一转发</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>新项目</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">notify-me</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>plugin marketplace</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>覆盖面广，带随机趣味标题和多语言</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>只要 IM 通知，不在乎状态识别</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ntfy-agent 和 agents-router 都是好工具，胜在轻和多平台，但它们对"发生了什么"的判断停留在"这一轮结束了"。agent-notifications 的差异在于把状态分成了七类，并且愿意为此写一个状态机去读工具调用记录——审查完代码和写完代码是两件不同的事，值不值得打断你也是两回事。加上点击聚焦能定位到 tmux 分屏这一层，多窗口并行的场景里它明显更省事。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 809</span><span>&nbsp;·&nbsp;</span><span>v1.43.0</span><span>&nbsp;·&nbsp;</span><span>GPL-3.0</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/777genius/agent-notifications</span></code><span>&nbsp;·&nbsp;</span><span>文档：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://777genius.github.io/agent-notifications/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">如果你经常让 agent 跑长任务，或者同时开着好几个会话，这个插件值得花十分钟装上。它比同类多做的那些判断，落在两个地方：区分"完成"和"审查完成"，以及在你走开的时候还找得到你。macOS、Linux、Windows 三端都有，Windows 用户记得走 Git Bash 那条路。</p>
+
+![agent-notifications-install](./agent-notifications-install.png)
+
+</section>

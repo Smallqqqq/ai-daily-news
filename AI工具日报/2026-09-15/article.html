@@ -1,0 +1,248 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-15</p>
+
+![summary](./summary.jpeg)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三个都落在开发流程里：一句自然语言驱动 Android 真机跑完端到端测试，Windows 上最常用的免费调试器接进 MCP，还有把 PostgreSQL 诊断做成只读的确定性工具。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">ARTEMIS — 一句话驱动 Android 真机跑完整个测试流程</p>
+
+![artemis-demo-1](./artemis-demo-1.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Android 端到端测试的维护成本大半压在定位器上。Appium 那套 XPath 和 ID 选择器只要 UI 改一次就得跟着改一批；Maestro 的 YAML 流程好写，碰到 Compose、Flutter、Canvas 自绘界面还是得重新找锚点。ARTEMIS 换了个思路：不写选择器，给一句自然语言，让模型看着屏幕操作。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它跑在 Python 3.12+ 上，通过 ADB 连真机或模拟器。第一次执行任务时会在设备上装一个 Accessibility Helper，用来读屏幕布局树，也可以用 UIAutomator2 作为替代后端。元素定位走「动态优先」：无障碍树里有元素索引就用索引，读不到再退回坐标和视觉识别。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">执行侧分两档。Flash 是「看一眼、做一步」的反应式循环，官方给的数字是每步 <strong style="color:#07c160;">3 到 5 秒</strong>。它的历史记录靠截图折叠成视觉摘要，旧步骤压缩成可检索的段落，所以循环本身不设轮数上限。Pro 是 Planner / Operator / Checker 的多 Agent 图。Planner 维护一份带里程碑的 Markdown 任务计划，每个动作执行前过一遍 Safety Net（先查 XML，再退回像素）。动作失败会开一条 incident，留在 Operator 上下文里直到后续某个动作成功才消除；最后 Checker 对着原始目标做一次终审。长流程能跑到 <strong style="color:#07c160;">100 步以上</strong>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">典型用法是把它当 MCP 服务器接进 Claude Code、Codex、Antigravity，然后在对话里直接派活：「把最新改动打成 APK、装到连接的设备上、用测试账号打开登录页、检查登录后有没有意外弹窗、把最终页面截图给我。」跑完返回截图、Logcat 和结构化结果。也可以不进 IDE，命令行直接跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">uv run artemis run "Open Settings, find Battery and tell me current level" --profile flash</code>，或者开 Web 控制台 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">uv run artemis ui</code> 看实时投屏、推理轨迹和执行回放。它同时是个 Python 库，能塞进 pytest 和 CI。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AndroidWorld 基准（20 多个 App、100 多个多步任务）上官方给出 <strong style="color:#07c160;">99%+</strong> 的任务完成率。这个数字是项目自己跑的，AndroidWorld 排行榜不做独立复核，看的时候留个余地。仓库 5,433 stars、482 forks，Apache-2.0。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/google/artemis.git
+cd artemis
+./start.sh          # macOS / Linux
+.\start.bat         # Windows PowerShell，前面的 .\ 不能省</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">启动脚本会检测并装好 ADB、scrcpy、FFmpeg 和 uv，然后问你要不要顺手把全局 MCP 配置和测试规则装进已识别的 IDE。已经装好了想补装，用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">uv run artemis mcp --install all</code> 一次装到所有支持的客户端；只装 Claude Code 就把 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">all</code> 换成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">claude</code>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ARTEMIS 首次公开提交是 8 月 13 日，其中 229 个文件里有 228 个与创业公司 Minitap 的 Apache-2.0 项目 mobile-use 高度一致，作者名单被替换掉了。Minitap 在 9 月 11 日公开证据，Google 当天在 README 和文件头补上署名，现在 README 末尾写着「本项目包含 Minitap, Inc. 开发的源代码」。功能本身不受影响，知道这段背景再决定用不用更踏实。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">ARTEMIS（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">git clone</code> + <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">./start.sh</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>自然语言驱动，动态优先定位，Flash/Pro 双档，原生 MCP</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 5.4K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">DroidRun</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install droidrun</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Python 多 Agent，Android + iOS</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 9.4K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Appium</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i -g appium</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>生态最大，WebDriver 协议，多语言绑定</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 22.0K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Maestro</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">curl -Ls "https://get.maestro.mobile.dev" | bash</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>YAML 声明式流程，内置等待减少 flaky</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>核心免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 15.6K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">mobile-mcp</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @mobilenext/mobile-mcp</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>轻量 MCP 包装，工具少但起步快</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 6.7K</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Appium 和 Maestro 的 stars 都比 ARTEMIS 高，但它们是 QA 时代的框架：Appium 单次点击 300 毫秒到 1 秒，Maestro 差不多，而 ARTEMIS 是模型直接看图操作，定位器维护这一层被整个拿掉了。DroidRun 是最接近的对手，也支持 iOS，如果你要跨双端可以优先看它；ARTEMIS 的优势在长流程的规划和验证链条更完整，读数也更硬气。mobile-mcp 只是薄薄一层 ADB 包装，适合已经想清楚每一步要调什么工具的场景。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 5,433</span><span>&nbsp;·&nbsp;</span><span>Apache-2.0</span><span>&nbsp;·&nbsp;</span><span>Python 3.12+</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/google/artemis</span></code><span>&nbsp;·&nbsp;</span><span>中文文档：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/google/artemis/blob/main/README_CN.md</span></code><span>&nbsp;·&nbsp;</span><span>AndroidWorld 基准：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/google-research/android_world</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">x64dbg-MCP Server — 把 Windows 上最常用的免费调试器交给 Agent</p>
+
+![x64dbg-mcp-demo](./x64dbg-mcp-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">给 AI 装逆向能力这件事，过去一年基本都发生在静态反汇编器上：IDA Pro 的 MCP、Ghidra 的 MCP，Agent 面对的是磁盘上那个不动了的二进制。可真正排查崩溃、跟壳、盯注册表调用的时候，你要的是动态调试——挂上运行中的进程、下硬件断点、改内存、单步走。x64dbg 是 Windows 上做这件事的免费标配，这个插件把它的全部能力开成了 HTTP 接口。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">实现方式是原生插件。它用 Zig 写成，编译出单个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.dp64</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.dp32</code> 文件丢进 x64dbg 的插件目录，启动时由 x64dbg 自己加载。加载时从 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">x64bridge.dll</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">x64dbg.dll</code> 里解析出 SDK 符号，然后在后台线程起一个 HTTP 服务器，MCP 客户端用 JSON-RPC 调工具，每个工具直接映射到 x64dbg 的 SDK 调用。没有外部进程，没有轮询，插件就活在调试器自己的地址空间里。也因为没有 .NET、没有 Python 运行时，跨平台交叉编译出 x32 和 x64 两个版本只要一条命令。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">README 的表里数下来 <strong style="color:#07c160;">80 多个工具</strong>，从 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">LoadBinary</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">SetHardwareBreakpoint</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">StepOver</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">ReadMemory</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">GetAllRegisters</code> 这类基础操作，到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">FindPattern</code> 通配符扫描、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">GetReferences</code> 找 CALL/JMP 交叉引用、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">DetectOEP</code> 检测壳的原始入口点、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">DumpModule</code> 脱壳落盘、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">GetPEB</code> 读进程环境块、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">FollowPointer</code> 多级解引用、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">TraceInto</code> 记录 N 条指令的地址和反汇编。另外还有 <strong style="color:#07c160;">22 个调试事件回调</strong>，断点命中、异常、DLL 加载卸载、线程切换都能触发。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">用起来是这样：把 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">dist/</code> 里的内容复制到 x64dbg 根目录，启动调试器，MCP 服务器自动起来，x64 默认听 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">0.0.0.0:9094</code>，x32 听 9095。在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.mcp.json</code> 里配上地址和一个 Bearer token 就能连。token 首次运行时自动生成，之后每个请求都要带，没带直接 401——这是个能读写进程内存的接口，跑在明文 HTTP 上，别往不可信网络里暴露。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>{
+  "mcpServers": {
+    "x64dbg": {
+      "type": "http",
+      "url": "http://localhost:9094/",
+      "headers": { "Authorization": "Bearer YOUR_TOKEN_HERE" }
+    }
+  }
+}</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">实际的对话长这样：你说「加载 calc.exe 并在入口点断下」，Agent 依次调 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">LoadBinary</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">SetBreakpoint</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">run</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">WaitForPause</code>，回你断在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">0x7FF7A1234000</code>；你问当前寄存器，它调 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">GetAllRegisters</code> 把 RAX、RCX、RDX 全列出来；你说读当前指令指针处的 64 字节，它回一段十六进制；你说再单步三条并把栈给我，它 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">StepOver</code> 三次再调 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">GetCallStack</code>。整个过程你不需要在调试器界面上点任何东西。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">仓库 1,964 stars、198 forks，MIT。最新 v1.3 发布于 9 月 2 日，三个版本的 Release 累计下载 2,454 次。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">x64dbg-MCP（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>解压到 x64dbg 插件目录</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>动态调试，80+ 工具，单文件无运行时</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 2.0K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">ida-pro-mcp</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install ida-pro-mcp</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>静态反汇编 + 反编译，IDAPython 桥</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>需 IDA Pro 商业授权</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 12.1K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">GhidraMCP</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Ghidra 插件</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>免费反汇编器，社区生态最大</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 10.0K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">bethington/ghidra-mcp</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Ghidra 扩展</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>headless 服务，工具懒加载</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3.8K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">mcp-debugger</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @debugmcp/mcp-debugger</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>headless，七种语言的源码级调试</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 166</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这几个工具是分工关系。IDA Pro 和 Ghidra 的 MCP 服务于静态分析，适合「这段二进制是干什么的」；x64dbg-MCP 服务于动态分析，适合「它现在在干什么」。真要选一个开始，x64dbg 免费且 Windows 上装起来最快，IDA Pro 的授权费用不是小数目。mcp-debugger 走的是另一条路，它有源码、有调试符号，做的是语言级调试而不是汇编级。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 1,964</span><span>&nbsp;·&nbsp;</span><span>v1.3</span><span>&nbsp;·&nbsp;</span><span>MIT</span><span>&nbsp;·&nbsp;</span><span>Zig</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/duty1g/x64dbg-mcp-server</span></code><span>&nbsp;·&nbsp;</span><span>x64dbg：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://x64dbg.com/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">pgbot — 只读连上 Postgres，用 SQL 算出结论再让 Agent 解释</p>
+
+![pgbot-demo-1](./pgbot-demo-1.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让 AI 查数据库这件事有个隐藏矛盾：模型会编。它看到一张慢查询表，可能给你一个听起来很合理但完全错误的索引建议。pgbot 的处理方式是把结论和解释拆开：所有发现由 Go 代码从 PostgreSQL 自己的统计视图里算出来，模型只负责把算好的结论翻译成人话，不参与下结论。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">实现上它是个单文件静态二进制，用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pg_monitor</code> 角色只读连进去，读 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pg_stat_statements</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pg_stat_user_indexes</code> 这些统计视图，然后打印一份「结论优先」的健康报告：顶部四条仪表（缓存命中率、锁等待和肇事查询、回滚率、空闲索引占用字节），中间一行列出这次检查通过了的子系统，然后是一个健康评分，最后按 CRITICAL / WARNING / NOTE 三档列发现。报告长这样：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>connected · db.example.com · postgres 17.4 · read-only · 6h20m window
+
+  cache hit  [████████████████████]  99.4%     ok
+  lock wait  [████████████░░░░░░░░]  61.0%     query 4f2a
+  rollbacks  [██░░░░░░░░░░░░░░░░░░]  12.0%     watch
+  idle idx   [██████░░░░░░░░░░░░░░]  18.0 GiB  review
+
+Database health: 82/100
+
+CRITICAL
+● transaction-id age 1.8B — 84% toward wraparound
+
+WARNING
+● orders queries 3.2× slower (8 → 26 ms mean)
+● 3 unused indexes consume 18 GB</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">只读不是靠一个开关，是靠角色本身没有写权限。会话层还压了三层兜底：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">default_transaction_read_only</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">statement_timeout=15s</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">lock_timeout=2s</code>，加上语句包在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">BEGIN READ ONLY</code> 里。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pgbot init</code> 会把建只读角色的 SQL 生成出来给你，不执行任何东西。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它还有一个我挺喜欢的特性：每次运行都在本地写一份基线。从第三次跑开始，它会告诉你「什么变了、为什么值得管」：哪条查询变慢了、哪张表开始走顺序扫描、哪个索引不再被使用。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pgbot why</code> 甚至能沿着基线历史给出一条因果链，症状、机理、前因，带数字和起始时间。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">接 Agent 的方式是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pgbot mcp</code>，走 stdio，只暴露确定性工具：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">inspect</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">unused_indexes</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">top_queries</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">vacuum_health</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">suggest_indexes</code>（用 hypopg 让规划器验证，不是拍脑袋）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">explain_plan</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">why</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">compare_to_baseline</code> 等十来个。每个工具返回固定 JSON 结构并带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">exactness</code> 标签，永远不把原始连接串或查询字面量交给模型。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 换个 Postgres 免安装试用
+npx @pgbot/cli inspect "$DATABASE_URL"
+
+# 或装到自己机器上
+brew install pgrundev/tap/pgbot
+curl -fsSL https://pgbot.dev/install | sh
+
+# 在 Claude Code 里一行接上
+claude mcp add pgbot --env DATABASE_URL="postgres://pgbot_ro:…@host:5432/db?sslmode=require" -- pgbot mcp</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">仓库还带了 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.claude-plugin/marketplace.json</code>，所以也能用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/plugin marketplace add pgrundev/pgbot</code> 装成插件，附三个斜杠命令 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/pg-health</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/pg-slow</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/pg-indexes</code>，以及一个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">postgres-diagnostics</code> Skill 定义什么时候该调哪条命令。CI 里也能用，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--format=sarif</code> 的输出可以直接丢给 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">github/codeql-action/upload-sarif</code>，发现会出现在仓库的 Security 标签页里。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">1,188 stars、58 forks，Apache-2.0，最新 v0.8.1 发布于 9 月 6 日。支持 PostgreSQL 14 到 18，14 和 15 是尽力而为，16 到 18 完整支持。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">pgbot（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @pgbot/cli</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">brew install</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>只读、结论确定性、本地基线、原生 MCP</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 1.2K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">DBHub</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @bytebase/dbhub</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>五种数据库统一 MCP，schema 搜索省 token</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3.5K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">MCP Alchemy</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">uvx mcp-alchemy</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>SQLAlchemy 后端，覆盖八种以上数据库</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 419</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">pganalyze</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>SaaS 接入</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>长期留存、仪表盘、告警、多实例汇总</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>按实例收费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>商业</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Percona PMM</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Docker 部署</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>监控平台，指标长期存储与告警</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">DBHub 的 stars 是 pgbot 的三倍，但它解决的是另一个问题：它是「给 Agent 一张能查数据的嘴」，把查询能力接出来，结论对不对由模型自己负责。pgbot 是「专科医生」，它自己会算，模型只负责翻译，而且它记得住上次的状态。如果你要的是长时间序列、告警和仪表盘，pganalyze 或 Percona PMM 才对路。pgbot 的定位是一次性诊断，十秒钟拿到答案，不用部署任何东西。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 1,188</span><span>&nbsp;·&nbsp;</span><span>v0.8.1</span><span>&nbsp;·&nbsp;</span><span>Apache-2.0</span><span>&nbsp;·&nbsp;</span><span>Go</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/pgrundev/pgbot</span></code><span>&nbsp;·&nbsp;</span><span>官网：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://pgbot.dev</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">geiger</strong> 解决的是一个很少有人愿意正面回答的问题：这台机器上到底跑着哪些 AI Agent，它们各自能碰到什么。一条只读命令 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx geiger-scan</code>，扫出 Claude Code 的全局和项目级 MCP 服务器、hooks、插件、skills、subagents，Cursor / Windsurf / Zed / VS Code / Cline / Roo / Continue 里的 MCP 配置，Codex CLI、Gemini CLI、Aider、OpenCode、Goose 等 Agent 的安装情况，Chrome 等浏览器里的 AI 扩展及其申请到的权限，还有全局 npm 里的 agent 包。每条发现都标出它能做什么（执行代码、持有密钥、全盘文件、全网访问）和证据文件路径。密钥只报告键名和形态，不输出任何一位值。132 stars，MIT，npm 上周 759 次下载。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 132</span><span>&nbsp;·&nbsp;</span><span>v0.3.0</span><span>&nbsp;·&nbsp;</span><span>MIT</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Atomburstofficial/geiger</span></code><span>&nbsp;·&nbsp;</span><span>npm：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.npmjs.com/package/geiger-scan</span></code></p>
+
+</section>
