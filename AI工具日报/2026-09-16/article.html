@@ -1,0 +1,175 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-16</p>
+
+![summary](./summary.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天这三个指向同一件事：同时跑好几个编码 agent 时，工作目录、会话和任务队列该怎么管起来。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Worktrunk — 让 git worktree 像分支一样随手可用，每个 agent 一个工作目录</p>
+
+![worktrunk-demo](./worktrunk-demo.gif)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">并行跑编码 agent 先要解决工作目录冲突。两个 Claude Code 同时改一个仓库，互相覆盖是迟早的事。git 自带 worktree 本来能隔离——每个 worktree 是独立检出目录，共享同一份 .git——但原生操作太啰嗦，新建一个要三次输入同一个分支名，路径还得自己记。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Worktrunk 把这件事压成三条命令。worktree 用分支名寻址，路径由模板自动推导：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">wt switch feat</code> 替代 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">cd ../repo.feat</code>，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">wt list</code> 替代只列路径的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">git worktree list</code>，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">wt remove</code> 一条命令清干净。要在新 worktree 里直接拉起 agent，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">wt switch -c -x claude feat</code> 就够了，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">-x</code> 后面的命令在切换后执行，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--</code> 之后的参数原样传给 agent，所以连开三个任务是三条并排的命令。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">围绕这个核心堆的是一圈工程细节。hooks 覆盖 create、pre-commit、pre-merge、post-merge、post-switch、post-start、pre-remove 七个时机，装依赖、跑迁移这类动作用它挂上去。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">wt merge</code> 把 squash、rebase、merge 和清理收进一条命令，合并完后台自动删 worktree 和分支。构建缓存可以跨 worktree 共享（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">target/</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">node_modules/</code> 这类），新 worktree 不用冷启动。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">wt list --full</code> 在列表里显示 CI 状态、PR 链接和每个分支的 AI 摘要，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">wt switch pr:123</code> 直接检出对应 PR。dev server 端口靠 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">hash_port</code> 模板过滤器给每个 worktree 分配不冲突的值。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Claude Code 用户装个插件就能看到谁在干活：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>wt config plugins claude install</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装完后 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">wt list</code> 的 Status 列会出现 🤖（Claude 正在工作）和 💬（等待输入）两种标记，Codex、OpenCode、Gemini CLI 也有对应追踪。标记本质上是 git config 里的字段，任何能在会话生命周期执行命令的 CLI 都能自己驱动它。worktree 隔离和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/wt-switch-create</code> 技能是 Claude Code 独有能力，其他 agent 暂时用不了。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># macOS / Linux
+brew install worktrunk &amp;&amp; wt config shell install
+
+# 有 Rust 工具链
+cargo install worktrunk &amp;&amp; wt config shell install
+
+# Windows
+winget install max-sixty.worktrunk
+git-wt config shell install</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">最后一步 shell 集成不能省，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">wt switch</code> 要真正切换目录靠它。Windows 上 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">wt</code> 与 Windows Terminal 的别名冲突，所以以 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">git-wt</code> 的名字安装。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Worktrunk（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">brew install worktrunk</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>并行 agent 编排、LLM 提交信息、hooks、构建缓存共享、Claude Code 状态标记</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 7.8K</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">gwq</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">brew install d-kuro/tap/gwq</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Go 编写、fuzzy finder、tmux 持久会话、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--json/--csv</code> 输出</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 385</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">同类里 gwq 声量次之，fuzzy finder 和 tmux 集成是它的强项，但 hooks、LLM 提交信息、合并工作流这套自动化它没有。还有几个走不同路线的：renri 把 git worktree 和 jj workspace 统一到一套命令下，gwm 和 lazyworktree 主打交互式 TUI。选 Worktrunk 的理由是它在同类的 star 数上高出一个量级（<strong style="color:#07c160;">7.8K 对 385</strong>），而 Claude Code 的活动标记把「哪个 agent 在哪个目录干活」直接画进了列表，这个能力其他 worktree 工具都还没有。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 7.8K</span><span>&nbsp;·&nbsp;</span><span>v0.77.0</span><span>&nbsp;·&nbsp;</span><span>MIT OR Apache-2.0</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/max-sixty/worktrunk</span></code><span>&nbsp;·&nbsp;</span><span>文档：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://worktrunk.dev/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Air Alpha — JetBrains 官方把 CLI agent 收进 IDE 的调度台</p>
+
+![air-alpha-demo-1](./air-alpha-demo-1.jpeg)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">JetBrains 在 9 月 2 日通过博客介绍了一个实验性插件 Air Alpha。它不提供模型，做的事很具体：把你本机已经装好的 CLI agent 接进 IntelliJ 平台 IDE。Claude Code、Codex、Junie 都支持，遵循 ACP（Agent Client Protocol）协议的 agent 也能从 ACP registry 里添加。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">插件启动后自动扫描本地已安装的 agent，检测到就让你在 IDE 内的 GUI 聊天窗口或终端 UI 里拉起来。终端模式直接调用各家的 CLI，Claude Max 订阅能原样使用，不需要再买一份 JetBrains AI；如果 agent 通过 JetBrains Central CLI 接入，消耗的则是 JetBrains AI 额度。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">最省事的是 Agent Sessions 工具窗口。多个会话并排显示，哪个在等你回复、哪个还在跑一眼看清，双击就能切换并恢复上下文，同时开三四个 agent 的时候比在几个终端窗口之间来回找强得多。Ctrl 按两下唤出快速 prompt，选中的代码自动作为上下文带进去。预设能把常用的 prompt、模型、Effort 等级和运行模式存成一组，下次一键调用。插件还能与 IDE 内置的 MCP server 组合，让 agent 用上 IDE 的代码分析能力。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">要求 IntelliJ 平台 IDE 2026.2，本机至少装一个 CLI 编码 agent。它是 Alpha 版本，JetBrains 明说 UI、支持的 agent、甚至插件名都可能变。前身是 JetBrains 一位工程师的个人项目 Agent Workbench。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>IDE 内 Settings → Plugins → Marketplace 搜索 "Air Alpha" → Install → 重启 IDE</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Air Alpha（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>JetBrains Marketplace 搜索安装</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>不绑定模型、复用本机已装 CLI agent、Agent Sessions 多会话管理</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费（Alpha）</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 JetBrains 官方</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Kilo Code</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>JetBrains Marketplace</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Kotlin/Swing 原生重写、500+ 模型、slash 命令、MCP 管理</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">JetBrains AI Assistant</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>IDE 内置</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>官方订阅制、绑定自家模型与 Junie</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅制</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">选 Air Alpha 的关键在于它不选边。Kilo Code 和 JetBrains AI Assistant 都自带模型方案，你得接受它给的选择；Air Alpha 只做编排层，模型和订阅由你现有的 agent 决定，换 agent 不用换插件。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 JetBrains Marketplace</span><span>&nbsp;·&nbsp;</span><span>v262.8665.436</span><span>&nbsp;·&nbsp;</span><span>免费（Alpha）</span><span>&nbsp;·&nbsp;</span><span>官方介绍：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://blog.jetbrains.com/ja/blog/2026/09/02/try-air-alpha/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Pizza Bot — 给长时间跑的 agent 一个收件箱，干完的活自己排队</p>
+
+![pizza-bot-demo](./pizza-bot-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 跑得越久，「现在到底进行到哪一步」就越难回答。Pizza Bot 把这个状态问题做成了邮箱：已完成的工作进 Unread，等待你决策的运行进 Action。关掉窗口或断线，agent 继续干活，前提是 api-server 进程还活着。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它建在 DeepAgents/LangGraph 这套有状态 runtime 上。Electron 桌面端、浏览器和终端 CLI 共用同一个 React 界面，都通过 HTTP/SSE 与 api-server 通信，三条路径看到的是同一份状态。会话异步切换不中断运行，线程能分组到文件夹，检查点让运行跨客户端断连恢复，cron 和 webhook 都能触发。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">人工审批是内置的一环：agent 需要拍板时会停下来等，不会自己猜。Skills 可以转成工具受限的子代理，进度显示在 Activity 面板。模型随你挑，Amazon Bedrock、Anthropic、Google Gemini、OpenAI、OpenRouter、Ollama 都行，用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">PIZZA_MODEL=&lt;provider&gt;:&lt;id&gt;</code> 指定；扩展从 UI 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.mcp.json</code> 添加 MCP 服务器。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据默认不出本机：api-server 只绑定 127.0.0.1，状态存在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">~/.pizza-bot-oss</code>，本地文件夹要在 Settings &gt; Files 里显式授权，默认只读。项目在 Amazon 内部开发并开源，内部有 2,000 多名 Amazon 用户参与过测试反馈。运行需要 Node.js 24 及以上。</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># 从 GitHub Releases 下载对应平台安装包
+# macOS（Intel / Apple silicon，已签名并公证）/ Windows / Linux（x64, arm64，未签名，需核对 SHA256SUMS）
+
+# 或从源码跑
+git clone https://github.com/pizza-bot-app/pizza-bot.git
+cd pizza-bot &amp;&amp; npm install &amp;&amp; npm run dev</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Pizza Bot（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>桌面安装包 / 源码运行</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>本地优先、Unread/Action 收件箱、人工审批、cron/webhook 触发、MCP 扩展</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 177</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Claude Code 后台任务</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>已内置</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>单会话后台执行，没有跨会话的任务收件箱</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>随订阅</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Codex Cloud</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>云端</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>任务派到云端沙箱执行，代码要上传</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅制</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Pizza Bot 的取舍很直白：177 stars 热度不高，但它是少数把「多个后台 agent 的任务队列」做成独立界面的方案，human-in-the-loop 审批是内建的。要我从这三个里挑一个今晚就装，我会挑它：Apache-2.0 开源、Amazon 内部两千多人用过，比 star 数更能说明扛不扛得住真实使用。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 177</span><span>&nbsp;·&nbsp;</span><span>Apache-2.0</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/pizza-bot-app/pizza-bot</span></code></p>
+
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">ponytail</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">让编码 agent 像最懒的资深开发那样思考，能不写的代码就不写。</p>
+  <p style="margin:0;font-size:13px;color:#999999;">139,433 stars，本周新增 7,499</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+  <p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">i-have-adhd</p>
+  <p style="margin:0 0 4px 0;font-size:15px;color:#666666;line-height:1.9;">逼 agent 把结论放在最前面，别埋在长文里。</p>
+  <p style="margin:0;font-size:13px;color:#999999;">46,303 stars，本周新增 17,880</p>
+</section>
+
+</section>

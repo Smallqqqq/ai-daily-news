@@ -1,0 +1,186 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-16</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">编码助手很少答错，更多时候是答对了而你没找到：开场先来一句"好问题"，中间铺三段背景，真正该执行的那条命令藏在第四段，结尾再问一句"需要我继续吗"。i-have-adhd 是一份写给 LLM 的输出契约，把可执行的动作顶到第一行。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它五月建仓，这个月冲上 GitHub 周 trending，一周涨了 1.7 万星，现在 46.3k。装完调一次 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/i-have-adhd</code>，整个会话里 agent 的每一句回复都被这套规则重塑。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+![i-have-adhd-demo](./i-have-adhd-demo.png)
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">短问答里这个毛病不明显，长会话里会被放大。你让 agent 改一个鉴权流程，它回一大段：中间件怎么走、token 怎么验、cookie 怎么处理，顺带提一句你的依赖版本旧了、README 过期了、要不要顺手一起改。你得自己从段落里捞出"原来是要我跑 npm install"。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">跨轮次的进度丢失更烦。做完第三步，agent 问一句"下一步继续吗"，你已经忘了总共五步走到哪。规则里有一条专门治这个：每轮都要重述状态，写成"第 3 步，共 5 步已完成：schema 更新完，下一步回填新列"。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">还有两类细节每天都在消耗耐心。报错时 agent 先写"哎呀，似乎出了点问题"，而你需要的是哪一行挂了、期望值多少、实际值多少、改哪里。收尾那句"希望这对你有帮助，随时可以问我"也是，读到它的时候你早就在编辑器里定位下一条命令了。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">作者把这些问题归到一个读者画像上：读你输出的人，工作记忆装不下屏幕外的东西。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它是一份 SKILL.md，放在仓库的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">skills/i-have-adhd/SKILL.md</code>，通过 plugin marketplace 分发。定位不是"让回答变短"，而是按五条关于 ADHD 读者的事实重排信息：</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">工作记忆容量小，屏幕上没有的东西等于不存在，所以不要让人"记住 X"</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">知道答案不等于做完，从"懂了"到"做了"之间才是工作真正卡死的地方</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">启动是最难的一步，第一个动作必须小到可以立刻执行</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">模糊的时间估计等于没有，"有点工作量"和"几小时"在读的人眼里一样</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;">进展需要被看见，埋在总结里的成果不算数</li>
+</ul>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">十条规则全部从这五条推出来：</p>
+
+<ol style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">先给下一步动作</strong>。第一行就是能做的事，不是背景、不是计划。答案是一条命令或一个路径片段，它排在最前面。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">多步任务编号</strong>。超过一步就写编号列表，每一步是一个有边界的动作，不出现两次"然后"。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">结尾给一个具体动作</strong>。有未完成的事就点名一件两分钟内能做的，哪怕只是"打开那个文件"。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">砍掉枝节</strong>。第二个问题先记下，等第一个处理完再单独问，不在同一个回复里堆。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">每轮重述状态</strong>。宿主有任务工具就用工具承载，"第 3 步/共 5 步"这类进度由清单承担，不要再用散文复述一遍完整计划。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">时间估计具体化</strong>。"有测试覆盖的话十五分钟，没有的话一下午"。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">把完成的部分显性化</strong>。说清楚现在什么能用了，以及怎么试。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">报错平铺直叙</strong>。禁掉"哎呀""好像有点问题"，直接给原因和修法：哪一行失败、期望什么、实际什么、怎么改。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">列表不超过 5 项</strong>。超了就按相关性排序、分组，内部该保留的还是要保留，这条只约束呈现方式，不允许因此丢掉相关内容。</li>
+  <li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">无开场白、无复述、无收尾客套</strong>。"好问题""让我看看""希望对你有帮助""随时问我"全部禁掉。从答案开始，答案说完就结束。</li>
+</ol>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">规则的生命周期是整个会话。SKILL.md 里写得很硬：不确定是否还生效时，就按还生效处理。只有听到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">stop adhd mode</code> 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">normal mode</code> 才关闭。这一条比规则本身更要紧，否则十轮之后 agent 就会滑回默认腔调。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">另有两段设计是这份 skill 区别于普通 prompt 模板的地方。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一段是 When to break the rules，列了六条例外。用户要求"解释一下"时该展开就展开，开场白和收尾依然禁止。破坏性操作前必须先确认。连续三轮 debug 没进展，就停止改代码，改为指出一个可能错的假设并问一个诊断问题。请求本身有歧义时，先问一句再动手。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">另一段是 Pre-send check：发送前删五类句子，包括宣布自己要做什么的第一句、问"还有别的吗"或复盘的最后一句、"顺便说一下"式的旁枝、不承载信息的不确定副词，以及"回头再看""对齐一下"这类比喻说法。删完做一次自检，只读第一行和最后一行，能否知道接下来做什么、刚刚发生了什么。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">仓库结构上，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.claude-plugin</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.codex-plugin</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.cursor/skills</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.opencode</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gemini-extension.json</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">kimi.plugin.json</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">qwen-extension.json</code> 各占一份清单文件，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">skills/i-have-adhd/SKILL.md</code> 是唯一的内容源。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">evals/</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">tests/</code> 里放了可复现的效果评测，最近几次提交在测技能的输入开销与成本，作者在拿数据盯规则有没有副作用。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">安装配置</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Claude Code 两条命令：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>claude plugin marketplace add ayghri/i-have-adhd
+claude plugin install i-have-adhd@i-have-adhd
+
+claude plugin list          # 校验是否装上</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装完输入 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/i-have-adhd</code> 调用。它带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">disable-model-invocation: true</code>，也就是说 agent 不会自己偷偷启用，必须你显式点名。想让它在每次新会话里默认生效：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>touch ~/.claude/.i-have-adhd-always
+rm ~/.claude/.i-have-adhd-always      # 取消</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">同一份 SKILL.md 分发到了十几个宿主，对应命令：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code># Codex
+codex plugin marketplace add ayghri/i-have-adhd --ref main
+codex plugin add i-have-adhd@i-have-adhd
+
+# Cursor / GitHub Copilot / 其他走 agent-skills 规范的宿主
+npx skills add ayghri/i-have-adhd -a cursor -y
+npx skills add ayghri/i-have-adhd -a github-copilot
+
+# Gemini CLI，扩展方式装完即生效
+gemini extensions install https://github.com/ayghri/i-have-adhd
+
+# OpenCode
+git clone https://github.com/ayghri/i-have-adhd ~/.config/opencode/vendor/i-have-adhd</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">除此之外还有 Grok、Kimi Code、Qwen Code、Zed、Pi、Antigravity、Hermes、AstronClaw 的对应流程，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">INSTALL.md</code> 里逐个写了安装、校验、更新、卸载和 always-on 的做法。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">使用指南</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景一：排查一个线上报错</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件是丢进去一段堆栈或者一句"这个接口 401 了"。默认风格下，agent 先分析架构、再摆几种可能性，方案放在最后。开启后第一条回复的第一行就是你该敲的命令。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果长这样：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">src/auth.ts:42</code> 校验失败，期望 200 实际 401，原因是缺 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">Authorization</code> 头，改法是在请求里补上 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">Bearer ${token}</code>，下一步跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm test -- auth.spec.ts</code> 把第一条失败行贴回来。没有"哎呀"，没有"似乎"。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景二：一次跨五个文件的重构</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让它改一处接口签名并同步所有调用方，规则 2 会把这件事拆成编号步骤，规则 5 保证每轮回复都带进度。我中途去吃饭回来，往下翻两条消息就知道上一个 agent 停在哪一步、下一个动作是什么，不用重读全部输出。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这里的实际收益是上下文重建成本降下来了。传统写法里你要把前几轮的输出重新读一遍才能接上，现在每轮末尾自带状态摘要。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景三：长会话里连续开发一整天</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个 session 从早上开到晚上，中间切过七八个话题。默认情况下 agent 的输出风格会随上下文漂移，中午之后又开始"让我来看看"。规则里那条"规则的生命周期是整个会话，不确定时按仍生效处理"就是防这个。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">想临时退出，说一句 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">stop adhd mode</code>，agent 一行确认后回到默认风格；再喊 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/i-have-adhd</code> 又能切回来。我的用法是平时挂着 always-on，需要它慢慢讲清楚一件事时再喊 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">normal mode</code>。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">场景四：让 agent 一次扫一堆问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你在一个陌生仓库里让它做体检，默认输出会甩出十五条发现，每条一段。规则 9 会把它们按相关性排序、分组，每组控制在五项以内，同时明确要求不得因此丢掉内容，你追问时还能拿回完整清单。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">按自己的口味改规则</strong>。整套规则就是一份 Markdown，fork 之后直接编辑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">skills/i-have-adhd/SKILL.md</code>。注意 fork 和上游同名，得先卸载再装自己的：</p>
+
+<pre style="background-color:#282c34;color:#abb2bf;border-radius:8px;padding:16px;font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre;margin:0 0 12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><code>claude plugin uninstall i-have-adhd
+claude plugin marketplace remove i-have-adhd
+claude plugin marketplace add &lt;your-username&gt;/i-have-adhd
+claude plugin install i-have-adhd@i-have-adhd</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">常见改法是放宽规则 9 的五项上限，或者把规则 6 的时间单位从分钟换成天。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">把规则抄进宿主级配置当兜底</strong>。always-on 的开关只影响技能是否载入，有些平台还要单独关自己的开关。更彻底的做法是把十条规则写进 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">~/.codex/AGENTS.md</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">~/.config/zed/AGENTS.md</code> 或者 Cursor 的 User Rules，这样即使插件没加载，规则依然在。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">和 harness 的任务工具配合</strong>。规则 5 明确写了：宿主有 task/plan 工具时，用清单承载进度，不要再写一遍计划散文。在 Claude Code 里开着 todo 工具用这个技能，状态重述由工具完成，输出会更干净。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">常见踩坑</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">装了不等于开了</strong>。这个技能带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">disable-model-invocation: true</code>，装完不喊 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/i-have-adhd</code> 它不会生效。Codex 那边同名机制写在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">agents/openai.yaml</code> 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">policy.allow_implicit_invocation: false</code>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">命令补全里没有 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/i-have-adhd</code></strong>。先重启 agent 进程，插件命令是启动时注册的。Grok 还多一步，安装时要 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--trust</code> 且要显式 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">enable</code>，缺一个 hooks 和 skills 都不生效。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">设了 always-on 但新会话还是老样子</strong>。先升级插件再重启，hook 只在启动时读那个标志文件。另外 Grok 不读 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">~/.claude</code> 下的标志，得按它自己的路径放。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">装完回复里还有"好问题"</strong>。大概率是旧会话的上下文太长，规则被淹了。开一个新会话，或者收紧 SKILL.md 里对应那条的措辞。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">marketplace add</code> 失败</strong>。仓库参数要用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">owner/repo</code> 形式，写本地路径时必须指向仓库根目录，不能指到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.claude-plugin/</code>。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+  <section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">i-have-adhd（今日推荐）</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">claude plugin install i-have-adhd@i-have-adhd</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>管 agent 输出的信息结构：先动作、编号、无客套</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>每天和 coding agent 对话，答案总被埋在铺垫里</p>
+    <p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 46.3k</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">humanizer</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add blader/humanizer --global</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>去掉文本里的 AI 写作痕迹，不虚构细节</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>润色对外文章、文档</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 48.6k</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">ponytail</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">codex plugin marketplace add DietrichGebert/ponytail</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>让 agent 少写代码、少动文件</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>控制改动面，压住过度实现</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 139k</p>
+  </section>
+  <section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+    <p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">caveman</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gemini extensions install https://github.com/JuliusBrussee/caveman --consent</code></p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>压缩输出 token，砍掉客套话</p>
+    <p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>省 token、省阅读量</p>
+    <p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+  </section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">humanizer 处理的是"文本读起来像不像人写的"，i-have-adhd 处理的是"读的人能不能立刻动手"，一个面向成稿，一个面向对话。ponytail 管 agent 干什么（少写代码），这个技能管 agent 怎么说。要压 token 就配 caveman，它砍体量，i-have-adhd 砍顺序。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 24px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 46.3k</span><span>&nbsp;·&nbsp;</span><span>v0.3.0</span><span>&nbsp;·&nbsp;</span><span>MIT License</span><span>&nbsp;·&nbsp;</span><span>GitHub：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/ayghri/i-have-adhd</span></code><span>&nbsp;·&nbsp;</span><span>INSTALL.md：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/ayghri/i-have-adhd/blob/main/INSTALL.md</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">适合每天在终端里和 coding agent 打交道的人，尤其是同时开好几个会话、经常需要回头翻上文的那种。配置成本是两条命令加一次 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/i-have-adhd</code>，花不到两分钟。换来的东西很实在：每条回复的第一行就是下一步动作，最后一行就是刚刚发生了什么，中间不再有需要你自己捞的答案。</p>
+
+</section>
