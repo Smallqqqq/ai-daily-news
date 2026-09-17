@@ -1,0 +1,224 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background-color:#ffffff;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-17</p>
+
+![](./summary.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三个：一个把设计系统做成 AI 能直接读的接口，一个给编码 agent 记账并区分「跑通了」和「它说自己跑通了」，一个用 19 个 skill 审 agent 写出来的代码。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>Astryx — Meta 把用了八年的设计系统开源，CLI 和 MCP 是一等公民</strong></p>
+
+![](./astryx-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AI 写前端最常出的问题不是语法错，是它不认识你的设计系统。它会凭空造一套 class 名，会把已有的 Button 重新实现一遍，会把你定好的间距全部掀掉。多数设计系统对此的应对是额外写一份给模型看的文档，Astryx 的做法是把整套系统本身做成机器可读的接口。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Astryx 在 Meta 内部长了八年，撑起 <strong style="color:#07c160;">13,000+ 个应用</strong>，是公司里使用最广、规模最大的设计系统。公开版本基于 React 19+ 和 Meta 自己的 StyleX，MIT 许可，目前 Beta。它提供 150+ 无障碍组件、品牌级主题、深色模式、页面模板和一套 CLI，主张是「同一套系统，人和 AI 用同样的方式构建」——API、约定、文档和 CLI 是一起设计的，官方说法是「每一个让 AI 更好用的改动，也让人更好用」。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它在几个地方做了明确的取舍。样式虽然用 StyleX 编写，但对使用者不可见，你可以用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">className</code> 接 Tailwind、CSS Modules 或普通 CSS，没有样式库绑架。主题是一组 CSS 自定义属性覆盖，改一套变量就换掉整个品牌，不需要 fork 或包裹组件源码。组件的构建块直接导出，需要往深里改时用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">swizzle</code> 把组件源码整个 eject 进你的项目。另外它做了上下文感知的间距补偿，避免嵌套布局里出现双重 padding 这类老问题。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">面向 agent 的部分才是重点。CLI 被当成主接口来做：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx @astryxdesign/cli search button      # 组件、hook、文档、模板一次搜完，带相关度排序和后续命令提示
+npx @astryxdesign/cli component Button   # 打印组件完整文档
+npx @astryxdesign/cli template --list    # 列出可注入的页面/区块模板</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">每个命令都支持 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--json</code>，输出 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">{ type, data }</code> 的类型化信封，出错也是结构化的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">{ error, code, suggestions }</code>。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--dense</code> 输出为 AI 上下文窗口压缩过的格式，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--zh</code> 直接输出简体中文文档。MCP server 挂在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">https://astryx.atmeta.com/mcp</code>，暴露两个工具：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">search(query)</code> 用来发现组件、文档主题和模板，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">get(name)</code> 取回含 props、用法和示例的完整文档。也可以直接让 CLI 写配置文件：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx @astryxdesign/cli init --features agents --agent claude   # 生成 .claude/CLAUDE.md</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">典型场景：你对 Claude Code 说「加一个带分页的表格页」，它不再凭记忆瞎写，而是先 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">search table</code> 找到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Table</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Pagination</code> 的文档，再按文档里的组合约定拼出来，产出和你团队手写的用同一套 token，不需要事后统一风格。官方 Storybook 和 sandbox 都在线可开，不用先装环境就能看组件长什么样。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据上，仓库 9 月 15 日发的 v0.6.2，昨天还在推代码，MIT 许可，⭐13,174 / 1,132 forks。要留意的是仍处 Beta，416 个 open issues，图表包（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">@astryxdesign/vega</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">@astryxdesign/charts</code>）只在 canary tag 上，没有稳定版。Meta 主导的开源项目在长期治理上会有人提疑问，这点看你怎么权衡。上一次写前端方向是一周前的 M3E Canvas，Astryx 的体量和覆盖面是另一个量级。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npm install @astryxdesign/core @astryxdesign/theme-neutral @stylexjs/stylex
+npm install -D @astryxdesign/cli</code></pre>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>同类工具对比</strong></p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Astryx（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i @astryxdesign/core</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>150+ 组件，CLI + MCP + <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--dense</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--zh</code> 当主接口，不 fork 换主题</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐13.2k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">shadcn/ui</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx shadcn@latest init</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>源码复制进项目，Radix 底座，生态最大</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐124k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">MUI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i @mui/material</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>最成熟，Material 设计语言，企业组件最全</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT + 商业版</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐99k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Chakra UI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i @chakra-ui/react</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>可访问性与主题 API 设计简洁</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐40.6k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Mantine</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i @mantine/core</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>组件与 hooks 数量多，文档质量高</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐31.7k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">shadcn/ui 的 stars 接近 Astryx 的十倍，但两者解决的不是同一个问题——shadcn 把源码给你，约定得你自己维护；Astryx 的价值恰恰在于那份约定本身是机器可读的。要判断值不值得上手，我会先看项目是不是新起的：已经有成熟设计系统的话，Astryx 帮不上忙；如果是新前端项目、又打算让 agent 大量参与写界面，它是目前唯一把 CLI 和 MCP 当成主要接口来设计的主流设计系统。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 13,174 &nbsp;·&nbsp; v0.6.2 &nbsp;·&nbsp; MIT &nbsp;·&nbsp; </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/facebook/astryx</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://astryx.atmeta.com</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>agentacct — 区分「跑通了」和「它说自己跑通了」，每个任务一张工作回执</strong></p>
+
+![](./agentacct-demo-receipt.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">编码 agent 说 done 的时候，你没法直接判断它真跑通了测试，还是只是觉得自己跑通了。这个区别在随手改几行代码时不重要，在一天跑八个会话、跨好几个仓库的时候就很重要。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agentacct 读你机器上 agent 已经写好的 session log（Claude Code、Codex、OpenCode、Hermes 都支持），给每个任务生成一张 Work Receipt。回执按顺序回答三个问题：做完了吗、谁说的、证据还有效吗。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">判决分四档。<strong style="color:#07c160;">Verified</strong> 要求每个当前 check 都通过，而且是在最后一次记录到的改动之后跑的；<strong style="font-weight:bold;color:#000;">Reported</strong> 是 agent 自己声称完成；中间还有 In Progress 和 Observed。每个 check 带证据等级——agent 自报、hook 观察到的 exit code、或者 CI。回执里某一步如果没有 check，就停在 claimed 状态，回执直接把这件事写出来，不留模糊空间。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">更有意思的是时间轴不把失败平均掉。官方截图里那个「给登录接口加令牌桶限流」的任务，第一次测试挂了 12 个，后面三次分别是 12 通过、12 通过、38 通过，四行全留在时间轴上。你能看到证据是什么时候追上代码的，也能看到它没追上的时候。</p>
+
+![](./agentacct-demo-work.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据全在本地。没有账号、没有云、没有遥测，成本是查定价表算出来的估算值，界面上带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">≈</code> 标记，官方明确说这不是账单。Usage &amp; limits 一栏把 provider 报告的配额窗口（Codex 的 5 小时窗口、每周窗口各自用了多少、什么时候重置）和每个客户端实际记录到的用量并排放，方便在撞墙之前看见。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>pipx install agentacct
+agentacct onboard   # 每台机器跑一次：找 agent、建本地库、启动记录器
+agentacct tui       # 终端界面</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装完要开一个新的 agent 会话，hook 和 MCP server 在会话开始时绑定。要求 Python &gt;= 3.11，macOS 或 Linux，Windows 只能走 WSL；macOS 另有签名公证过的原生 App，不需要 Python。今天刚发 v0.11.0。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>同类工具对比</strong></p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">agentacct（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pipx install agentacct</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>每任务一张工作回执，Verified/Reported 分级 + 证据等级 + 保留失败时间轴</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐724</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Claude Code 内置 /usage、/cost</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>内置</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>只看当前会话的 token 和额度</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>随订阅</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">ccusage</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx ccusage@latest</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>从本地 JSONL 统计 Claude Code 用量与成本</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐18.6k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Langfuse</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Docker 自托管 / 云</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>生产级 LLM 追踪、评估、prompt 管理</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源 + 云</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐34.7k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ccusage 和 Langfuse 都能告诉你花了多少钱，但回答不了「这一步到底验没验证过」。agentacct 的差异就在那张回执的判决逻辑上。短板也明显：只覆盖四五个客户端，Windows 原生跑不了，而且它靠解析各家 session log 工作，上游格式一变就得跟着改。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 724 &nbsp;·&nbsp; v0.11.0 &nbsp;·&nbsp; MIT &nbsp;·&nbsp; </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/mikehasa/agentacct</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>Mantis — Google 官方的 19 个 skill，让 agent 自己找漏洞、复现、打补丁</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">编码 agent 把写代码的成本压下来之后，瓶颈移到了审代码上。规则匹配型的 SAST 找不出业务逻辑里的越权和状态机漏洞，人工审又跟不上 agent 的产出速度。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Mantis 是 Google 开源的一套安全审查 skill，外加一个 ADK reference harness。仓库根目录下平铺着 19 个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-*</code> 目录，每个目录是一段独立的 skill：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-history</code> 回头翻代码库的历史漏洞，避免重蹈覆辙；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-structural-index</code> 建语义索引；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-threat-model</code> 自动生成威胁模型。再往下是执行阶段，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-plan</code> 把威胁模型拆成一组可研究的假设，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-researcher</code> 执行研究计划，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-dedupe</code> 去重，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-reproduce</code> 尝试复现，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-chain</code> 把已知漏洞串成更有杀伤力的组合。最后 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-patch</code> 打补丁，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-review</code> 用对抗循环验证补丁真的堵住了。大仓库上靠分层摘要，token 消耗压掉 <strong style="color:#07c160;">85% 以上</strong>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">两个专门对抗 LLM 老毛病的 skill 值得单独提。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-critic</code> 负责自我批判，抑制幻觉出来的「漏洞」；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-calibrate</code> 按既定 rubric 校准严重度，避免最后吐给你几千个 critical。官方在 README 里把这条写得很直白：模型是非确定性的，可能编造发现，也可能生成错误的补丁，所有发现必须由安全专家人工复核后才能上报。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">安装和运行：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>cd reference &amp;&amp; ./install.sh                     # 需要先装 python3-venv
+gcloud auth application-default login            # 用 Vertex AI 时配 ADC
+python3 scripts/configure.py --auto              # 自动检测能力并生成配置
+python3 scripts/configure.py --test --probe      # 约 1 秒的预检与连通性探测
+./run.sh path/to/code                            # 跑一轮漏洞审查
+./run.sh path/to/code --objective "审计 webhook handler 里的 SSRF"</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">设置步骤比今天另外两个工具多，而且要接入 Google Cloud 的凭证体系，不是那种三分钟就能上手的工具。适合的用法是把某个仓库或某个模块丢进去跑一轮深度审查，而不是挂进日常 CI。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">README 顶部是一段全大写的警告：这套东西会自主生成并执行不稳定的代码，只能在隔离受限的环境里跑，绝不能用在能接触到生产系统、敏感数据或内网的机器上；也不要批量给开源维护者提交未经验证的 AI 生成报告。官方把这段放在最前面，当使用前提读。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">仓库 Apache-2.0，⭐1,569 / 152 forks，9 月 13 日还在推代码。技能之间没有官方发布的 harness 也能单独用，每个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mantis-*</code> 目录本身就是一份可以挂到 Claude Code、Gemini CLI 或 Antigravity CLI 上的 skill。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>同类工具对比</strong></p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Mantis（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">cd reference &amp;&amp; ./install.sh</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>19 个 skill 覆盖从威胁建模到补丁对抗验证的完整流程，分层摘要省 85%+ token</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>Apache-2.0</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐1.6k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Strix</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">curl -sSL https://strix.ai/install | bash</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>开源 AI 渗透测试 agent，每个漏洞附可复现攻击请求</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>Apache-2.0</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐63k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">open-code-review</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>见仓库</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>阿里开源的代码审查 CLI，同模型下 token 用量约为通义版 Agent 的 1/9</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Semgrep</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install semgrep</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>规则匹配型静态分析，确定性高但找不出逻辑漏洞</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源 + 商业版</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Strix 的 stars 是 Mantis 的四十倍，但它是从攻击者视角做渗透测试，产出的是可复现的攻击链；Mantis 从开发者视角出发，最终会落到补丁和对抗验证补丁上。两者解决的问题有交集但不重合。如果你只想在 CI 里加一道确定性的门，Semgrep 这类规则引擎更合适；如果要的是能读懂业务逻辑、还能自己证明漏洞存在的那一层，目前开源里选择不多。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 1,569 &nbsp;·&nbsp; Apache-2.0 &nbsp;·&nbsp; </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/google/mantis</span></code></p>
+
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>其他值得关注</strong></p>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;">Micro Mock</p>
+<p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">VS Code 扩展，右键任意 OpenAPI 3.0/3.x 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.yaml</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">.json</code>（Swagger 2.0 不支持）就能起一个本地 mock server，底层是 Prism，全本地不联网。真正有用的是 chaos 部分：给 500、429 这类状态码分别配一个独立的触发概率，再叠一层人为延迟，用来验证前端的错误处理和重试分支。侧边栏能看到最近 10 次请求的方法、路径、状态码和耗时，编辑器内可直接发请求并复制成 cURL。改坏 spec 时上一个能用的 mock 会继续跑。MIT 许可，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">https://github.com/SamirHodzic/micro-mock</code> 和 VS Code Marketplace 都有，仓库 9 月 11 日才建，还很新。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;">FrontierHarness Eval</p>
+<p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">固定模型（Kimi K3）、固定 30 道题（21 道 Terminal-Bench 加 9 道 DeepSWE）、固定运行时，只换 harness，12 种配置跑了 360 次评测。通过率区间其实很窄，只有 50.0% 到 66.7%。成本区间是另一个故事：每次通过的有效成本从 $1.05 到 $18.34，差 <strong style="color:#07c160;">17 倍</strong>。Codex 通过率最高，66.7%，每次通过 $3.47；Claude Code 和 DSH Creator 都是 63.3%，但前者 $18.34、后者 $3.28。报告把差异归因于 harness 与模型的适配——缓存策略、工具循环、失败后的行为——而不是模型本身。任务定义和原始数据都公开在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">https://github.com/frontier-harness-eval/eval</code>，⭐218。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222;line-height:1.8;text-align:left;">Atomic Agent</p>
+<p style="margin:0;font-size:15px;color:#666;line-height:2.0;text-align:left;">本地优先的 CLI/TUI 编码 agent，走自己的 TurboQuant llama.cpp fork，不登录、不要 API key，会话、记忆、任务、trace、skill、配置全部落在本地 SQLite 和纯文件里。内置 56 个工具，覆盖基于 Playwright 的浏览器自动化、文件系统与 shell（危险操作需审批）、文档抽取、只读 Git 检查、记忆、任务与 cron。官方自报在 GAIA validation Level 1 的 53 道题上拿到 69.8%（37/53），同模型同预算下对比 Hermes 的 58.5%。MIT，⭐2,545。</p>
+</section>
+
+</section>
