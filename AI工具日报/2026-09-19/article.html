@@ -1,0 +1,189 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background-color:#ffffff;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-19</p>
+
+![](./summary.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三个都从大厂内部出来，而且都开源了：一个让 agent 找漏洞、再派另一个 agent 去证伪，一个让 agent 用你已登录的浏览器却不打断你，一个把编码 agent 压进 6.4 MB 的二进制。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>Security Audit Skill — 查漏洞的 agent，不能是发现漏洞的那个</strong></p>
+
+![](./security-audit-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让 coding agent 审代码找漏洞，最大的障碍不是它找不到，是它太爱报。同一个 agent 自己找、自己验，等于让一个人批改自己的卷子，它对自己写下的判断有天然的确认倾向，最后交上来一堆看着吓人、实际站不住的候选。Cloudflare 把这件事拆成六个阶段，核心设计只有一条，README 里的原话是：检查某个发现的 agent，永远不是发现它的那个 agent。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">六个阶段是这样走的。先做侦察，把架构、信任边界、输入面和已有覆盖画成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">architecture.md</code> 加一份 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">coverage-ledger.json</code>。然后按 ledger 里的单元分配隔离的 hunter 去查，查完由 coverage critic 找缺口，这一步保证的是「哪些地方还没被看过」是可数的，而不是凭感觉。第三阶段把每个候选丢给全新的 verifier，verifier 的任务是证伪它。第四阶段把结论按 confirmed / needs_validation / rejected 三档写进 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">findings.json</code>，并对照 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">report-schema.json</code> 校验。之后还有一轮独立记录验证，最后才生成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">REPORT.md</code>。父 agent 在指定节点要跑两个零依赖的 Node 校验器，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">validate-coverage-ledger.cjs</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">validate-findings.cjs</code>，覆盖表不全或者 findings 不合 schema 就直接拦下来。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">三种判定的含义分得很清。confirmed 要求完整的来源追溯和有界的观测结果；needs_validation 是确有未决事实、但不给严重级别；rejected 记录的是被证伪的候选，也保留下来。对同一个仓库多跑几次是累加的，会用上一次的 ledger 和 findings 找缺口、复验改动过的源码，不把过期或者悬而未决的东西算作已覆盖。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">用法是在待审计的代码库里起一个 agent，说「security audit this codebase」或者「do a security review, output to ~/audits/my-project」。默认输出到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/security-audit-skill/&lt;repo-name&gt;/run-&lt;N&gt;</code>，除非你显式指定仓库内被版本控制忽略的目录，否则不会往你仓库里写文件。它覆盖的攻击面写在十几个 Markdown 里：内存安全与二进制、LLM 提示注入与工具滥用、HTTP 请求分帧与认证、客户端 DOM 注入、供应链与发布、云与部署、RPC 与消息队列、资源耗尽、多租户数据隔离、桌面与移动端本地 IPC。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx skills add https://github.com/cloudflare/security-audit-skill --skill security-audit
+# 装到用户级而非当前项目
+npx skills add https://github.com/cloudflare/security-audit-skill --skill security-audit --global</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">仓库 <strong style="color:#07c160;">13.8K stars</strong>、740 forks、MIT 许可。README 里有一句很实在的观察：在他们自己的测试中，单次运行大约只能找到重复运行累计发现的一半漏洞。它的用法是反复跑，且每一轮的覆盖面都可审计。它对宿主有硬要求：agent 得支持工具调用和并行子代理，需要 Node.js 跑校验器，还需要 OS 级沙箱（禁外网、净化环境变量、限制资源、只允许写指定 scratch 路径），否则流程会把线索挂在 needs_validation，而不会去真的执行目标代码。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>同类工具对比</strong></p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">security-audit-skill（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add ...security-audit</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>独立 verifier 专职证伪，覆盖率 ledger 强制校验，多次运行累加</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐13.8k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Strix</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install strix-agent</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>主动渗透测试，每个漏洞附一条跑通的攻击请求</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>Apache-2.0</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐53k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Mantis（Google）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>agent skill</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>19 个 skill 做威胁建模、漏洞复现、打补丁</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Claude Code Security Review</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>GitHub Action</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>在 CI 里对 PR 增量做安全审查</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐3k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Strix 的 stars 是它的四倍，但两者跑的位置不同。Strix 是主动打，会真的发请求、真的去利用；security-audit-skill 是坐在代码库上读，把「这个边界到底有没有被突破」当作唯一确认标准，确认不了的就降级成 needs_validation。要的是每次 PR 都过一遍、结论能进工单，我会选后者；要的是在授权范围内真打一遍，选前者。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 13.8K &nbsp;·&nbsp; MIT &nbsp;·&nbsp; </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/cloudflare/security-audit-skill</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://blog.cloudflare.com/build-your-own-vulnerability-harness/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>BrowserSkill — 让 agent 用你已登录的浏览器，用完把标签页还回来</strong></p>
+
+![](./browserskill-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让 agent 操作浏览器这件事不缺方案。Playwright MCP、chrome-devtools-mcp 那一类都是开一个干净的无头实例，跑完关掉。麻烦出现在需要登录态的地方：你得把 cookie 喂进去，或者专门为它建一个测试账号，然后看着它抓到的页面和你自己看到的不是同一个。腾讯这个项目反过来做，直接用你本机那个已经登录好的 Chrome，同时让它别打断你。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">架构值得说清楚，因为它是这个项目大部分设计取舍的来源。agent 侧通过 shell 调 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">bsk</code> 命令，CLI 通过本地 IPC 找到 daemon，daemon 在 127.0.0.1 上开 WebSocket 连浏览器扩展，扩展再驱动一个独立的 Agent Window。agent 从不直接和浏览器通信，所有动作都过 daemon 这一层。好处是你用任何能调 shell 的 agent 都行，README 里列了 Cursor、Claude Code、Codex、OpenClaw、CodeBuddy、WorkBuddy、Pi、Hermes，不存在 harness 锁定。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">标签页那部分是它最像「给真人用的工具」的地方。agent 需要碰你已经打开的页面时，必须显式执行 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">tab borrow</code>，借的时候默认要你点确认，任务结束归还，你其余的浏览器不受影响。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">tab borrow --timeout 60s</code> 控制的是等你确认的时长，不决定是否需要确认。遇到验证码、登录、弹窗确认，agent 可以发起 request-help 请你接管，你处理完它接着跑，这个 human-in-the-loop 是内建的，不靠 agent 自己发挥。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">安装最省事的方式是让 agent 自己装，把这一行丢给它：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>Set up browser-skill on this machine by following https://raw.githubusercontent.com/Tencent/BrowserSkill/main/AGENT_INSTALL.md</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">手动装 CLI，macOS/Linux 用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">curl -fsSL https://raw.githubusercontent.com/Tencent/BrowserSkill/main/install.sh | sh</code>，Windows 用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">irm https://raw.githubusercontent.com/Tencent/BrowserSkill/main/install.ps1 | iex</code>，装到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.local/bin</code>。扩展从 Chrome Web Store 或 Edge Add-ons 装。然后 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">bsk install-skill</code> 会列出支持的 harness 让你空格选中、回车安装，非交互场景用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">bsk install-skill --harness cursor --json</code>。装完跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">bsk doctor</code> 看扩展连上没有，再新开一个 agent 会话让它打开 example.com 总结一下。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据上，仓库 <strong style="color:#07c160;">5.3K stars</strong>、370 forks、521 commits、MIT 许可。平台覆盖 macOS（Apple Silicon 和 Intel）、Linux（x64/ARM64）、Windows x64，浏览器支持 Chrome 和 Edge，Firefox 在计划里。0.3.0 起 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--unattended</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">BSK_REQUEST_HELP=off</code> 这类开关被废止，改用扩展弹窗里的两个选项（借用前是否确认、是否允许求助），把权限决定权从命令行挪到你能看见的地方。扩展会借用你的真实身份去操作网站，这点在装之前要想清楚。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>同类工具对比</strong></p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">BrowserSkill（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">curl .../install.sh | sh</code> + 商店扩展</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>复用真实登录态，tab 显式借用并归还，独立 Agent Window 不抢焦点</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐5.3k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Playwright MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @playwright/mcp@latest</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>独占无头实例，跨 Chromium/Firefox/WebKit，确定性回放强</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>Apache-2.0</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>微软官方</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">chrome-devtools-mcp</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx -y chrome-devtools-mcp@latest</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>性能 trace、Lighthouse、内存快照，偏诊断</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>Apache-2.0</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐51.6k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Browser Use</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install browser-use</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>任务级接口，视觉驱动，安装体积 200MB+</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐108k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Browser Use 的 stars 是它的二十倍，但那二十倍买的是「无人值守跑公开网站」。BrowserSkill 解决的是另一个问题：那些必须登录、且登录态在你手里的系统，比如后台、内部工具、带二次验证的站点。这类场景下把 cookie 搬进无头浏览器通常走不通，或者代价高到不值得。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 5.3K &nbsp;·&nbsp; MIT &nbsp;·&nbsp; </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Tencent/BrowserSkill</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Tencent/BrowserSkill/blob/main/AGENT_INSTALL.md</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>fx — 6.4 MB 的编码 agent，能编译成 WASM 跑在浏览器里</strong></p>
+
+![](./fx-demo.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">编码 agent 的 harness 这两年在比谁功能多，安装体积跟着涨到几百 MB。Vercel Labs 往反方向做了一次：用 Zig 写了个单文件原生二进制，v0.0.7 时是 6.19 MiB，到 8 月下旬长到 7.8 MiB，仓库的 CI 给六个 Linux CLI 命令路径卡了 2 毫秒的墙钟预算。官方宣称的冷启动是 10 微秒，这个数字没有第三方在同样条件下复现出来过，但「启动不做任何事、直接等输入」这个方向是真的。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">「小」是靠砍系统提示词和工具集换来的，官方明说这么做的目的是少占模型的上下文窗口。功能面倒不窄：约 26 个内置工具（有一份 benchmark 数到 11 个），带 MCP、subagent（一次性子代理和持久子代理两种，ctrl+x 管理器，持久身份）、skills、后台命令、词法语义搜索、web search/fetch、vision，以及 ACP。模型侧默认走 Vercel AI Gateway，也支持 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">fx login codex</code> 用 ChatGPT 订阅、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">fx login grok</code> 用 Grok 订阅，或者填自定义的 OpenAI 兼容端点（Ollama、OpenRouter）。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它的接入面比一般 CLI 宽，这是真正的差异所在，四个面：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>curl -fsSL https://fx.sh/setup.sh | bash   # 装到 ~/.local/bin
+fx login                                    # 走 Vercel 授权流，会话存在本地
+fx                                          # 在项目目录里起交互式 shell
+fx ask "read src/ and tell me how requests are routed" --json   # 一次性调用，返回结构化输出
+fx acp                                      # 走 stdio 接 ACP 客户端</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">第四个面是把 agent 嵌进 JS 宿主。SDK 以 libfx 发到 npm，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">createFxAgent()</code> 加载 fx-core.wasm 拿到核心，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">createFxTerminal()</code> 再加上交互终端 fx-term.wasm，仓库里带 Node.js、浏览器、Next.js、Nuxt 四个示例，浏览器上跑需要 Chrome/Edge 137+ 且开启 JSPI。想在 SaaS 里塞一个 agent、或者同时开几十个实例的场景，6 MB 和 250 MB 是「能做」和「做不了」的区别。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">第三方 headless-harness-bench 对六个 headless harness 做静态源码审计，81 分制加权总分下 fx 排第五：omp 66.1 &gt; dsh 65.6 &gt; opencode 61.6 &gt; Pi 60.9 &gt; fx 58.1 &gt; Crush 52.1。它成本与许可一项拿了最高的 3.0，取消与进程卫生 2.5，但隔离与密钥卫生只有 1.6，扩展性 1.6。更要紧的是 v0.0.5 起沙箱被拿掉了：被批准的命令现在作为普通宿主子进程运行，老的 sandbox 配置项已退役。官方文档的态度是「权限回调不是沙箱」，嵌入方需要自己提供隔离。项目本身标着 experimental，README 原话是 use at your own risk。仓库 <strong style="color:#07c160;">3.1K stars</strong>、352 forks、Apache-2.0。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>同类工具对比</strong></p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">fx（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">curl -fsSL https://fx.sh/setup.sh | bash</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>6.4 MB 单文件，可编成 WASM 嵌进 JS 宿主，ACP 接编辑器</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>Apache-2.0</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐3.1k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Claude Code</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i -g @anthropic-ai/claude-code</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>多端产品，扩展面最深（hooks、subagents、plugins）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅制</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐146k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">pi</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm 包（见仓库）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>极简功能流派，默认四个工具，其余靠 TS 扩展</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐106k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Codex CLI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i -g @openai/codex</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>内核级沙箱（macOS Seatbelt / Linux Landlock+seccomp）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅制</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">OpenCode</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>各平台包管理器</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>183 个 provider 的统一 provider 层</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Claude Code 和 pi 代表另外两种极简：前者是全功能平台，后者砍功能保留组合能力，fx 砍的是字节数、保留功能。选它的理由只有一条，你要把 agent 嵌进别的程序里，或者要在同一台机器上并发几十个实例。只是自己在终端里用的话，Claude Code 或 pi 的成熟度和生态都更划算。Vercel 同时挂了一百万美元的安全赏金（单份报告最高五万）找 Firecracker microVM 逃逸和 egress 防火墙绕过，方向是清楚的。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 3.1K &nbsp;·&nbsp; Apache-2.0 &nbsp;·&nbsp; </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/vercel-labs/fx</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://fx.sh/docs</span></code></p>
+
+</section>
