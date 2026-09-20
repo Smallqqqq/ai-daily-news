@@ -1,0 +1,193 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background-color:#ffffff;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-20</p>
+
+![](./summary.png)
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三个指向同一件事：让 agent 把活干完。一个给它接上整个互联网的读取能力，一个把散落的文档变成它会自己维护的知识库，一个让它从写完代码一路做到部署和运维。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>Agent-Reach — 一个 CLI，给 agent 接上十几个平台的读取路径</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让 agent 去读 Twitter、Reddit、YouTube、小红书，折腾过的都知道麻烦在哪。每个平台一套认证，每个平台一个第三方库。库一挂就得重挑一个，再重新对一遍 cookie 和 token。把这些散装脚本堆进 agent 的工作目录，它每轮还要读懂一堆和自己任务无关的胶水代码。Agent Reach 的自我定位是「选择器、安装器、健康检查和路由器，而不是包装层」，装完之后 agent 直接调上游工具，中间不隔代理。仓库 <strong style="color:#07c160;">83.5K stars</strong>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">核心抽象是「频道加有序后端列表」。每个平台对应一串候选后端，不绑定单一实现。Twitter 走 twitter-cli → OpenCLI → bird，Bilibili 走 bili-cli → OpenCLI → 搜索 API（yt-dlp 在被封后已退役）。切换供应商只是重排列表，不用改代码。频道探活会真的发一次请求，命令存在与否说明不了后端还能用。第一个完全可用的后端胜出；全都不可用时，输出的是修复指引，不给裸报错码。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">基础安装激活的零配置频道包括网页（Jina Reader 转 Markdown）、YouTube 字幕、GitHub、RSS、Exa 语义搜索、V2EX 以及基础版 Bilibili。需要登录态的平台是显式可选项，覆盖 X、Reddit、小红书、Facebook、Instagram、LinkedIn、Boss直聘，agent 必须征得你同意才会去装。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent-reach doctor</code> 逐频道报状态，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">doctor --json</code> 还会告诉你当前生效的是哪个后端。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>pipx install https://github.com/Panniantong/agent-reach/archive/main.zip
+
+# 默认只做只读检查，不动系统
+agent-reach install --env=auto
+
+# 确认无误后再允许系统级改动
+agent-reach install --env=auto --system
+
+# 逐频道体检
+agent-reach doctor</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">凭证存在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.agent-reach/config.yaml</code>，权限 600，不上传。文档里的约束比多数同类工具硬：不经你明确同意不用 sudo；除 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.agent-reach/</code> 外不改任何东西；不在工作目录里 clone 仓库或落文件，临时产出走 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/tmp/</code>。cookie 类平台它建议用小号。Twitter 的 cookie 只在配置检查时读取，真正调用仍需在进程内设置 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">TWITTER_AUTH_TOKEN</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">TWITTER_CT0</code>。配一个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent-reach watch</code> 定时任务，输出是「全部正常」时保持静默，不用每天看一条成功日志。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>同类工具对比</strong></p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Agent-Reach（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pipx install .../agent-reach</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>十几平台多后端路由 + 探活 + 修复指引，零 API 费用</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐83.5k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Firecrawl</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i -g firecrawl-mcp</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>网页抓取转 Markdown，反爬处理成熟</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>AGPL-3.0，云版按量</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐182k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Exa MCP Server</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx exa-mcp-server</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>语义搜索，检索质量高</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT，按量付费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐5k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">自己写脚本</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>—</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>灵活，但每加一个平台就多一份要养的胶水</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Firecrawl 的 stars 是它的两倍多，两者却不重叠。Firecrawl 解决「网页怎么抓干净」，Agent-Reach 解决「十几个平台的读取路径怎么统一并保持可用」。需求集中在自己抓站就用 Firecrawl；希望 agent 随手能读 X、Reddit、B 站、小红书，Agent-Reach 省掉的是每个月一次的后端失效排查。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 83.5K &nbsp;·&nbsp; MIT &nbsp;·&nbsp; </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Panniantong/Agent-Reach</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/install.md</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>WeKnora — 腾讯把文档变成 RAG、推理 agent 和会自我维护的 Wiki</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">企业内部的知识散在飞书、Notion、语雀、钉钉文档、GitLab 和各版本文件里。做一套问答系统不难，难的是半年后它还有用。文档更新了索引没跟上，答案没人敢信，Wiki 页面慢慢烂掉。WeKnora 是腾讯开源的 LLM 知识平台，把三件事装进同一个系统：RAG 快速问答、自主推理 agent、自维护 Wiki。仓库 <strong style="color:#07c160;">27.5K stars</strong>，MIT，当前版本 v0.8.0。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Wiki 模式是它和其他 RAG 系统拉开距离的地方。agent 把原始文档蒸馏成互相链接的 Markdown 页面，带知识图谱、修订历史和逐行 diff，改错可以回滚。检索走 BM25 加稠密向量的混合路线，向量库可选 pgvector、Elasticsearch、OpenSearch、Milvus、Weaviate、Qdrant、Apache Doris 或腾讯自家 VectorDB，不强绑。推理那条路径是 ReAct 循环，把检索、MCP 工具、沙箱和联网搜索编排在一起。它自带 29 个工具的官方 MCP server，编码 agent 可以直接查你的知识库。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/Tencent/WeKnora.git
+cd WeKnora
+cp .env.example .env
+docker compose pull
+docker compose up -d
+# Web UI :80 · API :8080 · Langfuse :3000</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">接入面铺得比一般开源项目宽。数据源支持飞书知识库与云盘、Lark、GitLab、Notion、语雀、钉钉文档、RSS；文件格式覆盖 PDF、Word、Markdown、HTML、EPUB、MHTML、表格、PPT、XMind 等二十来种；模型侧二十多家提供商，本地跑走 Ollama 也行。IM 渠道能接企业微信、飞书、QQ 机器人、Slack、Telegram、钉钉。除了 Web UI，还有 REST API、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">weknora</code> CLI、Chrome 扩展、微信小程序和网页嵌入挂件。权限有四级 workspace RBAC，凭证用 AES-256-GCM 加密存储，可观测性接 Langfuse。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">两个要提前知道的点。文档和配置注释以中文为主，英文社区资料还不多；官方明确建议部署在内网，不要直接暴露到公网。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>同类工具对比</strong></p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">WeKnora（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">docker compose up -d</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>RAG + ReAct agent + 自维护 Wiki，29 工具 MCP server，国产数据源齐全</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT 开源</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐27.5k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">RAGFlow</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">docker compose up -d</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>深度文档解析见长，RAG 引擎成熟</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>Apache-2.0</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐91k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Dify</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">docker compose up -d</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>LLMOps 平台，工作流编排能力强</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源 + 云版</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐156k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">LlamaIndex</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install llama-index</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>代码库，自己搭检索流程</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>MIT</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐52k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">三个竞品的 stars 都更高，定位不同。Dify 和 LlamaIndex 是让你自己搭，WeKnora 把「文档进去、问答和 Wiki 出来」整条流程装配好了给你。真正需要权衡的是 RAGFlow：解析能力更强、社区更大，代价是没有 Wiki 那种让 agent 反过来维护知识表示的设计。文档源以国产 IM 和文档平台为主的话，WeKnora 的开箱程度更高。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 27.5K &nbsp;·&nbsp; MIT &nbsp;·&nbsp; </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Tencent/WeKnora</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://weknora.weixin.qq.com</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Tencent/WeKnora/tree/main/docs</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>Monk — 编码 agent 写完代码之后，把部署和运维也接过去</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">现在的编码 agent 能把代码写完、测试跑通，然后停在终端里。剩下的 Dockerfile、数据库、环境变量、域名、证书、CI 流水线，还是你自己来。Monk 是一个跑在 IDE 里的自主 DevOps agent，官网首页那句话把定位说清了：你的编码 agent 唯一需要的那个 DevOps。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">安全模型是它最值得看的部分。你的编码 agent 连的是一个确定性编排器，不是 shell。它从头到尾看不到你的云凭证，凭证存在你自己的基础设施上，靠原生 KMS 管。部署、删除、集群变更这类不可逆操作，需要你在 Monk 自己的 UI 里点同意，agent 的对话框里回不了 y。这条界线很关键，agent 被提示注入时能造成的最大破坏被限制住了。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">能力覆盖从 Day 1 到 Day 2。分析代码和依赖、生成优化过的 Dockerfile、起数据库和队列、配网络与 TLS、在 AWS/GCP/Azure/DigitalOcean/Hetzner/Netlify/Vercel 上部署、生成 GitHub Actions 或 GitLab CI 流水线，之后继续做监控、扩缩容、日志排障和成本分析。官方称有 100 多个集成。前端走 Netlify 而后端留在云主机上，这类分平台部署它也认。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code
+/plugin marketplace add monk-io/monk-plugin
+/plugin install monk@monk-plugins
+
+# Codex
+codex plugin marketplace add monk-io/monk-plugin   # 启动后在 /plugins 里安装
+
+# Cursor：/add-plugin monk，或直接从 Cursor 插件市场装
+
+# VS Code / Windsurf：装 Monk 扩展，Cmd+Shift+M 唤起</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">MCP 配置由它自己管。启用后 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">monk-agent</code> 落在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.monk/bin</code>，在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">127.0.0.1:7419</code> 提供 MCP，并按需写入项目的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.cursor/mcp.json</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.claude.json</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.gemini/settings.json</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.codex/config.toml</code>。只管理当前主项目的发现文件，服务停止或切项目时把自己那几条清理掉。需要 monkd v3.21.3 或更新，Windows 上走 Ubuntu WSL 发行版。产品商业收费，有 5 天免费试用。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Monk 在 VS Code Marketplace 上的安装量只有 195，Open VSX 上约 3.1 万，评分样本还很少。产品功能完整，背后是有实体的公司，但社区验证数据远不如前两个工具。部署流程稳定、现有工具链够用，我会先放着；每次上线都要人工重来一遍，5 天试用足够判断值不值。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>同类工具对比</strong></p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Monk（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/plugin install monk@monk-plugins</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>编码 agent 直接下发部署与运维，凭证不经过 agent 上下文</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>商业，5 天试用</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>VS Code 195 · Open VSX ~3.1 万</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Coolify</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>自托管安装脚本</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>面板驱动的自托管 PaaS，配置动作仍由人来点</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>Apache-2.0</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐62k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Dokploy</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>自托管安装脚本</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>更轻量的自托管 PaaS</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐37k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Terraform + GitHub Actions</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>—</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>编排能力最强，配置和维护全由人写</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Monk 的 stars 没法跟 Coolify 比，因为它是商业产品，开源插件仓只有 25 stars。选它还是选 Coolify，取决于你想让谁来写这些配置。Coolify 给你一个面板，动作还是你在点；Monk 把动作交给 agent 执行，你的角色变成审批。风险也在这里，agent 能碰到你的云账号，所以「凭证不进模型上下文」和「不可逆操作走 UI 审批」这两条设计，是它值不值得试的前提。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 VS Code Marketplace &nbsp;·&nbsp; Open VSX ~3.1 万次下载 &nbsp;·&nbsp; v1.26.0 &nbsp;·&nbsp; Apache-2.0 插件 &nbsp;·&nbsp; </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://monk.io/</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/monk-io/monk-plugin</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://docs.monk.io</span></code></p>
+
+<p style="text-align:center;margin:32px 0;color:#07c160;letter-spacing:8px;font-size:12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>其他值得关注</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">MiniMax Code CLI 在 9 月 18 日以 MIT 开源，仓库两天到 <strong style="color:#07c160;">1.3K stars</strong>。官方公布的 FrontierHarness Eval 成绩是 30 个任务通过率 76.7%、中位耗时 4 分 33 秒、单次通过成本 1.825 美元。同一份评测里 Codex 是 66.7% / 6 分 43 秒 / 3.468 美元，Claude Code 是 63.3% / 9 分 38 秒 / 18.337 美元。安装走 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npm install -g @minimax-ai/code</code>，支持 TUI、headless（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mcode exec</code>）和编辑器 ACP 三种入口，可自带 API key 走 OpenAI 或 Anthropic 格式。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/MiniMax-AI/minimax-code</span></code></p>
+
+</section>

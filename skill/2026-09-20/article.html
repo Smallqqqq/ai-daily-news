@@ -1,0 +1,230 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background-color:#ffffff;">
+
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-20</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你的 coding agent 能读本地代码、能改文件、能跑测试，但让它去查一条 Reddit 讨论、扒一段 B 站视频字幕、看一眼小红书上的用户吐槽，多半会卡在 403 或者登录墙前面。Agent Reach 把这堆事收成一条命令：装完之后 agent 自己知道该调哪个工具、去哪个平台取数。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它自己不抓取，做的是一层能力路由。每个平台配一串首选加备选的后端，坏掉一个换下一个，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent-reach doctor</code> 一条命令告诉你哪个通道还能用。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+![](./agent-reach-demo.png)
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>它解决什么问题</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 联网这件事，难在"配得起来"。Reddit 匿名 API 封了，返回 403；Twitter 搜索要付费；小红书要登录；B 站下载撞风控；网页抓回来是一坨 HTML 不是可读文本；RSS 得自己写解析。单个平台都不算难题。难的是每个平台都得单独折腾一遍，而且今天能用的方法下个月可能就失效了。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent Reach 的作者把这堆活概括成"选型、安装、体检、路由"。项目本身不做抓取。它负责的是替你挑出当前还活着的那个后端，装好，定期体检，然后把调用方式写进 SKILL.md 让 agent 自己去调。方法失效时改的是一个列表的顺序，不是重写代码。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>核心原理</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">代码结构里 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">channels/</code> 是核心，一个平台一个文件：</p>
+
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #e8e8e8;">
+<thead>
+<tr>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">平台</th>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">后端列表（首选 ▸ 备选）</th>
+</tr>
+</thead>
+<tbody>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">网页</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Jina Reader</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Twitter/X</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">twitter-cli ▸ OpenCLI ▸ bird</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">YouTube</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">yt-dlp</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">GitHub</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">gh CLI</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">B站</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">bili-cli ▸ OpenCLI ▸ 搜索 API（yt-dlp 已下线）</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Reddit</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">OpenCLI ▸ rdt-cli</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">小红书</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">OpenCLI ▸ xiaohongshu-mcp ▸ xhs-cli</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">LinkedIn</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">mcp-server-linkedin ▸ Jina Reader</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">RSS</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">feedparser</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">全网搜索</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Exa（走 mcporter 的 MCP）</td>
+</tr>
+</tbody>
+</table>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">每个 channel 文件是真的去探测候选后端，不是检查一下命令存不存在就完事。第一个能跑通的胜出，跑不通的会给出修复处方。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent-reach doctor</code> 就是把这轮探测的结果摊开给你看，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">doctor --json</code> 还能拿到当前生效的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">active_backend</code> 字段。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">零配置就能用的有七个通道：网页、YouTube 字幕与搜索、GitHub 公开仓库与搜索、任意 RSS、Exa 全网搜索、V2EX、B站基础读写。需要登录态的另外十个（Twitter、Reddit、小红书、Facebook、Instagram、LinkedIn、Boss直聘、雪球、小宇宙播客、B站字幕）单独按需开。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>安装配置</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Python 3.10+，推荐 pipx：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>pipx install https://github.com/Panniantong/agent-reach/archive/main.zip
+
+# 第一步只做只读体检，列缺什么，不动系统
+agent-reach install --env=auto
+
+# 确认无误后再执行，这一步才会真正装依赖、注册 skill
+agent-reach install --env=auto --system</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Windows 上 Python 商店版 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">python3</code> 是个占位符，直接用 venv 路径绕开：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>py -3 -m venv $env:USERPROFILE\.agent-reach-venv
+$env:USERPROFILE\.agent-reach-venv\Scripts\Activate.ps1
+python -m pip install https://github.com/Panniantong/agent-reach/archive/main.zip
+agent-reach install --env=auto</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">按需开通道，通道名支持 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">twitter</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">reddit</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">xiaohongshu</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">facebook</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">instagram</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">linkedin</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">xueqiu</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">xiaoyuzhou</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">bilibili</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">opencli</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">boss</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">all</code>：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>agent-reach install --env=auto --system --channels=opencli,xiaohongshu</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">收尾体检：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>agent-reach doctor          # 逐通道状态，标 ✅ / ❌ / ⚠️
+agent-reach doctor --json   # 多后端平台附带 active_backend</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">配置和 token 落在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.agent-reach/config.json</code>（权限 600），上游工具装在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.agent-reach/tools/</code>，不会上传。想反悔就 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent-reach uninstall</code>，加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--keep-config</code> 只删 skill 文件保留 token，加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--dry-run</code> 先看要删什么。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>使用指南</strong></p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>场景一：把登录墙后面的内容喂给 agent</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">零配置通道装完就能用，agent 会自己去调。直接说人话就行：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>读一下这篇 https://example.com/some-article 讲了什么，用中文总结要点</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 走 Jina Reader 把页面转成干净文本再读。同样的路子对 YouTube 有效：给一条视频链接，它调 yt-dlp 拉字幕，绕开"没有字幕文本就没法读"的限制。RSS 同理，扔个 feed 地址给它，不用自己写解析。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>场景二：跨平台舆情与竞品调研</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这是 Agent Reach 拉开差距的地方。同一个话题，让 agent 一次扫几个平台：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>帮我调研一下"AI 编程助手"这个话题：
+- Twitter 上最近 20 条相关讨论的主要观点
+- B站搜相关视频，看播放量最高的三个标题和简介
+- V2EX 上有没有相关帖子，有的话总结回复
+- 小红书搜一下，看用户主要在吐槽什么</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 按 SKILL.md 里的命令参考分别调 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">twitter search</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">bili search</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">opencli</code> 对应通道，把结果汇总。以前这需要你手动开四个网页翻一遍，现在是一条 prompt 的事。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>场景三：让 agent 读长视频和播客</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">小宇宙播客和长视频是最难"读"的内容。配好 Groq key 之后：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>agent-reach configure groq-key
+bash ~/.agent-reach/tools/xiaoyuzhou/transcribe.sh https://www.xiaoyuzhoufm.com/episode/xxxxx</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Whisper 把音频转成文字，agent 接着读文本。同样的思路用在 B 站字幕上（需要 OpenCLI 通道），技术分享类的长视频可以直接变成可检索的笔记素材。</p>
+
+<p style="font-size:18px;font-weight:bold;color:#222222;margin:22px 0 12px 0;"><strong>场景四：定时体检，坏了自己报</strong></p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>agent-reach watch          # 体检 + 更新检查，适合挂定时任务
+agent-reach check-update   # 只查版本</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">把它挂进 cron 或你现有的定时任务里。全部正常时它保持安静，有通道掉线或者有新版本才出声。这类工具最大的隐性成本就是"哪天悄悄坏了你不知道"，watch 是冲着这个来的。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>进阶技巧</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">让 agent 自己选路。</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent-reach doctor --json</code> 输出的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">active_backend</code> 字段告诉 agent 当前实际走的是哪个后端。写自定义 skill 或者 prompt 时带上这个信息，agent 就知道该按哪个后端的参数格式调用，而不用猜。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">自己加一个平台。</strong>channel 是可插拔的，照着 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">channels/rss.py</code> 或者 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">channels/v2ex.py</code> 的写法新增一个文件，注册进 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">__init__.py</code> 的 doctor 列表，就是一个新通道。它本质是"候选列表 + 探测函数"，加平台不需要动主流程。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">分层授权。</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--env=auto</code> 是只读检查，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--system</code> 才允许改系统，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--dry-run</code> 可以预览。装之前先跑一遍不带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--system</code> 的，看清楚它会装什么、往哪儿写，再决定要不要放行。这套设计对不放心 agent 动系统的人比较友好。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>常见踩坑</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">别装 PyPI 上那个同名包。</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pip install agent-reach</code> 装到的是另一个完全不同的项目。安装命令必须是仓库地址 <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/Panniantong/agent-reach/archive/main.zip</code>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Twitter 的 cookie 存了不等于能用。</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent-reach configure twitter-cookies</code> 存下来的值只供 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">doctor</code> 检查配置是否完整，doctor 本身不做上游认证。真正调用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">twitter search</code> 之前，得在当前进程环境里显式 export：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>export TWITTER_AUTH_TOKEN="..."
+export TWITTER_CT0="..."
+twitter search "test" -n 1</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">网络不通的话再补 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">export HTTP_PROXY</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">HTTPS_PROXY</code>，或者干脆绕开走 Exa：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">mcporter call exa.web_search_exa query="site:x.com 搜索词" numResults=5</code>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">雪球报 HTTP 400 就是没登录。</strong>雪球 API 不支持匿名访问。在 Chrome 里登录雪球后执行：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>agent-reach configure --from-browser chrome --platform xueqiu</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">cookie 过期后会复现，重新跑一遍即可。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Boss直聘说"已登录"也可能是假的。</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">boss status</code> 只校验本地 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.boss-agent/auth/session.enc</code>，两份凭据存储是分开的。以 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">AUTH_EXPIRED</code> 为准：出现这个错误就说明浏览器实际未登录，不管 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">boss status</code> 说什么。去专用 Chrome 窗口里肉眼确认并手动登录 zhipin.com，然后 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">boss --cdp-url http://localhost:9222 login --cdp</code> 同步。两个存储目录都别手动删。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">cookie 类平台有封号风险。</strong>Twitter、小红书这些走 cookie 的通道，脚本调用等同于完整登录权限。作者的建议是用小号，别拿主账号试。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Windows 用户的额外提醒。</strong>这个项目对 Windows 是照顾到了的，仓库里有一条提交就是专门修"Windows 控制台 emoji 编码崩溃"的。但 Python 环境要绕开商店占位符，见上面的 venv 装法。另外安装文档里记录的 SKILL.md 落地路径是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.openclaw/skills/agent-reach/</code>，Claude Code 用户装完先 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/skills</code> 看一眼有没有 agent-reach，没有的话把 SKILL.md 复制到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.claude/skills/agent-reach/</code> 就行。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>同类技能对比</strong></p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Agent Reach（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pipx install &lt;repo&gt;</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>17 平台统一路由 + 自动体检 + 后端降级</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>需要跨平台取材的调研与分析</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 83.5k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">playwright-skill</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx</code> 安装</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>教 agent 写浏览器自动化代码</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>E2E 测试、需要真实交互的页面</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>不适用</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Jina Reader</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">curl r.jina.ai/URL</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>单点网页转可读文本</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>只要读一个公开页面</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>免费服务</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">twitter-cli / rdt-cli / bili-cli</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>各自单独装</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>单平台，功能更深</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>只盯一个平台</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>不适用</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Exa / Tavily MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>MCP 配置</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>语义搜索，覆盖全网公开内容</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>找资料，不追求特定平台</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>有免费额度</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">跟 playwright-skill 的区别值得说明：那个是让 agent 学会写浏览器自动化代码，产物是测试脚本；Agent Reach 是让 agent 能读取互联网内容，产物是信息本身。一个面向操作，一个面向取材。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent Reach 真正省下来的是"哪个方法今天还能用"这个判断。83.5k stars、7.3k forks、376 次提交、MIT 协议，issue 和 PR 都开着且活跃，通道失效时有人跟。我个人的判断是，这类依赖第三方接口的项目，维护活跃度比功能列表重要。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 83.5k &nbsp;·&nbsp; v1.5.0 &nbsp;·&nbsp; MIT &nbsp;·&nbsp; </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Panniantong/Agent-Reach</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Panniantong/agent-reach/blob/main/docs/install.md</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Panniantong/agent-reach/blob/main/docs/troubleshooting.md</span></code></p>
+
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;"><strong>今日小结</strong></p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">如果你经常让 agent 去网上找资料、盯竞品、读长文和视频，Agent Reach 值得今天花十分钟装上。零配置那七个通道装完立刻可用，登录态通道按需再加。装上之后 agent 从"只能读你给的链接"变成"能自己去取数"，中间的选型和失效切换由它兜着。</p>
+
+</section>
