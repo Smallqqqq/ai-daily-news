@@ -1,0 +1,174 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-21</p>
+<p style="margin:0 0 14px 0;">![今日工具概览](./summary.png)</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让好几个 agent 同时干活不难，难的是它们干完之后人怎么接手。Orca 把一队 CLI agent 摆进各自的 worktree，Bandit Stealth 把 agent 整个搬上本地显卡，ChangeLens 则盯着 agent 改过的每一块代码，逐块决定留还是退。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Orca — 一个桌面应用管住一队并行 agent，每个 agent 一个独立 worktree</p>
+<p style="margin:0 0 14px 0;">![Orca 界面](./orca-demo.jpg)</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">同时开三个 Claude Code 会话是很多人的日常，麻烦在于它们会踩同一个工作目录。文件互相覆盖，git 状态缠成一团，最后谁也说不清哪个 agent 改了什么。土办法是手动 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">git worktree add</code> 加几个终端标签页，agent 一多就彻底失控。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Orca 把这件事做成了桌面应用。核心机制是每个 agent 跑在自己的 git worktree 里，互相完全隔离。同一句 prompt 可以扇形发给多个 agent，跑完横向比结果，挑最好的那个合并回来。它不绑定模型厂商，Claude Code、Codex、Cursor、GitHub Copilot、OpenCode、Kimi、Qwen Code、Devin、Goose 都能接。判断标准只有一条：能在终端里跑起来就行，用的还是你自己的订阅额度。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">worktree 隔离之外，几个细节做得比较到位。终端用 WebGL 渲染，支持无限分屏和持久化回滚缓冲。Design Mode 下点一下界面元素，就能把对应的 HTML、CSS 和裁剪截图直接发给 agent。GitHub 和 Linear 是原生内置的。可以直接在 diff 行上写评论，把反馈发回给 agent。桌面端之外还有 iOS/Android 伴侣应用，配上仓库 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">cloud/</code> 目录里的 relay，能在手机上盯进度、远程操控。Orca 自己也带 CLI，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">orca worktree create</code> 这类命令让 agent 反过来驱动这个应用。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># macOS
+brew install --cask stablyai/orca/orca
+
+# Arch Linux（或 stably-orca-git 从源码构建）
+yay -S stably-orca-bin
+
+# Windows .exe / Linux AppImage 见下载页
+# https://onOrca.dev/download</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Orca（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 5px; border-radius: 4px; font-family: Consolas, monospace; font-size: 13px;">brew install --cask stablyai/orca/orca</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>桌面应用，任意 CLI agent，含移动端与 SSH worktree</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（MIT）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 73.7k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Conductor</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>官网下载</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>同样的并行 agent 思路</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>未公开</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>闭源，仅 macOS</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">vibe-kanban</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>自托管</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>看板式管理 agent 任务</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 28.1k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">claude-squad</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 5px; border-radius: 4px; font-family: Consolas, monospace; font-size: 13px;">brew install claude-squad</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>tmux + git worktree，纯终端</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（AGPL-3.0）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 8.5k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Crystal</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>桌面应用</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>并行 worktree 跑 Codex / Claude Code</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（MIT）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3.1k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">同赛道热度第二的 vibe-kanban 已经在 README 挂了 sunset 公告，主力方向往别处转了。claude-squad 更轻，代价是只有 tmux 界面，看 diff、点链接、拖图片都得回命令行。Conductor 功能接近，但锁死 macOS 且不开源。要我在这几个里挑一个先装，会选 Orca，它是目前少见的把 Windows、Linux、macOS 三端加上移动端和远程 SSH worktree 一起做齐的那个。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 73.7k · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/stablyai/orca</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://onOrca.dev</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Bandit Stealth — VS Code 里跑本地模型的编码 agent，代码不出机器</p>
+<p style="margin:0 0 14px 0;">![Bandit Stealth 演示](./bandit-stealth-demo.gif)</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">公司代码不能往外传，这一条约束就把绝大多数云端编码 agent 排除在外了。Bandit Stealth 走本地推理路线：默认接 Ollama，模型跑在自己显卡上，不填任何 API key 就能开始用，遥测默认关闭。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它做的事情不止补全。读文件、写文件、搜索、执行 shell 命令构成一个完整的工具调用循环，每次写入都要过 diff 审批。落盘前会做语言级校验，覆盖 TypeScript、Python、JSON、C#。权限分三档：<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">plan</code> 只读、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">ask</code> 每次都问（默认）、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">auto</code> 放开日常操作。破坏性操作的处理写得很死：永远要问，官方 README 的原话是"这条底线不可配置，是故意的"。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">用起来的手感做得挺细。<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">@</code> 引用文件、自动上下文、diff 直接流进编辑器这些都有。会话带检查点，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">/rewind</code> 能回退。语音输入输出可以拆开配，STT 和 TTS 分别选 Bandit 云、OpenAI 兼容的 Whisper、ElevenLabs、本地 Piper 或自定义地址。agent 流式输出时可以排队发消息，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">!</code> 前缀的命令直接丢进 VS Code 集成终端跑，带完整 TTY。MCP 双向都支持，既当客户端也当服务端。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">模型选择官方给了明确建议。<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">qwen3.6:27b</code> 是本地首选，32GB 以上内存的 Mac 推荐 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">gemma4:26b</code>。同时点名不建议 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">gpt-oss:120b</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">qwen2.5-coder:32b</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">qwen3.6:35b</code> 这几个跑自主 agent 循环，理由是它们在这种长链调用场景下表现不稳。本地部分永久免费，不需要账号。云端按两个滚动窗口计量，5 小时会话额度配 7 天周额度，Free 是 100/500，Pro 500/5,000，Team 2,000/20,000。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 本地推理环境
+brew install ollama
+ollama pull gemma4:26b
+
+# 或者用 CLI（需要 Node.js 20+）
+npm install -g bandit-stealth-cli
+bandit</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Bandit Stealth（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code / Open VSX 装扩展</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>默认本地 Ollama，无需 API key，无遥测</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>本地永久免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>92,879 次下载（Open VSX）</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Cline</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code 扩展</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>自主编码 agent，生态成熟</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费，模型自付</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 68.9k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Continue</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code / JetBrains</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>补全 + 对话 + agent，企业可自托管</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 36.0k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Roo Code</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code 扩展</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>多模式 agent，角色可自定义</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 24.3k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Zoo Code</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code / Open VSX</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>一队 agent 分工干活</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>153,965 次下载（Open VSX）</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">表里热度更高的几个都默认走云端模型，想本地跑得自己拼 Ollama 配置。Bandit Stealth 把本地当作默认路径，装完扩展直接能用，另外还提供 CLI 版本和扩展两套入口。<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">/rewind</code>、会话检查点、破坏性操作硬门禁这几处的完成度也比多数同类高。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 Open VSX · 92,879 次下载 · v1.7.448 · Apache-2.0 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Burtson-Labs/bandit-agent-framework</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://open-vsx.org/extension/BurtsonLabs/bandit-stealth</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">ChangeLens — agent 改过的代码逐块验收，不吃 git 的亏</p>
+<p style="margin:0 0 14px 0;">![ChangeLens 演示](./changelens-demo.png)</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 改文件是直接落盘的，不经过任何提交。这时候打开 git diff，看到的是"我自己的改动 + agent 的改动"混在一起的一大坨，想挑出 agent 动过的地方只能靠肉眼比对。改完顺手 commit 也不解决问题，提交不等于审查过，agent 的改动照样躺在那儿没人看。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ChangeLens 的做法是自己维护一份基线，跟 git 完全解耦。扩展第一次激活时抓一遍工作区里所有在管文件的快照，之后凡是来自编辑器外部的写入都算待审改动。你自己在 VS Code 里敲的改动会直接并入基线，不会冒出来打扰。基线存在扩展的存储目录，不进工作区，不碰仓库元数据，没有遥测也不发网络请求。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">审查界面有两种模式。Unified 是默认的只读编辑器，打开就定位到第一个改动块，保留完整文件上下文和语法高亮；另一种用 VS Code 自带的 diff 编辑器。每个改动块上方挂 Accept 和 Revert 两个 CodeLens 操作。Accept 把当前内容认作新基线，磁盘上什么都不动。Revert 恢复基线内容：改过的文件恢复成未保存的缓冲区状态，agent 新建的文件确认后删掉，agent 删掉的文件按字节还原。有处防护做得比较严谨，文件现状和算 diff 时的内容一旦对不上，Revert 会直接拒绝，避免盖掉新来的改动。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它对 git 操作的处理做得更细。pull、merge、rebase、切分支、hard reset 都会被折进基线，不会误报成 agent 的改动。只有 git 真正重写过的文件才折，靠文件大小和 mtime 双重校验。没有 git 也能用，装了 git 的情况下它只用来找当前 HEAD。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">项目还很新，v0.2.3，Open VSX 上 1,490 次下载。README 把已知限制列得很直白：嵌套 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">.gitignore</code> 不读，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">git stash pop</code> / <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">git restore</code> 这类不移动 HEAD 的命令会被当成外部改动，没有重命名检测（显示成删除 + 新增），基线内容在扩展存储里是明文。要求 VS Code 1.100.0 以上，且必须打开受信任的实体文件工作区，受限模式和虚拟工作区里自动禁用。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 方式一：扩展面板搜索 ChangeLens 安装
+# 方式二：Open VSX 下载 .vsix 后
+#   命令面板 → Extensions: Install from VSIX...</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">ChangeLens（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code / Open VSX</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>自建基线，不依赖 git，逐块 accept/revert</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（MIT）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>1,490 次下载（Open VSX）</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">编辑器内置 diff</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>自带</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>依赖 git 或手动保存，分不清人和 agent 的改动</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Cursor / Copilot 的 hunk 审批</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>自带</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>只在对话内联视图里生效，离开会话就看不到</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>订阅制</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">alibaba/open-code-review</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>自行部署</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>提交后的代码审查，token 消耗低</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 38.5k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">CodeRabbit</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>接入 Git 平台</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>面向 PR 的审查，团队协作向</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>商业订阅</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这个场景几乎没有直接竞品。编辑器自带的 diff 和各家 agent 的内联审批都绑在 git 或者单次会话上，会话一关就没法回头逐块看。ChangeLens 是少数把"agent 改动"当成独立于版本控制的一等对象的东西，代价是下载量还很小，功能边界也比较窄。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 Open VSX · 1,490 次下载 · v0.2.3 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/ragentis/changelens-vscode</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://open-vsx.org/extension/ragentis/changelens</span></code></p>
+</section>

@@ -1,0 +1,163 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-21</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AI 修 bug 的方式一直是：加几行 print，跑一遍，猜一下，再改。它能读代码、能推理，但看不到运行时的变量到底长什么样。debug-skill 把 Debug Adapter Protocol 包成一个 CLI，让 agent 真的能下断点、单步执行、检查调用栈。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="margin:0 0 14px 0;">![debug-skill 演示](./debug-skill-demo.gif)</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">它解决什么问题</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一句话能说清：agent 平时是在<strong style="font-weight:bold;color:#000;">读</strong>代码，不是在<strong style="font-weight:bold;color:#000;">跑</strong>代码。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">遇到崩溃、异常、输出不对的时候，它手里只有两条路。要么加 print 语句反复跑，要么纯靠静态推理猜一个原因。前者慢且脏，改一次跑一次；后者经常猜错，尤其在涉及多个模块、状态在几层调用之间被改坏的时候。人类开发者早就不用这种办法了，我们用断点。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这个技能就是把断点还给 agent。它接入的是真正的调试器进程，agent 拿到的是那一刻内存里真实的值。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">适合的场景很具体：偶发 bug 需要特定状态才复现、某个值在哪一层调用被改坏、抛异常时想看看当时完整的局部变量。这些用 print 做起来都很别扭。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">核心原理</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">仓库里有两个东西，别搞混。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个是 Claude Code 技能本身（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">debugging-code</code>），教 agent 调试的工作流：断点该下在哪、怎么沿调用栈向上追、什么时候该停下来重新想。另一个是配套的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dap</code> 命令行工具，这是实际干活的部分。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">链路是这样的：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>dap &lt;cmd&gt;  →  Unix socket  →  Daemon  →  DAP 协议  →  debugpy / dlv / js-debug / lldb-dap  →  你的程序</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">中间架一层守护进程，是因为调试会话本身有状态，程序得停在断点上等你。如果每条命令都重新起一个调试器，程序就重启一次，状态全没了。守护进程负责把这个会话挂着，CLI 每次只发一条命令、拿回一份完整快照。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这个设计的一个直接后果是<strong style="font-weight:bold;color:#000;">无状态 CLI</strong>。任何 agent 只要能跑 bash 就能操作调试器，不需要维持长连接，不需要理解 DAP 协议。<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dap</code> 在 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dap debug</code> 时自动拉起守护进程，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dap stop</code> 或者空闲 10 分钟后自动结束。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">执行类命令（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">debug</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">continue</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">step</code>）返回的是完整上下文：当前位置、源码、局部变量、调用栈、程序输出。agent 不需要额外再问一轮。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">还有个细节值得单独说：<strong style="font-weight:bold;color:#000;">命名会话</strong>。<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--session agent1</code> 可以让多个 agent 各自挂一个调试会话，互不干扰。这是为并行 agent 编排准备的。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">语言支持靠自动识别，按文件扩展名挑后端：</p>
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #e8e8e8;">
+<thead>
+<tr>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">语言</th>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">调试后端</th>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">自动识别</th>
+</tr>
+</thead>
+<tbody>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Python</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">debugpy</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">是</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Go</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">dlv（Delve）</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">是</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Node.js / TypeScript</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">js-debug</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">是</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Rust / C / C++</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">lldb-dap</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">是</td>
+</tr>
+</tbody>
+</table>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">安装配置</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Claude Code 走插件市场，两条命令：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>/plugin marketplace add AlmogBaku/debug-skill
+/plugin install debugging-code@debug-skill-marketplace</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">然后装 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dap</code> CLI。三选一，按你的系统挑：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># macOS / Linux 一行脚本
+bash &lt;(curl -fsSL https://raw.githubusercontent.com/AlmogBaku/debug-skill/master/skills/debugging-code/scripts/install-dap.sh)
+
+# macOS 用 Homebrew
+brew install AlmogBaku/tap/dap
+
+# 有 Go 环境
+go install github.com/AlmogBaku/debug-skill/cmd/dap@latest</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Windows 用户走 releases 页面下预编译二进制，或者用 Go 那条。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">如果你用的是 Codex、Cursor、OpenCode 这些，用 skills.sh 装：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx skills add AlmogBaku/debug-skill</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">或者直接把 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">skills/debugging-code/</code> 目录拷进对应 agent 的 skills 目录。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">使用指南</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">场景一：用一个条件断点抓住偶发 bug</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">经典的场景：某个函数在绝大多数输入下正常，只有特定数据才出问题，你没法手动构造那个状态。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">别设普通断点，设条件的。语法是 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">"文件:行号:条件"</code>，引号必须带：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>dap debug app.py --break "app.py:42:i == 100"
+dap debug bank.py --break "bank.py:68:balance &lt; 0"</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让 agent 直接问："用条件断点抓住 balance 变成负数的第一时刻，然后把当时的完整局部变量给我看。"</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 会拿到断住那一瞬间的所有状态，而不用先跑一百次。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">场景二：追一个值是"在哪一层被改坏的"</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">假设 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">compute()</code> 返回了 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">None</code>，但你翻代码看不出哪一步出的问题。这类 bug 用 print 追起来最痛苦，因为你不知道该在哪几个地方加。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">做法是沿调用栈向上走，找到值第一次出错的那一帧：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>dap eval "result" --frame 0     # 当前帧：已经是 None
+dap eval "result" --frame 1     # 上一帧：还是正常值
+dap eval "input" --frame 1      # 再查上一帧的入参</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">技能文档里给的原则是：一直向上追，直到你找到这个值<strong style="font-weight:bold;color:#000;">第一次</strong>变错的那一层。那一层就是问题所在，不是它显形的那一层。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这一步的关键在于 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">--frame N</code>。没有这个参数，你只能在最内层干瞪眼。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">场景三：多个 agent 同时调试不同服务</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">微服务或者多进程场景，几个 agent 各自负责一块。默认情况下它们的调试会话会打架。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">用命名会话隔离：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>dap debug app.py  --session agent1 --break app.py:10
+dap debug main.go --session agent2 --break main.go:8
+dap stop --session agent1</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">每个会话有自己的守护进程和 socket，互不干扰。编排型 skill（比如 ruflo、oh-my-claudecode 那类）配上这个能力，可以让每个子 agent 独立调试自己负责的那部分。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">场景四：接一个已经在跑的进程</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">程序已经起来了，或者跑在容器里，你不想重启它。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>dap debug --attach container:5678 --backend debugpy --break handler.py:20
+dap debug --pid 12345 --backend debugpy</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这一条对排查生产环境行为差异特别有用。你连上去看的是真实进程的真实状态，不是一个复现出来的近似环境。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">进阶技巧</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">restart</code> 而不是重新 debug。</strong>改完代码想再跑一遍的时候，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dap restart</code> 会保留你这次会话里对断点的所有增删改。用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dap debug</code> 重来一遍，这些断点配置就没了。调试过程中往往断点位置要挪好几次，这个差别很实在。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">在重启之前，先用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">eval</code> 验证修复假设。</strong>程序还停在断点上的时候，你可以直接对着当前状态试算：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>dap eval "len(items) == 0"
+dap eval "[x for x in items if x is None]"</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">如果假设成立，再改代码、再 restart。这样一轮里能验证掉好几个猜想，比"改一次跑一次"快得多。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">注意别在 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">eval</code> 里放有副作用的表达式。</strong>技能文档明确不建议。你的表达式会在真实进程里真的执行，改数据、发请求、写文件都会生效。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">两条来自技能文档的原则，价值超过任何命令。</strong>一条是 "Two strikes, rethink"：同一个 bug 试了两次修不好，立刻停下重新想，别接着试第三次。另一条是 "如果你已经连续单步超过 3 次，你需要的是一个断点，不是更多单步"。这两条其实是在防 agent 最容易犯的毛病：在一个错误的方向上越走越深。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">常见踩坑</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">调试后端要单独装。</strong><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dap</code> 自己不包含 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">debugpy</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dlv</code> 这些东西，它是去调用系统里已有的。跑起来报找不到后端的话，看仓库里的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">references/installing-debuggers.md</code>，每个语言的装法都写了。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">macOS 上用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dlv --pid</code> 附加 Go 进程会失败。</strong>这是 System Integrity Protection 的限制，不是 bug。README 里明确标了这个坑，需要关掉 SIP 才能用 PID 附加的方式调试 Go 进程。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">调试会话会留守护进程。</strong>正常结束会自动清理，异常中断的话进程可能还挂着。手动清 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dap stop</code>，或者等 10 分钟空闲超时自动退出。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">同类技能对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">debug-skill（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 5px; border-radius: 4px; font-family: Consolas, monospace; font-size: 13px;">/plugin install debugging-code</code> + 装 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 5px; border-radius: 4px; font-family: Consolas, monospace; font-size: 13px;">dap</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>真接入调试器进程，断点/单步/调用栈全套</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>偶发 bug、值在哪层被改坏、附加运行中进程</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 323</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Superpowers 的 systematic-debugging</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 5px; border-radius: 4px; font-family: Consolas, monospace; font-size: 13px;">/plugin install superpowers</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>方法论纪律：四阶段流程 + 三次失败强制停手</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>防止 agent 乱改代码，靠推理定位</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 高（整套框架）</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">IntelliJ IDEA ij-debugger</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>需 IDE 2026.2+ 并开放 MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>IDE 内置调试器暴露给外部 agent</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>已经在用 JetBrains 全家桶的团队</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>官方内置</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">传统 print / 日志诊断</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>无需安装</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>改代码加输出，重跑</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>简单问题、一次性脚本</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">选 debug-skill 的理由在于它补的是能力缺口而不是加约束。systematic-debugging 那类技能是在教 agent「别乱猜」，这个技能是让 agent 不用猜。两者其实不冲突，一个管纪律，一个给工具，配着用效果更好。IDE 方案的问题在于绑死在 IDE 上，命令行和 CI 环境里用不了。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">还有一个现实的考虑：agent 调 bug 时的往返次数直接决定你的 token 花费。让它在真实状态上做一次 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">eval</code>，比让它改代码重跑三轮便宜得多。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 323 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/AlmogBaku/debug-skill</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://youtu.be/ZxXvTtilZr0</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">如果你经常让 AI 修 bug，尤其是那种"偶尔才复现"、"不知道哪一层出的问题"的类型，这个技能装上去的收益是立刻的。配置大概十分钟：插件两条命令，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">dap</code> 一条命令，再加一个对应语言的调试后端。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">换来的是 agent 的工作方式从"加 print 猜"变成"下断点看"。它省掉的不只是时间，还有来回改代码引入的新问题。</p>
+</section>

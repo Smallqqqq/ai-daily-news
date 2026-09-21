@@ -1,0 +1,356 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-21</p>
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+<p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0;">本期覆盖 2026-09-20 至 2026-09-21 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Lobsters / Product Hunt / arXiv / HF Papers / Trendshift 及中文渠道。今日头条是阿里 Qwen-Image-2.1 开源（HN 508 分）和 Google 的分布式 Agent 运行时 AX 重新引爆讨论（HN 219 分、Trendshift 日榜第一）。另一个明显信号是"上下文压缩"成为独立品类——fast-jev-compaction 用决策模型替代 LLM 写摘要，一周涨到 5.3k 星。</p>
+<p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0;">精选 10 条按影响力排序。</p>
+</section>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. Qwen-Image-2.1 — 7B 统一生图与编辑，原生 RGBA 透明层</p>
+<p style="margin:0 0 14px 0;">![Qwen-Image-2.1 生成效果](./qwen-image-21-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.2/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 508 points / 153 comments；HF Papers 当日热门</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">阿里通义千问团队 9 月 20 日开源 Qwen-Image-2.1，把文生图和图像编辑合并到同一组权重里。视觉生成部分只有 7B 参数（32 层 single-stream DiT），配 Qwen3-VL 8B 文本编码器和 64 通道 RGBA VAE，整条管线约 16.22B 参数、33GB 文件。默认输出 2048×2048 原生 2K，横版最高可到 2752×1536。核心卖点是原生 RGBA——模型自己判断该不该输出透明通道，不需要外挂抠图；透明图层内的文字还能继续改。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>pip install torch&gt;=2.4.0
+pip install transformers&gt;=5.17
+pip install git+https://github.com/huggingface/diffusers
+pip install accelerate pillow</code></pre>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>from diffusers import QwenImage21Pipeline
+import torch
+
+pipe = QwenImage21Pipeline.from_pretrained("Qwen/Qwen-Image-2.1", torch_dtype=torch.bfloat16)
+pipe.to("cuda")
+# 默认 40 步、2048×2048
+image = pipe(prompt="透明背景的玻璃水杯，放在白色桌面上").images[0]
+image.save("out.png")</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ComfyUI 用户直接拉 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">Comfy-Org/Qwen-Image-2.1</code> 权重，首日已支持；vLLM-Omni、SGLang-Diffusion、ModelScope、AMD ROCm 也在首发适配名单里。提示词改写模型 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">Qwen/Qwen-Image-2.1-PE-T2I</code>、<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">Qwen/Qwen-Image-2.1-PE-I2I</code> 是可选组件，把粗略指令转成精确提示词。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">在官方 Qwen-Image-Bench 上拿到 <strong style="color:#07c160;">60.28 分</strong>，超过闭源的 Nano Banana 2.0（59.82）和 GPT Image 1.5（59.65），是开源阵营第一；不过仍低于 GPT Image 2.5 Sunburst 的 67.01。生成与编辑共用权重意味着不用再维护两套模型。参考图上限从常见的一两张提到 10 张，六张人像合成合照、五张素材生成穿搭这类场景可以一次做完。单张 RTX 4090 上 1024×1024 约 <strong style="color:#07c160;">18.7 秒</strong>。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">授权是硬约束：Qwen Research License，只允许研究和评估，商用需单独申请，用生成内容做商业物料同样不行。有商用需求的话这条要先确认。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 上的关注点集中在透明通道的真实可用性，有人实测从真实照片提取主体输出透明图层的边缘质量，认为比传统抠图管线省了一个环节。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">也有人拿 Qwen-Image-Bench 的自评分数说事——benchmark 是官方自己出的，第三方复现还没看到，60.28 这个数应当打个折扣看。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/QwenLM/Qwen-Image-2.1</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. google/ax — 把 Agent 当 K8s Pod 管的分布式运行时</p>
+<p style="margin:0 0 14px 0;">![google/ax 架构示意](./google-ax-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.9/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 219 points / 92 comments；Trendshift 日榜第一</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Google 开源的 Agent Executor（命令行叫 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">ax</code>），定位是 agent 的运行时控制平面——不是框架，是框架下层的东西。它把一次 agent 执行抽象成 Task，配上三个声明式原语：Workspace（预先备好 Git 仓库、MCP server、skill 包）、Gateway（出网白名单 + 凭证注入）、Model（模型与密钥集中配置）。核心能力是空闲 agent 自动 checkpoint，恢复时亚秒级拉起，几十个 Task 复用同一份 worker 资源，官方说法是"按实际干活的时间付费"。底层跑在 Agent Substrate 上，用 GKE Sandbox / Kata Containers 做隔离。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">仓库 5 月就开源了，这波是 9 月 20 日重新引爆讨论，HN 4 小时内 219 分。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 安装 CLI（Go 1.21+）
+go install github.com/google/ax/cmd/ax@latest
+# 二进制落在 $(go env GOPATH)/bin，确保在 PATH 里
+
+# 部署控制面，需要 K8s 集群 + ko
+brew install ko
+make deploy AX_IMAGE_REPO=&lt;your-registry&gt;
+
+# 提交任务并观察
+ax apply -f examples/task.yaml
+ax get tasks
+ax watch task task123
+ax ssh task123 -- ls -la /workspace
+ax suspend task task123
+ax resume task task123</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">CLI 刻意做成 kubectl 的形状（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">apply</code> / <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">get</code> / <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">describe</code> / <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">watch</code> / <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">delete</code>），会跟随当前 kubectx，也能 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">ax --context=dev-cluster</code> 切集群。还有个 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">./demo.sh</code> 可以本地跑通一遍。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">长跑 agent（小时级、天级）的断点续跑、审计、并发写冲突，过去是各家 SRE 自己拼的。AX 把这些变成运行时内置：事件日志 + 快照做 durable execution，单写者架构防状态腐化，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">ax fork</code> 能在任意 checkpoint 分叉轨迹做 A/B。官方演示里 30 个逻辑 agent 会话共用一份物理执行容量（统计上只有一个活跃时），宣称硬件效率提升 <strong style="color:#07c160;">97%</strong>。代价是这套东西得跑在 K8s 上，个人开发者上手门槛不低。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 高赞把这事读成 Google 在复刻 Kubernetes 打法：开源运行时抢占事实标准，再靠托管执行和 Gemini 企业版变现，对标的是 AWS 的 Bedrock AgentCore。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">也有人质疑"数十亿任务"是营销话术——README 自己写着 pre-stable，核心概念和协议还在改，明确预告会有 breaking change。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/google/ax</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. vercel-labs/json-render — 让 AI 生成 UI，但只能在你的组件表里挑</p>
+<p style="margin:0 0 14px 0;">![json-render 渲染效果](./json-render-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.7/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 291 stars/day；累计 17.4k stars</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Vercel Labs 出的 Generative UI 框架，解决的是"模型把界面描述得挺好，但前端拼不出来"这一步。做法是把模型的输出约束成 JSON，JSON 只能引用开发者用 Zod 定义的组件 catalog；渲染层拿到 JSON 再映射成真实组件。生成什么和怎么渲染彻底解耦——前端可以换成自己的组件库，不锁死框架。协议很薄，渲染层可扩展。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npm install @json-render/core @json-render/react
+# 按需选渲染器
+npm install @json-render/shadcn        # 36 个预置 shadcn/ui 组件
+npm install @json-render/vue           # 或 svelte / solid / react-native</code></pre>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>import { defineCatalog } from "@json-render/core";
+import { defineRegistry, Renderer } from "@json-render/react";
+
+const catalog = defineCatalog({ components: { Button, Card, Table } });
+const registry = defineRegistry(catalog);
+
+&lt;Renderer spec={spec} registry={registry} /&gt;</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">catalog 上有个 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">catalog.prompt()</code> 可以直接吐出系统提示词，省掉手写约束的那一步。<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">createSpecStreamCompiler</code> 支持渐进式流式渲染。官方 demo 覆盖 dashboard、React Email、Remotion 视频、chat、Gaussian splatting 等场景，<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">pnpm dev</code> 后访问 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">json-render.localhost:1355</code> 就能看到。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">裸让模型输出前端代码，稳定性和可控性都难保证。JSON 约束成 catalog 子集之后，输出是可校验的——schema 不匹配就拒绝渲染，不会出现"生成了一个你没实现的组件"这种运行时炸掉的情况。跨 React / Vue / Svelte / Solid / React Native 五套渲染器共用一份 spec，同一份生成结果可以落到不同技术栈。生态已经铺开：SkillsMP 上收录了 24 个相关 skill，涵盖 core、next、svelte、react-three-fiber、yaml 流式格式、devtools，还有一个 MCP 适配器让你在 Claude、ChatGPT、Cursor 里直接渲染交互 UI。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">LINUX DO 上有开发者对比后认为，相比直接让模型吐 HTML，JSON 契约这条路的可验证性明显更好，但组件 catalog 的维护成本会转移到前端这边。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">也有人提到它和 Vercel AI SDK 天然衔接，用 Vercel 全家桶的项目接入基本零摩擦——这也是判断它能否形成生态壁垒的关键。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/vercel-labs/json-render</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. blader/humanizer — 50.7k 星的"去 AI 味"技能包</p>
+<p style="margin:0 0 14px 0;">![humanizer 改写效果](./humanizer-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.6/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">50,595 stars（周增 3,024）；skills.sh 7.3K 安装</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个纯 Markdown 的 agent skill，专治 AI 写出来的腔调。它把"AI 味"拆成 25 条带编号的模式，分五类：铺垫而不直说、节奏过于工整、虚张声势和借来的权威、格式强迫症、聊天残渣（"当然！""希望这对你有帮助"这类）。工作流是先按显著度标出问题，再起草改写，然后回头拿原文和模式清单双向核对，最后出终稿——明确禁止编造原文没有的细节。参考来源是维基百科的 "Signs of AI writing" 词条和 WikiProject AI Cleanup。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 通用安装，装到全局
+npx skills add blader/humanizer --global
+
+# 指定 agent，或一次性装给全部 agent
+npx skills add blader/humanizer --global --agent '*'</code></pre>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code 2.1.142+ 可以直接当插件装
+/plugin marketplace add blader/humanizer
+/plugin install humanizer@humanizer</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装完在对话里敲 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">/humanizer</code>（插件形式是 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">/humanizer:humanizer</code>），把文本贴进去或者直接指向一个 Markdown 文件。想让它贴近你自己的文风，附 2–3 段个人写作样本，它会跟着样本的节奏、用词和标点走。Claude Desktop 用户可以下载仓库 ZIP 当 skill 上传，或者手动把 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">SKILL.md</code> 拷进 skills 目录。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">3.0.0 版把早期 35 条模式合并压到 25 条并重新分组，减少规则互相打架。纯 Markdown 意味着不绑定任何厂商——Codex、Cursor、Claude Code 都能用，这是它跟各家自带写作指令的根本差别。同一周里 petergyang/no-ai-slop（+2,134 星）也在爬榜，两个项目抢同一个需求，说明"AI 写作痕迹"已经是个被明确承认的问题，不再是个人洁癖。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">社区争论集中在一点：它消除的是表面特征还是真实文风差异。有人实测改写后确实不像 AI 了，但内容密度没变，只是把"随着……的不断发展"换成了别的说法。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">反过来也有人认为这正是它的正确边界——README 明确写了不发明细节、不改事实，只动表达层。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/blader/humanizer</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. fast-jev-compaction — 用决策模型替代 LLM 写摘要，100 万 token 压到 8.6 万</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.4/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">5,018 stars（09-17 创建）；289 forks</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个 Claude Code 插件，同时也是 npm 库。它替换掉 Claude Code 内置的 context compaction：内置做法是让 LLM 写一份摘要，有损——文件路径、确切报错、约束条件都可能在重写中丢掉。这个插件不写一个字，只做删除和截断。每个 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">tool_use</code> 和它的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">tool_result</code> 按 ID 配对后，逐条丢给 Jev（TypeSafe 的决策模型，不生成文本，只回答是/否和打分，约 0.4 秒出结果）问两个问题：这次调用还要不要？结果要不要逐字保留？按 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">keepThreshold</code>（默认 0.5）分三档处理——都留、留调用但把结果截到前 300 字符加一行注记、或者整对删掉。用户和助手的文本始终逐字、按原顺序保留。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npm install fast-jev-compaction
+export TYPESAFE_API_KEY=...
+
+# 或者直接当 Claude Code 插件装
+claude plugin marketplace add tamaratran/fast-jev-compaction
+claude plugin install fast-jev-compaction@fast-jev-compaction</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">依赖 Claude Code 2.1.274+ 的 function hooks（早期功能，要显式开），在 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">~/.claude/settings.json</code> 里配：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>{
+  "env": {
+    "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS": "1",
+    "TYPESAFE_API_KEY": "&lt;your key&gt;"
+  }
+}</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">本地调试可以 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude --plugin-dir .</code>。每次压缩会广播到一个 loopback 页面（含 Jev 给出的两个概率和最终判定），可以下载成单个自包含 HTML，不存任何数据。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">实测把一段近 100 万 token 的会话压到 <strong style="color:#07c160;">8.6 万 token</strong>，耗时约 <strong style="color:#07c160;">1 秒</strong>——这是"不重写"路线相对"让 LLM 总结"路线的核心优势，摘要再准也是有损压缩，而删除+截断是可逆的语义单元操作。失败路径也设计过：Jev 报错、答案异常、缺 key、历史塞不进 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">maxStateTokens</code>（默认 25k）都会抛错，由 hook 决定回退，压缩率低于 0.25 时直接放弃替换、退回内置摘要。作者自己标注了两个限制：token 数按字符估算，不是精确分词；概率值不足以证明一条结果真的可以安全删除。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">项目被收进 fatwang2/awesome-jev 目录，Jev 生态在两周内从演示长成了一排插件——同期还有 hermes-jev-skills（71 轮压缩 0.95 秒）和判断"何时该 /compact"的 compact-adviser。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">也有人提醒这引入了一个新的外部依赖：压缩能力绑在 TypeSafe 的 API 和 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 5px; border-radius: 4px; font-family: Consolas, monospace; font-size: 14px;">TYPESAFE_API_KEY</code> 上，key 出问题就没法压缩。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/tamaratran/fast-jev-compaction</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. Pirate Face — 用 BitTorrent 给开源模型权重做异地备份</p>
+<p style="margin:0 0 14px 0;">![Pirate Face 界面](./pirate-face-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.3/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 453 points / 134 comments；09-20 登顶首页</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Pirate Face（pirateface.co）是个去中心化的模型权重保全服务，把 Hugging Face 上的开源权重镜像成校验和验证过的 BitTorrent 磁力链接，靠 P2P 做种而不是单一公司托管。只同步 Apache-2.0 和 MIT 许可的模型（另有一个明示的 Kimi-K3 例外）。机制上用 BitTorrent BEP-19 web-seeds 指回 Hugging Face：模型还在的时候下载直接走 HF，一旦被下架，下载自动落到 P2P swarm 上并标记为 "Rescued"。每个文件带官方 SHA-256 哈希，可以逐位校验。9 月 20 日上线了一方 tracker 和 DHT 发现（<code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">udp://tracker.pirateface.co:6969/announce</code>）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">不用装东西，浏览器直接访问 <code style="background-color: #f5f5f5; color: #666; padding: 2px 6px; border-radius: 4px; font-family: Consolas, monospace; font-size: 14px;">https://pirateface.co</code> 搜索模型名即可浏览、下载、做种，无需账号。要绑定公开身份的话可以注册，并用匹配的 Hugging Face 身份做验证。磁力链接可以喂给任何 BitTorrent 客户端。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">直接诱因是 NVIDIA 以 <strong style="color:#07c160;">129 亿美元</strong>收购 Hugging Face 引发的单点托管担忧——权重集中在少数公司手里，下架、区域性屏蔽、条款变更都会让下游项目一夜之间失去依赖。BitTorrent 天然适合这个场景：大文件、一次公布多次分发、内容寻址天然防篡改。但要看清现状：官方口径 66.9 万个可用模型，截至 9 月 20 日只有约 4,891 条 "witnessed records"，而且这些是校验和/版本证据，不是已存储的权重或活跃做种者。做种情况相当薄——做种最多的小模型 18 个种子，DeepSeek 和 Qwen 的大模型各 11 个。计划中的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">HF_ENDPOINT=https://pirateface.co</code> 直连替换和数据集支持都还标着 "soon"。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 评论对名字争议很大，但多数认同 BitTorrent 是权重分发显而易见的技术选型，真正的问题在种子数量而不是架构。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">有实测者反馈，自己上传的 torrent 走不通 HF web-seed 兜底路径，说明这部分还没完全跑顺。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">也有评论质疑所谓"abliterated 模型被下架"的叙事——有人指出 HF 移除某个模型是因为上传者反复向用户推送可疑付费要求，跟审查无关。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://pirateface.co</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. BuilderIO/agent-native — 一个 action 同时喂给 UI、agent 和 MCP</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 98 stars/day；累计 5.3k stars</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">BuilderIO 出的 TypeScript 框架，用来写"agent 原生"的应用。核心设计是每个能力只定义一次 action：agent 把它当工具调用，UI 直接调同一份代码。配套还有共享数据（agent 干的活在 UI 里看得到，反之亦然）和共享应用状态（agent 知道用户当前在哪个页面、选中了哪条记录）。框架自带 agent 对话、认证与权限、skills 与 memory、自动化、agent teams，后端默认 PostgreSQL（本地开发用 PGlite），跑在 Nitro 兼容的宿主上。LLM、数据库、工具、基础设施都可以换成自己的。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx --yes @agent-native/core@latest create my-agent --standalone --template chat</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">action 的定义形如 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">actions/hello.ts</code>，用 Zod 声明 schema 并指定 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">http: { method: "GET" }</code>；声明之后 agent 自动获得 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">hello</code> 这个工具，前端用 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">useActionQuery("hello", { name: "Alex" })</code> 调它——校验和权限走的是同一套。仓库里还带着一批可以直接跑的模板应用：Clips、Design、Slides、Analytics、Calendar、Mail、Assets、Content、Plans。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 应用普遍有个结构性重复：同一个业务动作要写两遍，一遍给 agent 当 tool，一遍给前端当 API，两边的参数校验和权限检查还经常不一致。action 作为单一事实来源把这个问题消掉了，而且一次定义自动暴露成 HTTP、MCP、A2A、CLI 五种入口——别人想接你的 agent 能力时不用再补一层适配。TypeScript 全程类型安全，集成门槛压得比较低。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">讨论区主要认可"一份 action 多处消费"这个抽象，认为比给 agent 单独做一套 tool 层更省事。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">也有人担心框架覆盖面太宽（认证、数据库、自动化、团队协作全都自己做），容易变成又一个难拆的 all-in-one。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/BuilderIO/agent-native</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. 阶跃星辰 Step 5 Preview — 600B MoE 只激活 27B，登顶 AA 开源榜前三</p>
+<p style="margin:0 0 14px 0;">![Step 5 Preview 发布信息](./step5-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">09-20 发布；AA 开源榜第三</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">上海阶跃星辰 9 月 20 日发布旗舰基座模型 Step 5 Preview，针对真实 agentic 任务设计。稀疏 MoE 架构，总参数 600B、激活 27B，支持 100 万 token 上下文和文本+视觉输入。发布当天 API 已开放，完整权重计划 10 月 15 日开源。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">API 已可用，接入方式见官网 <code style="background-color: #f5f5f5; color: #666; padding: 2px 6px; border-radius: 4px; font-family: Consolas, monospace; font-size: 14px;">https://www.stepfun.com</code>。权重开源要等到 10 月 15 日，届时可在官方仓库获取。急着用的先走 API。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Artificial Analysis Intelligence Index 拿到 <strong style="color:#07c160;">44 分</strong>，官方称位列全球开源模型前三——这是国产开源模型的最高位次。几个具体分项：DeepSWE v1.1 67.7%，StepCodeBench 49.0%，FrontierFinance 66.4（官方称全球第二，压过 GPT-6 Astra 和其他开源模型）；软件工程方向领先 Kimi K3 和 GLM-5.3，落后于 GPT-6 Astra 和 Claude Opus 5。成本维度更扎眼：AA 指数上单任务约 0.71 美元，输入/输出定价 $1 / $2.7 每百万 token，输出速度约 100 tokens/s，官方口径单任务成本约为 Claude Opus 5 的<strong style="color:#07c160;">八分之一</strong>——600B 总参只激活 27B 是达到这个性价比的原因。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">中文报道集中在中美开源模型的位次竞争上，"仅三分之一参数敢和美国最新模型扳手腕"是流传较广的一个角度。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">预期管理也在同步进行：权重要等到 10 月 15 日才开源，现在能拿到的只有 API，且所有 benchmark 数字目前都是官方自评。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.stepfun.com</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. 腾讯混元 WebCraftBench — 让 agent 自己点网页，来验收 AI 生成的应用</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">arXiv 2609.15387；中文技术渠道集中报道</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">腾讯混元团队联合清华、北大提出 WebCraftBench（部分报道称 IWC-Bench），把软件测试的思路搬进 AI 网页生成评测。流程是代码插桩 → 覆盖率引导探索 → 把操作记录整理成状态转移图 → 分维度评分。跟看代码或看截图的老办法不同，它让 agent 真的打开页面、点按钮、填表单、切页面，再核对哪些功能实际被执行过。关键设计是探索阶段看不到验收标准清单，只在评分阶段才拿清单比对，把探索和评分分开。评分分美观度、易用性、需求符合度三个维度。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">论文与基准信息见 <code style="background-color: #f5f5f5; color: #666; padding: 2px 6px; border-radius: 4px; font-family: Consolas, monospace; font-size: 14px;">arXiv:2609.15387</code>。该基准当前主要用于评测 AI 生成网页的能力，官方尚未明确是否开放完整数据集下载，需要跟踪腾讯混元官方仓库更新。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据规模扎实：369 条真实用户需求（取自实际使用流量，其中 60.2% 是口语表达、63.4% 没把需求说清楚），5,088 条验收标准（功能 2,706、内容 1,447、视觉 935，平均每任务 13.8 条），覆盖 17 个前沿模型、共 6,273 个生成应用。自动插桩成功率 <strong style="color:#07c160;">99.89%</strong>，覆盖率引导把函数覆盖率中位数从 91.9% 提到 94.3%。在 197 组人工复核对比中，168 组与人类选择一致，一致率 <strong style="color:#07c160;">85.3%</strong>。一个反直觉的结论：没有模型包揽三项第一，GPT-5.6-Sol 美观度最高但易用性只排第六，单个应用上美观度与易用性的相关系数仅 0.36——界面好看和交互可靠基本是两回事。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">讨论集中在"需求说不清"这个数据上——63.4% 的真实需求本身就不完整，这比 benchmark 分数更能说明 AI 生成网页的实际难点在哪。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">也有人指出更换评分裁判后排名仍然稳定，加上 85.3% 的人类一致率，说明这套评测的鲁棒性经得起检验。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://arxiv.org/abs/2609.15387</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">10. 微软用 agent 把 Copilot 运行时从 TypeScript 移植到 Rust，$12 万 token 换来 15.9 倍吞吐</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.2/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">The Register / 4sysops 报道；中文技术社区大范围转载</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">微软把 GitHub Copilot 的运行时从 TypeScript/Node.js 重写成纯 Rust，主要工作量交给 AI agent 完成，用的是 Copilot 自己——"用 Copilot 重写 Copilot"。参与的模型包括 GPT-5.6 Sol 和 Claude Opus 4.8，按各自擅长领域分工。过程从 5 月 12 日到 8 月 21 日，历时 14.5 周，135 个 release，约 1.3 个移植 PR/天，128 个 PR 增量合入 main。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这是工程案例不是可直接安装的工具，细节见微软工程师 Stephen Toub 的回顾文章和 The Register 报道。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数字很硬：基准测试里 1,000 次单轮会话生命周期（共享 client、100 并发 pipeline），TypeScript 版每秒 7.55 次，Rust 版每秒 120 次，<strong style="color:#07c160;">15.9 倍</strong>。内存差距更明显——10 个 agent 客户端的批次，TypeScript 占 1,383 MB，Rust 占 126 MB，降了约 <strong style="color:#07c160;">91%</strong>，主要因为 Rust 版把工作留在进程内，而 TypeScript 要另起后台进程。代码量从 43 万行 TypeScript 变成约 83 万行 Rust（另有约 46.9 万行单测、17.5 万行 E2E 测试），AI token 花费约 12 万美元加三周人力；官方称人工重写预计需要一两年和数百万美元。最难的一个文件是 3 万多行的 <code style="background-color: #f5f5f5; color: #e91e63; padding: 2px 6px; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 15px;">session.ts</code>，花了 25 小时：56 分钟读文档、122 次工具调用澄清、15 个子会话通过内置编排 skill 互相协调。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">值得记下的反直觉部分：Stephen Toub 说 agent 花在调研和信息收集上的时间远多于写代码，"AI 疯狂吐代码的流行印象几乎正好是反的"。人类的精力集中在 review/测试/CI（占 lead engineer 时间的 31%）、拍板技术决策（17.4%）和推动收尾（15%）。踩的坑也很典型——约 50 个已知回归出现在"能编译但行为不对"的代码里，原因是语义含糊、功能缺失、分支漂移。有句总结说得准：Rust 编译器能拦住 agent 写出内存不安全的代码，拦不住 agent 把错误的程序写得很规范。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">争议点在可比性：Toub 自己强调这"绝不意味着每个大型 TypeScript 程序都该改成 Rust"，性能收益里有多少来自语言、多少来自进程内嵌入的架构调整，报道里只有定性描述。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">另一派关注成本口径——12 万美元 token 费听起来便宜，但没算上资深工程师 14.5 周的投入和 135 个 release 的 CI 开销。</li>
+</ul>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.theregister.com/devops/2026/09/18/microsoft-agentically-ports-copilot-runtime-to-rust-for-120k/</span></code></p>
+
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">asciimoo/hister <span style="font-size:13px;font-weight:normal;color:#999999;">09-20 GitHub Trending 新上榜，约 2,673 stars</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">本地搜索引擎，索引访问过的网页和文件，同时提供 web、terminal 和 MCP 三种客户端，可以当 agent 的本地检索后端。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Unity 官方 agent 插件 <span style="font-size:13px;font-weight:normal;color:#999999;">09-20 报道</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">为 Claude Code 和 Codex 发布官方插件，给编码 agent 注入版本最新的游戏开发技能，Codex 版带 31 个 skill。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Jcode <span style="font-size:13px;font-weight:normal;color:#999999;">09-20 YC profile 公布，20,000+ stars</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">Rust 写的终端 agent harness，v0.85.0 于 09-19 发布，宣称内存占用 27.8 MB，对比 Claude Code 的 386.6 MB。每月推理开销 100 万美元。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">腾讯 Gander 多模态模型 <span style="font-size:13px;font-weight:normal;color:#999999;">09-20~21</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">后台任务执行与前台实时对话并行，指令可随时打断和修改。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Runway GWM-1 实时流式视频生成 <span style="font-size:13px;font-weight:normal;color:#999999;">09-20~21</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">自研世界模型驱动，逐帧推演支持实时交互，方向指向机器人视觉和自动驾驶感知。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Google MilleMiglia <span style="font-size:13px;font-weight:normal;color:#999999;">09-21</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">开源的中型物流网络与全球供应链 benchmark。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">DAMO RADAR <span style="font-size:13px;font-weight:normal;color:#999999;">09-20 前后</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">达摩院与浙大一院等联合研发的通用医疗影像 AI，一次可识别 146 种以上腹部病症，登上《Science》，已开源。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">智谱 ZCode 开源 + 信通院审计 <span style="font-size:13px;font-weight:normal;color:#999999;">09-21</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">因默认上传用户代码、Git 历史和密钥引发企业追责后，智谱承诺全面开源 ZCode，并委托中国信通院做第三方安全审计，后续每月发布代码安全审计报告。</p>
+</section>
+
+<section style="background-color: #f5f7fa; border-radius: 8px; padding: 16px 18px; margin: 28px 0 0 0;">
+<p style="margin: 0 0 6px 0; font-size: 17px; font-weight: bold; color: #333333; text-align: left;">本期关键词</p>
+<p style="margin: 0; font-size: 15px; color: #555555; line-height: 2.0; text-align: left;">Qwen-Image-2.1 · google/ax · Jev 决策模型 · 上下文压缩 · Generative UI · BitTorrent 权重保全 · Step 5 Preview · WebCraftBench · agentic 代码迁移</p>
+</section>
+</section>
