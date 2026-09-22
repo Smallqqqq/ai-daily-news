@@ -1,0 +1,392 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-22</p>
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+<p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0;">本期覆盖 2026-09-21 至 2026-09-22 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Bluesky / Lobsters / arXiv / HF Papers / 知乎 / AI 实验室博客。如果要我挑两条今天就能用上的，是第 3 条（跨 CLI 的 agent 记忆）和第 4 条（agent 界面组件）。</p>
+<p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0;">核心主题：小米 MiMo-V2.6 以开源权重拿下 AA 智能指数开源第一、Anthropic 官方金融 Agent 工具包冲上热榜、以及"给 agent 用的基础设施"集体爆发（记忆、沙箱、离线知识库、UI 组件各占一格）。精选 10 条按影响力排序。</p>
+</section>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. 小米 MiMo-V2.6 开源：1.02T 稀疏 MoE 拿下 AA 智能指数开源第一</p>
+<p style="margin:0 0 14px 0;">![MiMo-V2.6 发布与基准表现](./mimo-v26-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 首帖约 560 points / 284 comments，HN 另一线 450 points / 228 comments，中文科技媒体全线覆盖</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">小米 MiMo 团队 9 月 22 日凌晨发布并开源 MiMo-V2.6 系列，包含全模态旗舰 Pro 与高效版 Flash。Pro 是稀疏 MoE，总参数约 1.02T、激活约 42B；Flash 总参数约 310B、激活约 15B。两者都支持 1M token 上下文、多模态输入、最高 128K 输出。小米同步公开了模型权重（HuggingFace）、完整技术报告、基于 verl 的端到端 RL 框架、7,000+ 带评分任务环境，以及一个 Distill-Qwen-9B 起点。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 权重（HuggingFace，Pro 与 Flash 均已开放）
+huggingface-cli download XiaomiMiMo/MiMo-V2.6-Pro
+huggingface-cli download XiaomiMiMo/MiMo-V2.6-Flash
+
+# API（价格与 V2.5 持平）
+curl https://api.mimo.mi.com/v1/chat/completions \
+  -H "Authorization: Bearer $MIMO_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"mimo-v2.6-flash","messages":[{"role":"user","content":"hi"}]}'
+
+# RL 训练框架 + 7,000 个任务环境随技术报告一并放出
+git clone https://github.com/XiaomiMiMo/MiMo-V2.6</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Flash 定价 ¥1/¥2 每百万输入/输出 token，Pro 为 ¥3/¥6，缓存命中折扣 99%。桌面客户端 MiMo Desktop 正式版同步上线，UltraSpeed 模式宣称最高 20 倍推理加速。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AA 智能指数（v4.3.2）Pro 拿到 <strong style="color:#07c160;font-weight:bold;">46 分</strong>，高于 Kimi K3 的 44、GLM-5.3 的 45，是目前开源权重模型里的第一；相比自家 V2.5-Pro 的 26 分涨了 20 分。Agent 基准提升更陡：DeepSWE v1.1 从 V2.5-Pro 的 19.0 跳到 <strong style="color:#07c160;font-weight:bold;">71.9</strong>，AutomationBench 16.0 → 53.1，Terminal Bench 2.1 65.2 → 89.9，JobBench 25.0 → 62.0。训练总成本 Pro 约 <strong style="color:#07c160;font-weight:bold;">262 万美元</strong>、Flash 约 85 万美元，各自在 6 天内跑完 30 步 RL、约 75 万条轨迹。小米承认在部分评测上仍落后 Claude Fable 5.1 与 GPT-6 Astra（两者指数均为 53）。基准与成本数据均为厂商自报，尚无独立复现。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color: #f0f9eb; border-left: 4px solid #07c160; margin: 0 0 12px 0; padding: 14px 18px; border-radius: 0 6px 6px 0; color: #555555; line-height: 2.0;">
+<p style="margin: 0; font-size: 15px;">HN 最高赞落在透明度上："我知道大家对'什么是真正开放'有很强的主张（开放权重、开放训练数据、开放训练代码），但我真的很喜欢他们在训练过程上如此透明。"该帖被称作"极好的学习与教学工具"。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">质疑同样具体：有人怀疑实时训练看板部分造假（刷新后进度回退、重启与曲线对不上），也有人指出训练期间跑 benchmark 会带来轻度过拟合。另有一线讨论完全异步训练的声称——"trainer time + sampler time = step time，所以它并不是'完全异步'"。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://mimo.mi.com/docs/zh-CN/news/latest/v2-6</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://venturebeat.com/technology/better-than-deepseek-xiaomis-mimo-v2-6-pro-debuts-as-the-top-open-weights-model-in-the-world-alongside-cheaper-v2-6-flash</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://app.hncompanion.com/item?id=49792730</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. anthropics/financial-services：Anthropic 官方开源 10 个金融 Agent + 11 个 MCP 连接器</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.8/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 单日 +424 stars，当日新入榜第 5 位</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Anthropic 官方开源的 Claude for Financial Services 工具包，面向投行、股票研究、私募、财富管理、基金管理与运营等场景。核心设计是"一份源码、两种封装"：每个工作流只写一次，既能作为 Claude Cowork 插件交互使用，也能通过 API 部署成 Claude Managed Agent（CMA）做无头编排。仓库全部是 markdown 和 JSON，没有构建步骤。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">内置的命名 agent 包括 Pitch Agent、Meeting Prep Agent、Market Researcher、Earnings Reviewer、Model Builder、Valuation Reviewer、GL Reconciler、Month-End Closer、Statement Auditor 和 KYC Screener。MCP 连接器覆盖 Daloopa、Morningstar、S&amp;P Global、FactSet、Moody's、MT Newswires、Aiera、LSEG、PitchBook、Chronograph、Egnyte、Box。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 通过 Claude Code 插件市场安装
+claude plugin marketplace add anthropics/claude-for-financial-services
+
+# 部署成 Managed Agent（需要 ANTHROPIC_API_KEY）
+export ANTHROPIC_API_KEY=sk-ant-...
+scripts/deploy-managed-agent.sh gl-reconciler --dry-run
+scripts/deploy-managed-agent.sh gl-reconciler</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">注意仓库 slug（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">anthropics/financial-services</code>）与插件市场名（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">claude-for-financial-services</code>）不一致，这是最容易踩的坑。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这是 Anthropic 把"垂直行业 agent"从演示推进到可部署资产的一步。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">plugins/vertical-plugins/</code> 作为领域技能、斜杠命令和 MCP 连接器的唯一真源，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">check.py</code> 负责 lint 和漂移检测，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">sync-agent-skills.py</code> 保证同一份定义在插件与 CMA 两侧不跑偏——解决了此前垂直 agent 做两份实现、两边行为不一致的问题。<strong style="color:#07c160;font-weight:bold;">11 个 MCP 连接器</strong>意味着一套插件可以直接接上投行实际在用的数据源，而不是只读本地文件。局限也要说清楚：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">callable_agents</code> 子 agent 委派仍是研究预览，MCP 连接器需要各自订阅或 API key，不是免费的数据管道。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">社区实测反馈集中在安装环节：连接器 JSON 格式错误、hooks schema 不匹配、Bedrock 区域 model ID 报错是三个高频问题。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">关于定位，有讨论指出这套东西的价值不在于"让 Claude 会算 DCF"，而在于把编译、DCF、LBO、三表模型、deck QC、Excel 审计这些重复动作固化成可审计的脚本入口（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/comps</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/dcf</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/earnings</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/ic-memo</code>），让模型只负责判断而不是从零铺表格。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/anthropics/financial-services</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://agentpedia.codes/blog/anthropics-financial-services-guide</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. akitaonrails/ai-memory：一个 Rust 二进制，让 Claude Code 和 Codex 交接上下文</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.6/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 单日 +167 stars，DEV 社区与 Product Hunt 同步讨论</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">给 agent 编码 CLI 做长期记忆、并支持跨厂商交接的工具。解决的问题很具体：你在 Claude Code 里干到一半退出，换 Codex 或 Cursor 在同一个目录里继续，一切都要重新解释一遍——架构、试过但失败的路子、还没想清楚的问题。ai-memory 通过生命周期钩子自动抓取 prompt、工具调用、压缩检查点和会话边界，编译成 Git 版本化的 Markdown 页面（借鉴 Karpathy 的 compile-not-retrieve 思路），可 grep、可用 Obsidian 打开、可 rsync，不需要向量数据库。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">检索层是 Rust 服务，SQLite FTS5 索引加混合排序：FTS5 + 实体匹配 RRF + 图邻居 RRF + 可选向量 RRF，再叠一层有界来源权威度调整。下次会话启动时，agent 会收到一个有界的"你上次停在哪"交接块。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Arch Linux
+yay -S ai-memory-bin
+
+# Docker（默认监听 127.0.0.1:49374）
+git clone https://github.com/akitaonrails/ai-memory
+cd ai-memory && ./docker/run.sh
+
+# 接入各客户端
+ai-memory install-hooks
+ai-memory install-mcp
+
+# 常用命令
+ai-memory bootstrap          # 从现有仓库的 git log / README / docs 播种 wiki
+ai-memory search "xxx"       # 终端 FTS5 检索
+ai-memory run claude         # 托管式跨 harness 工作流，带原生会话恢复</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">支持 Claude Code、Codex、Cursor、Gemini CLI、Devin CLI、OpenCode、Kimi Code、Kiro CLI 等 <strong style="color:#07c160;font-weight:bold;">20 多个客户端</strong>，是当前覆盖面最广的一层。LLM 是可选的：零 LLM 模式下仍有 FTS5、实体和图检索加规则摘要；配上 provider 才启用合并、矛盾 lint 和带评估门控的自动改进循环。记忆页有生物式衰减加访问强化——情节页会淡忘，语义/程序/置顶页豁免，这是多数"永久记忆"方案没处理的检索污染问题。平台支持 Linux（Docker 主目标）与 macOS，Windows 走 WSL2，原生 Windows 仍是实验性。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color: #f0f9eb; border-left: 4px solid #07c160; margin: 0 0 12px 0; padding: 14px 18px; border-radius: 0 6px 6px 0; color: #555555; line-height: 2.0;">
+<p style="margin: 0; font-size: 15px;">作者自己在 README 里写明是和 Claude Code 协作完成的，社区关注点因此转向"这套记忆到底减了多少重复解释"而非实现细节。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">争论集中在"Markdown wiki + FTS5 是否够用"：支持方认为 grep 可得、可版本回滚、可人工修订是 agent 记忆的必要属性；质疑方认为纯文本检索在跨项目语义关联上不如向量方案，RRF 混排只是在补这个短板。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/akitaonrails/ai-memory</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. Jakubantalik/thinking-orbs：给 agent 界面做"思考中"动画，3,111 星首次上榜</p>
+<p style="margin:0 0 14px 0;">![thinking-orbs 九种思考动画状态](./thinking-orbs-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.3/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 首次入榜，3,111 stars（单日 +168），libraries.dev 显示累计 4,220,214 次安装</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一套点阵式"思考球"加载指示器，专给 AI 与 agent 界面用。作者 Jakub Antalik 认为多数产品还在用脉冲圆点或旋转 spinner 表示"模型在干活"，而这类动画在一段交互里可能占据 30% 以上的感知时长，值得认真做。库里带九个手工调过的动画状态，对应 agent 的动作语义：working（粒子在倾斜轨道上绕行）、searching（扫描经线扫过点阵球）、solving（色带先乱后"咔"地归位）、listening（波形穿过圆环）、connecting、weaving、composing、breathing、shaping（圆 → 三角 → 方）。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">两个尺寸预设是分别设计而非等比缩放：64px 用于聊天头像位，20px 用于行内文字位，各自有独立的点数、点径和速度参数。纯 Canvas 2D 实现，不用 WebGL、不用滤镜，Chrome / Safari / Firefox 渲染一致。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npm install thinking-orbs</code></pre>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>import { ThinkingOrb } from "thinking-orbs";
+
+// 状态跟随 agent 实际动作切换
+&lt;ThinkingOrb state="searching" size={64} theme="auto" /&gt;</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">无障碍与性能都做了：每个状态带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">aria-label</code>，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">prefers-reduced-motion</code> 下退化为静态帧，离屏或标签页隐藏时自动暂停，所有实例共享一个时钟。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">在一个"模型能力趋同、产品靠体验细节拉开差距"的阶段，把加载态做成有语义的反馈通道，比再堆一个功能更容易被用户感知。生态扩散速度印证了需求：Flutter（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">thinking_orbs_flutter</code>）、React Native/Expo（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">expo-thinking-orbs</code>，用 Skia + Reanimated 跑在 UI 线程）、SolidJS（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">solid-thinking-orbs</code>）、甚至 Pi 编码 agent 的终端扩展（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pi-thinking-orbs</code>，通过 Kitty/iTerm2 图像协议渲染 64×64 PNG 帧）都已出现。项目已从 orbs.jakubantalik.com 迁至 libraries.dev。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color: #f0f9eb; border-left: 4px solid #07c160; margin: 0 0 12px 0; padding: 14px 18px; border-radius: 0 6px 6px 0; color: #555555; line-height: 2.0;">
+<p style="margin: 0; font-size: 15px;">社区移植者指出原库的关键取舍："每个状态都是纯 CPU 数学，每帧只吐几十个点的数组"——这是它能做到跨浏览器像素级一致、且不抢 GPU 的原因。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">有前端工程师把它当作 AI 产品差异化的具体样本：模型能力收敛之后，用户感知到的"快"很大程度上由加载动画的节奏决定，而不只是端到端延迟。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Jakubantalik/thinking-orbs</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://libraries.dev/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. zhouxiaoka/autoclip：一条命令起一个 AI 视频切片工作站</p>
+<p style="margin:0 0 14px 0;">![AutoClip 自托管视频切片界面](./autoclip-demo.jpg)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 单日 +250 stars，Trendshift 日榜在列</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AutoClip 是一个自托管的 AI 视频切片与高光提取工具。支持 YouTube、B 站一键下载和本地上传，用 AI 分析后自动找出高光片段并切好，按类别归入合集。前端 React 18 + TypeScript + Ant Design，后端 FastAPI + Celery + Redis + SQLite（可升 PostgreSQL），下载走 yt-dlp，进度通过 WebSocket 实时推。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">模型侧兼容面很宽：通义千问、任何 OpenAI 兼容 API、Gemini、SiliconFlow，也支持 Ollama 和 LM Studio 跑本地模型（不填 API key、完全离线）。除了 Web 界面，还带 CLI、内置 MCP server 和 Agent skill，可以从 Cursor / Claude 里直接调用。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/zhouxiaoka/autoclip
+cd autoclip
+
+# Docker 一键起（推荐，4GB 内存起，建议 8GB）
+./docker-start.sh
+
+# 或本地模式
+./start_autoclip.sh
+
+# CLI 用法，指定本地模型
+autoclip run video.mp4 --provider ollama</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">也提供桌面版：AutoClip Desktop v1.2.1 有 macOS（Apple Silicon，ad-hoc 签名）和 Windows（x64，未签名）安装包，内置便携 Python 运行时和静态 ffmpeg/ffprobe，不需要额外装依赖。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">把"下载 → 转写 → AI 打分找高光 → 切片 → 归集"这条原本需要四五个工具串起来的流程，收进一个自托管服务。模型层不锁厂商，本地 Ollama 也能跑完整个流程。参数可调：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">chunk_size</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">min_score_threshold</code> 控制切片粒度与阈值。桌面版 v1.2.0 起支持无字幕视频一键装 Whisper、切片标题可编辑、B 站多账号管理、合集拖拽排序。已知限制：无 GPU 时速度偏慢，B 站下载需要浏览器登录态。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">中文开发者社区的实际反馈集中在硬件成本上：有人租 AutoDL 4090 实例跑批量切片，认为 GPU 是这类工具的实际门槛，而非模型选择。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">B 站下载的登录态问题是最高频的报错来源——需要选对浏览器配置，否则直接失败；这一点在 README 里只以一句提示带过。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/zhouxiaoka/autoclip</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. Crosstalk-Solutions/project-nomad：断网也能用的离线知识服务器</p>
+<p style="margin:0 0 14px 0;">![Project N.O.M.A.D. 离线知识服务器](./project-nomad-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.9/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 单日 +394 stars，总星 16.8k–34k（各榜单统计口径不一），腾讯云社区、法国 Science et Vie 均有报道</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Project N.O.M.A.D.（Node for Offline Media, Archives, and Data）是一个离网优先的知识与教育服务器。一个"Command Center"管理界面加 API，通过 Docker 编排一组容器化工具，负责安装、配置和更新，所有内容走浏览器访问，不需要桌面环境。除了初次安装和主动下载内容，之后完全离线运行，无任何内置遥测。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">内置能力包括：离线维基百科（全量约 95–100 GB，轻量版 11 GB）、医学参考、生存指南、电子书，Kiwix 提供的 75,000+ 本古腾堡书籍；Kolibri 承载可汗学院课程并支持多用户进度追踪；ProtoMaps 离线地图；CyberChef 做加解密与哈希；FlatNotes 本地 markdown 笔记；Ollama 或 OpenAI 兼容服务（LM Studio / llama.cpp）驱动的本地 AI 对话，配 Qdrant 做 RAG 与文档上传。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 任意 Debian 系系统（推荐 Ubuntu）一行安装
+curl -fsSL https://raw.githubusercontent.com/Crosstalk-Solutions/project-nomad/main/install/install_nomad.sh | bash
+
+# 装完浏览器打开
+# http://localhost:8080</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">最低 2GHz 双核 / 4GB 内存 / 5GB 磁盘；要跑 AI 功能建议 Ryzen 7 或 i7 以上、32GB 内存、RTX 3060 级显卡、250GB 以上 SSD。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它把"断网环境下的完整知识栈"做成了一个可复制的安装流程，而不是一堆需要手工调的 Docker 镜像。设计上刻意不带鉴权，维护者明确建议靠网络层控制、不要直接暴露到公网——这个取舍说明目标场景是内网或物理隔离环境，而不是云服务。内容覆盖目前以英文和美国为中心，地图与维基百科主要是英文。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">中文社区把它称作"一台真正离线的生存 AI 电脑"，讨论焦点是自然灾害、野外作业、网络审查三类场景下的实际可用性。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">硬件社区围绕 benchmark 排行榜组织内容：项目自带硬件评分与社区榜（benchmark.projectnomad.us），用户按跑分决定配置，形成了少见的"先看能不能跑动再决定装不装"的讨论方式。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Crosstalk-Solutions/project-nomad</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.projectnomad.us/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. coder/coder：自托管 agent 开发环境，2.34 把 AI Gateway 设为默认开启</p>
+<p style="margin:0 0 14px 0;">![Coder 自托管 AI 开发环境](./coder-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.7/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 单日 +460 stars，9 月 18 日起连续在榜</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Coder 是自托管的云开发环境与 AI 编码 agent 平台。工作区用 Terraform 定义（EC2 实例、Kubernetes Pod、Docker 容器），通过 WireGuard 连接，空闲自动关机。2.34 版本（当前 ESR）的核心变化是把 AI Gateway 默认打开（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">CODER_AI_GATEWAY_ENABLED=true</code>），并推进 Coder Agents 的 beta：agent 流量出现在 AI Gateway 的审计与会话视图里，支持把只读 agent 会话分享给同事、用斜杠命令调用 markdown 写的 Personal Skills、新模型自动配置推荐默认值，以及 GitLab 集成（MR 状态、diff、分支到 MR 的解析）。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">对多模型团队更实用的是 provider key 故障转移：每个 provider 最多配 5 个 OpenAI 或 Anthropic key，遇到限流或鉴权失败自动重试切换，密钥不写日志。User Secrets（beta）让每个用户把自己的 key-value 存一次，自动注入到所有工作区。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 用官方安装脚本部署服务端（需要 PostgreSQL 13+ 与外部访问 URL）
+curl -fsSL https://coder.com/install.sh | sh
+
+# 或用 Helm 装到 Kubernetes
+helm repo add coder-v2 https://helm.coder.com/v2
+helm install coder coder-v2/coder \
+  --namespace coder --create-namespace \
+  --set coder.env[0].name=CODER_ACCESS_URL \
+  --set coder.env[0].value=https://coder.example.com</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AGPL-3.0。官方支持的编码 agent 包括 Claude Code、Codex 和 OpenCode。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 的编码循环跑在控制平面、你自己的基础设施上，工作区里不存 API key——这是企业采纳编码 agent 时最常被合规卡住的一点。Coder 9 月 2 日还发布了 Agent Relay：在 Cursor 的云端 agent 会话与自有 Coder 工作区之间做代理，把 Coder 注册成一个算力池，让文件操作和命令执行发生在客户自己的基础设施内，推理与规划仍留在 Cursor，工具调用的归属通过与组织 IdP 匹配，提交记录与人写的代码同源可溯。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color: #f0f9eb; border-left: 4px solid #07c160; margin: 0 0 12px 0; padding: 14px 18px; border-radius: 0 6px 6px 0; color: #555555; line-height: 2.0;">
+<p style="margin: 0; font-size: 15px;">Coder CEO Rob Whiteley 的说法被反复引用："公司从来没有拒绝 AI agent，他们拒绝的是部署模型。"配套数据是 1% 的 Coder 工程师消耗了 40% 的 token 预算。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">采纳方强调的防线是四条：边界控制落在自己的云/VPC/本地、一次性沙箱按单任务界定、策略即基础设施、审计日志连被拦截的操作也记录。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://coder.com/changelog/coder-2-34</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/coder/coder</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. Kev：花 95 美元 H100 时间，把 Jev 式决策模型复刻到 Qwen3.5 上</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 408 points / 184 comments，中文、日文、韩文社区同步转载</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Jared Palmer（Cognition 工程 VP，Turborepo 与 Vercel v0/AI SDK 作者）发布的开源项目，在阿里 Qwen3.5 基座之上实现了一族"类 Jev"的极小型决策模型，三个规格：0.8B、4B、9B，Apache-2.0 许可，训练代码、评估数据和模型卡一并公开，权重可从 HuggingFace 和 GitHub Releases 取。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">与 Jev 一样，Kev 不生成文本，只返回带类型的概率：yes/no（noul）、多选（choice，最多 255 个选项）、有序打分三类 schema。定位是"嵌在软件工作流里的小型语义判断"——工单路由、升级路径选择、客户情绪打分这类场景。架构上每个检查点是冻结 Qwen3.5 基座上的 rank-16 LoRA 适配器加一个小型指针式读出头，读出头给传入的选项打分，因此支持开放词表、零样本分类，不用重训。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 权重
+huggingface-cli download jaredpalmer/kev-9b
+
+# 训练代码与评估数据
+git clone https://github.com/jaredpalmer/kev</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">训练用两个 epoch、约 1 万条来自十个公开数据集的样本，加 896 条生成的策略样例和 1,680 条规则样例，损失函数用交叉熵。整个移植成本约 <strong style="color:#07c160;font-weight:bold;">95 美元的 Modal H100 时长</strong>，加 0.03 美元的 Jev API 调用。README 明确说明训练没有使用任何 Jev 输出。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Kev-9B 在锁定测试集上准确率 <strong style="color:#07c160;font-weight:bold;">0.837</strong>，托管版 Jev 为 0.857；外部测试结果分裂——SemIf 的 144 条自撰决策上 Jev 领先（0.965 vs 0.917），而 scienthoon 的 900 条客服工单路由上 Kev-9B 反超（0.952 vs 0.897）。作者自己提醒这不是受控的架构对比，因为 Jev 的训练数据未知。已知回退：Apple M5 上有明显延迟退化，Kev-4B 处理五个问题要 779ms，而此前 Qwen3 版本只要 174ms，作者建议低延迟 Mac 场景先用旧 Qwen3 模型，等 MLX 后端上线。训练方法上 Kev 用的是交叉熵，与 Jev 的 RLCD 不同——这也成了"能不能叫 Jev-like"的争议点。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color: #f0f9eb; border-left: 4px solid #07c160; margin: 0 0 12px 0; padding: 14px 18px; border-radius: 0 6px 6px 0; color: #555555; line-height: 2.0;">
+<p style="margin: 0; font-size: 15px;">HN 上的核心分歧是"这到底是不是新东西"。Oras 的评论被广泛引用："vibe coder 们刚刚发现了分类器。"BoorishBears 强烈反对把它类比成 BERT，认为指针式读出头的开放词表能力与固定标签分类不是一回事。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">实用性建议倒是很一致：把这类模型放进编码 agent 当验证器、做工具调用前的削减代理、游戏 AI、垃圾信息过滤。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://hn.nuxt.dev/item/49783999</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://explainx.ai/blog/kev-open-source-jev-clone-qwen35-family-2026</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. xAI Grok 4.7：同价换代，Terminal-Bench 从 20.3% 跳到 38.0%</p>
+<p style="margin:0 0 14px 0;">![Grok 4.7 基准表现](./grok47-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.3/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 约 503 points / 419 comments（另有统计口径 472/387），当日最高分的 AI 模型发布帖</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">xAI（部分报道称 SpaceXAI）9 月 21 日正式发布 Grok 4.7，定位"最强编码与知识工作模型"。基座比 Grok 4.6 更大（马斯克称约 2.1T 参数，对比 4.6 的 1.5T，官方未确认），RL 训练更长且偏向多小时任务，自我验证更强，并原生理解 Grok Bot harness。上下文窗口 500k token，价格与 Grok 4.6 持平：$2/百万输入、$6/百万输出，快速版本 $4/$12。可在 Cursor、Grok Build、Grok API 及第三方平台调用。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>curl https://api.x.ai/v1/chat/completions \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"grok-4.7","messages":[{"role":"user","content":"hi"}]}'</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">也可在 Cursor 模型选择器里直接切到 Grok 4.7。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">提升幅度不小：CursorBench 4.0 从 Grok 4.6 的 40.4% 升到 46.3%，Terminal-Bench 4.0 从 20.3% 翻到 <strong style="color:#07c160;font-weight:bold;">38.0%</strong>，DeepSWE v1.1 高算力档 65.2% → 71.0%，EEBench 53.0% → 64.0%。Artificial Analysis 智能指数 <strong style="color:#07c160;font-weight:bold;">46</strong>（+2），把 xAI 送进实验室前四。AA-Briefcase v1.1 长周期 agent 知识工作上 1,657 Elo（+111），紧追 Claude Opus 5 与 Fable 5.1。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">但成本账要算清楚：完成单个任务平均输出约 <strong style="color:#07c160;font-weight:bold;">81k token</strong>，Grok 4.6 只要 36k，GPT-6 Astra 只要 27k。单价没涨，实际账单可能更贵。Terminal-Bench 4.0 的 38.0% 也仍远低于 Fable 5.1 Max 的 57.9%。安全侧新增了防护栈，LatchBio 生物安全基准 62.4%，HackerBench v0.3 上双用途风险提示放行率 3.3%。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">评测社区的评价偏冷静：Grok 4.7 在若干测试上超过 GPT-5.6 Sol，但整体仍落后 Fable 5.1 与 GPT-6 Astra，多个来源用"扎实但没有领跑"概括。也有评论直接称这次发布"雷声大雨点小"。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">方法论质疑集中在对比不一致：不同效果档位、不同 harness 的分数被混在一起比较，多数数据来自 xAI 发布材料与模型卡，写稿时尚未被独立复现。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://x.ai/news/grok-4-7</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://artificialanalysis.ai/articles/benchmarking-grok-4-7</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://llm-stats.com/blog/research/grok-4-7-launch</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">10. Mini-AGI：8GB 显存笔记本上从零训练的持续学习模型</p>
+<p style="margin:0 0 14px 0;">![Mini-AGI 持续学习实验](./mini-agi-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Show HN 248 points，HN 讨论线与多个聚合站转载</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">volotat 发布的一个实验性持续学习语言模型，目标是在只有 8GB 显存的消费级 GPU 上从零训练，数据以 batch-1 的连续流喂入（作者用的是 RTX 3070 Laptop）。核心设计是把权重视为磁盘上的文件：只有当前活跃的"工作集"专家被换入显存，因此模型总容量由磁盘空闲空间决定，而不是显存。模型是字节级的（256 个值，无 tokenizer），用无学习参数的旋转位置编码，使上下文可以通过持续训练增长。每个字节经过两个稠密前置块，再经过最多 24 次应用的循环块，配一个 PonderNet 式停机头按字符动态调整深度，以及每块应用上的 soft top-8 MoE 路由。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/volotat/mini-AGI
+cd mini-AGI
+# 按 README 安装依赖后开始训练/推理；读取与训练是同一个前向过程</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">权重尚未发布，作者说按当前阅读速度还需两周左右。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">真正的发现在灾难性遗忘的处理上。只训练 52.4 万个字符的国际象棋数据后：主干（嵌入、注意力、路由、停机头）与专家同学习率时，另外七门学科退化 +2.2300 nats，只保留 50.68% 的进度；把主干学习率降到专家的 0.1 倍后，退化收敛到 +0.0067 nats，相对随机水平保留了 <strong style="color:#07c160;font-weight:bold;">99.84%</strong>。主干承载了 97.6% 的平方梯度范数，它的学习率是让持续学习成立的关键机制。反直觉的是，专家池本身并不是防遗忘的原因——冻结工作集只解释了约 13.8% 的效果，损害的本质是"位移而非摧毁"，被破坏的知识在重新学习时恢复速度快约 <strong style="color:#07c160;font-weight:bold;">380 倍</strong>。局限也要讲：目前只读完 78 亿字符语料的第一部分（约 2.43 亿字符），生成的文本语法通顺、话题切题但会重复循环；作者称这是玩具规模的实验，不足以支撑泛化性结论。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 反应以好奇和鼓励为主，"proto-AGI""让人耳目一新"是常见评价，随后迅速转向"泛化还是记忆"的追问，以及和 RAG、上下文管理的比较。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">最有价值的一条批评针对标题本身：给下一课上机不等于持续学习，真正的基准是保留率核算——这一点作者自己在 README 里承认了，也是在数据里唯一给出了严谨对照的地方。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/volotat/mini-AGI</span></code></p>
+
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">"Why MCP Was Always a Bad Idea" 引爆 HN 争论 <span style="font-size:13px;font-weight:normal;color:#999999;">约 183 points / 134 comments</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">作者 Maharshi Patel 主张删掉大部分 MCP server，让 agent 直接用 HTTP API 和 CLI；Simon Willison 的最高赞反驳指出，MCP 的价值在企业场景——精确控制 agent 能访问哪些服务、不让 agent 直接拿到 API key、提供用户授权界面、留下可审计日志，这四点直接调用很难做到。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Meta Muse 登顶美区 App Store 免费榜 <span style="font-size:13px;font-weight:normal;color:#999999;">6 天下载超 90 万，Meta 股价单日涨约 11%</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">由 Muse Spark 模型驱动的消费级 agent 应用，可连接 Facebook / Instagram 内容、Gmail、日历和网页执行任务；亚马逊以隐私安全为由封堵了它的购物站访问，Shopify 则宣布接入 agentic checkout。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Claude Code Projects 重构为多 agent 协调器 <span style="font-size:13px;font-weight:normal;color:#999999;">Anthropic 9 月 17 日公布，9 月 20–21 日密集报道</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">中心 coordinator 拆解目标、派发给并行 threads，每个 thread 是带独立分支和仓库副本的云端会话，线程间共享项目记忆，冲突按常规 PR 合并冲突处理。目前仅 Pro / Max 的云端会话用户可见，本地支持"很快"跟进。量子位同步披露 Anthropic 内部日均运行约 3 万个 agent，26% 的核心 AI 研发工作由 Claude 主导。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Claude Code v2.1.278 把 Auto Mode 安全分类器迁到服务端 <span style="font-size:13px;font-weight:normal;color:#999999;">9 月 19 日发布</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">shell 命令与网络请求的安全检查默认走服务端分类器，覆盖 Claude API、Enterprise、Bedrock、Google Cloud Agent Platform、Microsoft Foundry；服务端不可用时回退本地分类器并在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/status</code> 提示，服务端分类器请求不计额外费用。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">HF Papers 当日榜首：软件工程 agent 的分类感知迭代专家训练 <span style="font-size:13px;font-weight:normal;color:#999999;">arXiv 2609.23377，浙江实验室 Logics-MLLM</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">"One to More, More to One: Category-Aware Iterative Expert Training for Software Engineering Agents"：把 SWE agent 按任务类别迭代训练出多个专家再合并回单一模型，当日 upvote 数不高但方向与 Top 10 里的 Kev、Mini-AGI 同属"小型专用模型替代通用大模型"的路线。（热度未达门槛，仅作方向参考）</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">yynxxxxx/Codex-X <span style="font-size:13px;font-weight:normal;color:#999999;">50 stars/day，刚过门槛</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">管理 OpenAI Codex 桌面端与 CLI 的 GUI/CLI 工具，Rust 实现。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">arXiv cs.AI 9 月 21 日新提交 <span style="font-size:13px;font-weight:normal;color:#999999;">20 篇，15 篇带 benchmark 标签</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">值得看的两个 —— 2609.21157 "Can Agents Design Better Chips with a Higher Level Abstraction?"（11 任务套件，产物已上 GitHub）、2609.21293 "GameASG-Bench: Benchmarking Autonomous Software Generation for Game Development"（含 GitHub 仓库）。其余多为增量改进，未达收录门槛。</p>
+</section>
+
+<section style="background-color: #f5f7fa; border-radius: 8px; padding: 16px 18px; margin: 28px 0 0 0;">
+<p style="margin: 0 0 6px 0; font-size: 17px; font-weight: bold; color: #333333; text-align: left;">本期关键词</p>
+<p style="margin: 0; font-size: 15px; color: #555555; line-height: 2.0; text-align: left;">MiMo-V2.6 开源 · 金融 Agent · 跨 CLI 记忆 · thinking-orbs · 视频自动切片 · 离线知识库 · Coder Agents · Kev 决策模型 · Grok 4.7 · 持续学习</p>
+</section>
+</section>
