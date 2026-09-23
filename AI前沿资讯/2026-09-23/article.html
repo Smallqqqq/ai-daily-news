@@ -1,0 +1,367 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-23</p>
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+<p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0;">本期覆盖 2026-09-22 至 2026-09-23 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Bluesky / Lobsters / arXiv / HF Papers / 知乎 / AI 实验室博客。精选 10 条按影响力排序。</p>
+<p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0;">核心主题：Agent 基础设施集中爆发（运行时、工具注册表、办公套件、异步 harness），同时 Anthropic 与 OpenAI 在 90 分钟内先后发布旗舰模型并同步降价。</p>
+</section>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. browser-use/video-use：让 coding agent 剪视频，4500 万 token 的帧数据压成 12KB 文本</p>
+<p style="margin:0 0 14px 0;">![video-use 剪辑流程演示](./video-use-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.2/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 单日 +191 星，总星 25,824，被 claudeskills.info / FreeMCPLab 等 skill 目录同步收录</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">browser-use 团队开源（MIT）的视频编辑 skill，让任何有 shell 权限的 coding agent（Claude Code、Codex 等）通过对话完成剪辑。核心设计是 LLM 从不"看"视频，而是"读"视频：对每个素材调一次 ElevenLabs Scribe，拿到词级时间戳、说话人分离和音频事件，打包成约 12KB 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">takes_packed.md</code>；只有在需要判断歧义停顿、重拍点、切点时，才用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">timeline_view</code> 生成一张 filmstrip + 波形 + 词标注的 PNG。整条流程是「转写 → 打包 → LLM 推理 → 输出 EDL 剪辑决策表 → 渲染 → 自检」。功能上会自动删口癖词（umm、uh、假开头）和无效停顿、按段做色彩分级、每个切点加 30ms 音频淡入淡出防爆音、烧字幕（默认两词大写分块）、用 HyperFrames/Remotion/Manim/PIL 并行生成动画叠加层。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/browser-use/video-use ~/.claude/skills/video-use
+cd ~/.claude/skills/video-use &amp;&amp; uv sync    # 或 pip install -e .
+# 需要 ffmpeg；要下载网络视频再装 yt-dlp
+export ELEVENLABS_API_KEY=sk_xxx            # 写进 .env
+# 把素材丢进 videos/ 目录，然后对 agent 说："把这些素材剪成一支发布会视频"
+# 产物落在 &lt;videos_dir&gt;/edit/final.mp4</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">把视频逐帧喂给模型大约需要 <strong style="color:#07c160;font-weight:bold;">4500 万 token</strong> 的帧数据，video-use 用约 <strong style="color:#07c160;font-weight:bold;">12KB 文本</strong>加几张 PNG 替代，成本差了几个数量级。它内置 12 条硬规则保证生产正确性：字幕最后烧、每段单独提取再无损拼接、绝不在词中间切断、执行前先确认剪辑策略。渲染结果会在每个切点边界做自检，不合格就修，最多重渲染 3 轮。会话记忆写进 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">project.md</code>，可以隔天接着改。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">社区讨论集中在"用文本代理视觉"这条路线上，认为它把多模态问题降级成了文本问题，代价是牺牲了对画面构图的精细控制（色彩分级只能走预设或自定义 ffmpeg filter chain）。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">25,824 总星中有 191 来自昨日单日增量，说明这轮是新增曝光而非存量老仓库翻热。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/browser-use/video-use</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. Claude Opus 5.5：Anthropic 旗舰换代，API 价格砍 20%，典型工作负载成本降 40%</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 1222 分 / 817 条评论（当日榜首），Artificial Analysis 智能指数 54</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Anthropic 于 9 月 22 日发布 Claude 5.5 家族首款模型 Opus 5.5，接替 7 月 24 日的 Opus 5，也是 CEO Dario Amodei 9 月 12 日发表 "pace the frontier" 文章后的首个发布。同步上线 Claude API（模型 ID <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">claude-opus-5-5</code>）、AWS Bedrock、Google Cloud 和 Microsoft Azure/Foundry。规格：1M token 上下文、128K 最大输出、文本+图像输入、adaptive thinking 常开且无法关闭、默认 medium effort、知识截止 2026 年 6 月。新增 anti-distillation 的 "preserved thinking"。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>export ANTHROPIC_API_KEY=sk-ant-xxx
+curl https://api.anthropic.com/v1/messages \
+  -H "x-api-key: $ANTHROPIC_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "content-type: application/json" \
+  -d '{"model":"claude-opus-5-5","max_tokens":4096,
+       "messages":[{"role":"user","content":"hello"}]}'
+
+# Claude Code 里直接切：
+claude --model claude-opus-5-5</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">定价 <strong style="color:#07c160;font-weight:bold;">$4 / $20</strong> 每百万 token（输入/输出），比 Opus 5 低 20%；缓存读取 $0.20/M（降 60%），batch + cache 叠加 $0.10，混合费率约 $12。Anthropic 称典型工作负载实跑成本比 Opus 5 低约 <strong style="color:#07c160;font-weight:bold;">40%</strong>，来源是单价下降加每任务 token 数减少的双重作用。benchmark 对比 Opus 5：Terminal-Bench 4.0 从 52.3% 升到 66.4%（xhigh），FrontierCode v1.1 Main 从 48.0% 到 54.4%，CursorBench 4.0 从 46.6% 到 57.8%，GDPval-AA v2.1 Elo 从 1708 到 1846。官方举的实例是一个遗留 HAProxy 的 C 转 Rust 移植，耗时 9.5 小时（Fable 5.1 需 12 小时），成本低 51%；20 万行代码审计 3 小时内完成，此前需 20 小时以上。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Anthropic 自己在发布材料里提示，到这个能力层级，benchmark 分差"已不是可靠指引"，实际与 Fable 5.1 的差距比分数看起来要小。这些数字是厂商自报，未经第三方复现。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">安全侧同步收紧：因为该模型在生物/网络攻击维度接近 Mythos 5.1，大部分网络任务被改道到 Opus 4.8、生物与前沿 LLM 任务改道到 Opus 5，另设 Life Sciences Verification Program 供白名单机构申请。外部评估方是 METR 和 Frontier Design，Anthropic 称其自动化行为审计分数为自身最高，越界尝试比 Opus 5 少约 85%。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">订阅侧同步上调 Pro/Max/Team 的五小时用量额度约 25%，并新增可保存的限流重置次数。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.anthropic.com/news/claude-opus-5-5</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. superdesigndev/treg：给 agent 工具做 OpenRouter，一行 curl 接入 2,630 个 endpoint</p>
+<p style="margin:0 0 14px 0;">![treg 工具注册表与调用演示](./treg-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.7/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 单日 +230 星，总星 2,203</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">treg 是一个面向 AI agent 的工具注册表加代理层，定位是"工具界的 OpenRouter"。它把 provider 账号握在自己手里，在服务端注入凭据，agent 只需要一个 base URL 和一个 token 就能调上千个外部 API，按次计费。官方目录覆盖 <strong style="color:#07c160;font-weight:bold;">2,630 个 endpoint</strong> 和 47 个 provider（官网当前展示值），品类含 SEO/外链、关键词与排名追踪、社交发布与趋势、人物与企业信息补全、广告管理、抓取。provider 包括 Semrush、Moz、SerpApi、DataForSEO、SE Ranking、Majestic、Hunter、Lusha、Apollo、Crunchbase、People Data Labs 等。设计上不做静默的 provider 择优或故障转移，而是把成功率、速度、价格并排列出来让人选。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>curl -fsSL https://treg.to/install.sh | sh
+
+treg catalog search "seo backlinks"              # 按能力找工具，不按厂商
+treg call dataforseo.labs.ranked_keywords        # 调用，凭据由 treg 注入
+
+# 其他接入方式
+# MCP endpoint:  https://treg.to/mcp
+# llms.txt:      https://treg.to/llms.txt        # 单个文件教会 agent 整个协议
+# Claude Code:   /plugin marketplace add superdesigndev/treg
+# 自托管:        pip install "tools-registry[server]" &amp;&amp; scripts/dev-local.sh up</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">凭据解析走"凭据阶梯"：先用团队自己注册的工具 key，其次是用团队存储的密钥通过 virtual tool 注入，最后才落到 treg 自己的 key 并按预付余额计费。用自己 key 的调用不计流量费。价格按 provider 原价 <strong style="color:#07c160;font-weight:bold;">0% 加价</strong>，新团队送 $1.00 起用额度，实测价格如 Tomba 的邮箱验证 $0.0089、Hunter $0.003、People Data Labs 人物补全 $0.028，部分查询未命中不收费。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">AgentSkillsHub 对其做了规则扫描（SlowMist 11 类红旗），判为 SAFE、质量分 65/100，未发现凭据窃取、数据外传、混淆下载、沙箱逃逸或 prompt 注入痕迹。该报告同时声明这是第一层自动扫描而非人工审计，建议上生产前自行确认它索要了哪些凭据。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">各来源对仓库数据的快照不一致（星数从 477 到 2.2k，endpoint 数有 2,630/47 和 2,896/60 两个版本，许可证有 AGPL 和 Apache 2.0 附加条款两种说法），建议以仓库和官网实时数据为准。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/superdesigndev/treg</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. GPT-6 Sol 与 Luna：Opus 5.5 发布 90 分钟后，OpenAI 把价格砍半</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 1199 分 / 612 条评论（当日第二）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">OpenAI 于 9 月 22 日发布 GPT-6 Sol 和 GPT-6 Luna，距 Anthropic 发布 Claude Opus 5.5 约 90 分钟。两者是 9 月 3 日发布的旗舰 GPT-6 Astra 的降价延伸，面向编码、专业工作和 computer use，Astra 仍是能力天花板。两款都是约 1.05M token 上下文、128K 最大输出、文本加图像输入，支持 web search、file search、code interpreter、Computer Use、MCP 和 Skills，新增了 Astra 没有的 "none" reasoning effort 档位。知识截止 Sol 为 2026 年 4 月 20 日、Luna 为 2026 年 5 月 18 日。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>export OPENAI_API_KEY=sk-xxx
+curl https://api.openai.com/v1/chat/completions \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-6-sol","messages":[{"role":"user","content":"hello"}]}'
+
+# 也可在 ChatGPT Work / Codex 里直接切换模型
+# Luna 对 Free 和 Go 用户在桌面端开放
+# 亚马逊 Bedrock 已同步上架</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Sol 定价 <strong style="color:#07c160;font-weight:bold;">$2 / $10</strong> 每百万 token，是 GPT-5.6 促销价 $4/$20 的一半、Astra 的约五分之一；Luna 定价 <strong style="color:#07c160;font-weight:bold;">$0.10 / $0.50</strong>，约为 Astra 的 1%。缓存读取 $0.01/M，缓存命中最高减免 90% 输入费用，batch 和 Flex 模式半价。超过约 272K token 的长上下文请求切到更高档：Sol $4/$15、Luna $0.20/$0.75。厂商自报 benchmark：AutomationBench 1.0.6 上 Sol 在 xhigh 档 33.2%、每任务 $0.27，对比 Claude Opus 5 的 26.9% 且成本约 11 倍；DeepSWE v1.1 上 Sol max 68.8%（接近 Fable 5 的 69.9%），成本低约 80%。Artificial Analysis 的编码 agent 指数据称 Sol +2、Luna -2。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">舆论焦点是发布时间差和降价幅度，Xataka 等媒体把它读作针对 Opus 5.5 的正面价格战。发布前一周 "GPT-6 Sol/Luna" 曾以 Azure 注册表字符串泄露的形式流传，属于未确认信息，这次是正式落地。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">厂商自报数字同样需要打折看：DeepSWE 68.8% 与 Fable 5 的 69.9% 差距在噪声范围内，Artificial Analysis 对 Luna 的评分反而是下降 2 分。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://openai.com/index/gpt-6-sol-luna/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. dream-num/univer：Office Harness for AI Agents，把表格文档幻灯片塞进一个运行时</p>
+<p style="margin:0 0 14px 0;">![Univer 办公运行时演示](./univer-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.3/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 单日 +255 星，总星 15,376</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Univer 是 dream-num 团队（Luckysheet 原班人马）做的办公运行时，把表格、文档、幻灯片、画布、关系型表格和 PDF 统一到一个环境里，专为 AI agent 设计。定位从"办公套件"改成了"Office Harness"：六种工具共享同一份存储和计算，一个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.univer</code> 文件可以装多种内容类型并互相引用、保持同步。配套的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">dream-num/dsh-univer-office</code> 是给 DeepSeek Harness 用的插件，把 agent 需要的创建、校验、版本化改动、多 agent 隔离 worktree 全部封装成 CLI 工具集。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 需要 DeepSeek Harness（DSH），Node.js &gt;= 22.19.0
+# 支持的 DSH 版本：0.1.1-rc.2 / 0.1.2-rc.1
+dsh plugin --profile web add dsh-univer-office
+
+# 也可以用 skills 方式装
+npx skills add dream-num/skills -s univer-cli -g</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">插件内置 CLI：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">univer_new</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">univer_import</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">univer_execute</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">univer_inspect</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">univer_lint</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">univer_export</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">univer_worktree</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">univer_screenshot</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">univer_compile_svg</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">univer_print_pdf</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">univer_api</code> 等。工作流是：描述结果 → agent 建隔离草稿并编辑 → 实时预览、提修改意见 → 批准后合并，丢弃也要显式操作。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">人类与 agent 协同编辑，每次改动可追溯；多 agent 跑在隔离 worktree 上并行，合并前必须人工复核；带 git 风格版本历史；agent 能对自己的产出做自验证再迭代。导入导出保真支持 XLSX、DOCX、PPTX、CSV、TSV、PDF，支持自托管和嵌入白标。性能指标是 <strong style="color:#07c160;font-weight:bold;">500+ 公式</strong>、最高 1000 万单元格。在 SpreadsheetBench（2025 年 12 月榜）上以 <strong style="color:#07c160;font-weight:bold;">68.86%</strong> 的 pass@1 排工具类第一，人类基线为 71.3%。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">社区把它和 9 月 20 日 DeepSeek Harness 生态的爆发联系起来：DSH 以"一切皆插件"设计开源后，社区插件数一周内从约 300 涨到 4000 以上，Univer 是其中定位最"重"的一类（补的是真实办公文件的生产能力，不是 UI 皮肤）。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">dsh-univer-office</code> 自身规模较小（约 336 星、29 fork、4 位贡献者），主体热度来自 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">dream-num/univer</code> 核心仓库。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/dream-num/univer</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/dream-num/dsh-univer-office</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. agent-substrate/substrate：Google 开源 K8s agent 运行时，250 个 agent 挤进 8 个 Pod</p>
+<p style="margin:0 0 14px 0;">![substrate K8s agent 运行时演示](./substrate-demo.jpg)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 单日 +245 星，总星 2,957；需 K8s 集群</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent Substrate 是 Google 开源的（Apache 2.0）Kubernetes 层 agent 运行时，Go 语言实现。它把大量"actor"（agent 应用）映射到少量常驻的 "worker" Pod 上，利用 agent 大部分时间空闲这一事实做高密度复用。这个项目不做构建 agent 的 SDK。它提供的是跑 agent 的运行时和控制面。K8s 仍负责基础设施供给和 Pod 自动伸缩，Substrate 只管 agent 特有的调度与控制。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/agent-substrate/substrate
+cd substrate
+
+# 本地起一个 kind 集群并装好 ate、PostgreSQL、rustfs，部署 counter demo
+./hack/install-ate.sh
+
+# GKE 快速开始
+./hack/install-ate.sh --deploy-ate-system
+
+# 创建 actor
+kubectl ate create actor my-counter-1 -a ate-demo-counter --template-ref counter</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">核心组件有 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ateapi</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">atelet</code>（DaemonSet，通过 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">runsc</code> 做 checkpoint/restore）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">atecontroller</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">atenet</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ateom-gvisor</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ateom-microvm</code>，CLI 是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">kubectl-ate</code>。CRD 包括 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">WorkerPool</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ActorTemplate</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">SandboxConfig</code>。actor 用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">(atespace, name)</code> 寻址，DNS 形如 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">&lt;actor-name&gt;.&lt;atespace&gt;.actors.resources.substrate.ate.dev</code>。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方演示把约 <strong style="color:#07c160;font-weight:bold;">250 个有状态 actor 会话</strong>复用进 <strong style="color:#07c160;font-weight:bold;">8 个物理 Pod</strong>，超售比 30 倍以上，靠 "Instant Session Teleport" 做到亚秒级挂起/恢复。原理是完整状态快照：内存和文件系统状态被捕获（gVisor <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">runsc</code> checkpoint/restore，或 microVM / Cloud Hypervisor），休眠的 actor 之后可以在任意 worker 上带状态恢复。框架无关，支持 ADK、LangChain、Claude Code/Codex，MCP server 也能作为 durable Actor 部署。三条生命周期被拆开：基础设施（K8s worker pod）、工作负载（actor 身份与放置）、执行（快照与沙箱状态）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">README 明确声明这是 "not an officially supported Google product"，也不在 Google 开源软件漏洞奖励计划范围内。安全加固被官方描述为仍处早期。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">项目创建于 2026 年 5 月 13 日、5 月 19 日发 v0.0.0，Google Cloud 曾在自家博客介绍过。它处于 very early development、非生产可用状态，API 几乎确定会变。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Solo.io 等第三方分析指出，"承载数十亿并发 agent 任务"属于设计目标，尚无实测结果支撑。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/agent-substrate/substrate</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. unreallabsai/unreal-agent：异步优先的 agent harness，把工具调用从模型回合里摘出去</p>
+<p style="margin:0 0 14px 0;">![unreal-agent 异步工具调用演示](./unreal-agent-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.7/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 135 分 / 65 条评论</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Unreal Labs 开源的 async-first agent harness，仓库里包含一个 Go 库、一个 Codex 风格的 runner 可执行文件，以及一个 Harbor 兼容的 benchmark runner。核心做法是把工具调用编排从模型职责里剥离：每次工具调用立刻记录为 "in-progress" 事件并在后台执行，最终结果稍后追加回来再触发下一次模型调用。这样模型不需要花回合和 token 去等待、轮询或发心跳。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/unreallabsai/unreal-agent
+cd unreal-agent &amp;&amp; go build ./...
+
+# 用 runner 跑一次
+./unreal-agent run --model gpt-6-astra --effort xhigh "your task"
+# benchmark
+./unreal-agent bench --suite terminal-bench-4.0</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方称在生产负载和 agent benchmark 上比 OpenAI Codex 省最多 <strong style="color:#07c160;font-weight:bold;">40%</strong> 成本、比 Pi 省最多 20%，通过率相当或略好。benchmark 用 GPT-6 Astra 的 xhigh 档跑 Terminal-Bench 4.0、SWE-Atlas、DeepSWE 1.1、ALE-CLI，报告数字包括 57.9% 通过率花 $1,428（Codex $2,350、Pi $1,827）、65.8% 对 Codex 的 63.3%、72.4% 对 69.0%，且模型回合数更少。省 token 的手段是小 prompt 体积、裁剪工具输出、不使用 sub-agent 和嵌套 workflow。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<blockquote style="background-color: #f0f9eb; border-left: 4px solid #07c160; margin: 0 0 12px 0; padding: 14px 18px; border-radius: 0 6px 6px 0; color: #555555; line-height: 2.0;">
+<p style="margin: 0; font-size: 15px;">技术侧有评论认可方向："I think this is what I've been waiting for! Live interactions with models are fundamentally asynchronous"，同时质疑异步调用到底怎么换算成 token 节省。</p>
+</blockquote>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 讨论里最大的声音是商标争议。有评论指出 "Sounds like a trademark issue when Epic ships a wildly popular Unreal Engine"，另有人反驳 Unreal 是通用词、商标有语境限制，还有人搬出 Epic 在 USPTO 的注册记录。楼主不得不出来澄清："OP is a coding agent and harness tool named Unreal, not the game engine by Epic."</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">也有批评指向"不设 sub-agent"这条约束在长程任务上会吃亏。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">官方自己标注了一个 caveat：同一个工具调用同时持有 in-progress 和 final 结果这件事在 Responses API 里没有规范定义，测试中部分非 OpenAI provider 会拒绝这种模式。benchmark 中通过率差距被 Unreal Labs 自己归为噪声而非能力差异。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/unreallabsai/unreal-agent</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. google-research/rrsi：给 agent harness 的自我进化加正则，token 省 36%</p>
+<p style="margin:0 0 14px 0;">![RRSI 正则化自我进化演示](./rrsi-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.3/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HF Papers 156 upvotes（当日第一），arXiv 2609.24972</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Google Cloud AI Research 联合 UNC、Stanford、WashU 的论文（Peng Xia 等 14 人），针对 agent harness 自动进化中的过拟合问题。前提是 agent 的能力很大程度上来自 harness（prompt、控制流、工具、记忆、上下文管理），近期方法通过迭代提议和选择组件级编辑来自动改进 harness，等于在 agent 系统层面做递归自我改进（RSI），但这样进化会靠背训练任务过拟合，in-distribution 涨很多、OOD 就掉回去。RRSI 的办法是正则化搜索过程本身：编辑空间保持开放，但约束搜索怎么移动。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/google-research/rrsi
+cd rrsi &amp;&amp; pip install -e ".[dev]"     # 需要 Python 3.10+
+
+# 仓库含三个 Domain 实例：terminal agent（Terminal-Bench 2.1）、
+# 文档工作 agent（Harvey LAB）、工程设计 agent（EngDesign）
+# 候选跑在 git worktree 分支上，接受即快进 evolve/&lt;domain&gt; 分支</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">方法到代码的映射：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">rrsi/schedule.py</code>（退火编辑预算）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">rrsi/propose.py</code>（proposer，带组件/假设/diff 标签）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">rrsi/critic.py</code>（评估前的泄漏筛查）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">rrsi/selection.py</code>（噪声调整下限、成本与带宽规则）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">rrsi/history.py</code>（编辑历史、停滞标记、剪枝）。proposer、analyst、critic 和 frozen policy 用 Vertex AI 上的 Claude Opus 4.8，Harvey LAB 的 judge 用 Gemini 3.5 Flash。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">proposer 跑在时间退火的编辑预算下（余弦衰减的编辑数上限），类比 L0 基数约束，并用证据感知的 credit assignment 鼓励未探索轨迹。selector 用 critic 筛掉 benchmark 特化提案和泄漏，用 pruner 删掉太小、太贵或已无用的改动，再加复杂度感知的接受规则（类比 Ridge/L2 收缩）。项目页给出的数字：3 个进化目标 benchmark 上平均 <strong style="color:#07c160;font-weight:bold;">+4.0 分</strong>，6 个 held-out benchmark 上平均 <strong style="color:#07c160;font-weight:bold;">+3.4 分</strong>且全部为正，策略 token 比不加正则的进化少 <strong style="color:#07c160;font-weight:bold;">36%</strong>，共 8 个 benchmark 覆盖编码、agent 工作区和工程设计。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">中文技术社区关注的正是那个落差：in-distribution 提升（论文摘要口径最高 14.1 分）远大于 OOD 的 4.7 分，说明泛化缺口依然显著，RRSI 只是让"幸存者"更可能是可复用的 agent 机制而不是 benchmark 特化或者噪声。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">同领域另有 SIA（arXiv 2605.27276）、Dream-RSI 和 Theseus Lab 的 RSI 综述（arXiv 2609.11873），方向接近但不是同一份工作。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://arxiv.org/abs/2609.24972</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/google-research/rrsi</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://regularized-rsi.com/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. fstandhartinger/jevbench：给"不聊天"的决策模型办一张可复现的榜单</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 6.9/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN Show HN 65 分，JevBench 系列已迭代到 v1.3</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">JevBench 是面向 Jev 类 typed decision model 的可复现 benchmark。这类系统输入一段结构化状态加一份有界评分规则，输出带类型的答案（选项、概率、分数、路由标签），不生成文本。作者 florianstandhar 在 HN 上发 Show HN 的动机写得很直白：Jev 表现很强，应该有个东西让正经开源实现和假的仿制品同台比一比。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/fstandhartinger/jevbench
+cd jevbench &amp;&amp; pip install -e .
+# harness 是 MIT 许可，公开题目、冻结产物、评分代码和逐题结果都已发布
+# 通过 per-author adapter 接入被测系统：
+#   typesafe / systemone_list / gradio_space / local_openjev / openai_compat</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一次完整跑要问 534 道英文决策题。v1.3 的分数由 chance-corrected 的 Intelligence、Calibration、Speed、Cost 四项几何平均得到，各占 25%，任何一项弱都会拖低总分。v1.0 是老口径：242 道题、六类决策族（路由、答案充分性判断、策略是非判断、意图分类、序数严重度评分、枚举抽取）、三个 cohort、五个维度并排展示。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">榜单上 Jev <strong style="color:#07c160;font-weight:bold;">74.4</strong> 排第一，SemIf 73.1 第二，djev 73.0 第三，Winnow-12B Q8 71.2，reflex 4B 70.3。第三方也能自己跑：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">zozo123/gemma-to-jev</code> 用 Gemma 3 4B 做 Jev 风格的单次前向决策（原生 Rust + Candle，不调 generate()），在 231 道公开题上报告 58.9% 准确率、ECE 0.402，并提到 JevBench 公布的 Jev 1.13.0 成绩是 86.6%。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 上有人指出另有一个 Hugging Face Space 版本的 benchmark 存在，认为 "the results do not seem to add up and also model sets are different"，觉得还需要时间成熟。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">作者自己列了限制：只有英文；延迟从单台德国服务器测量；本地/demo 延迟有明示的 ×2 调整（+150ms）；保留题仍会到达被测服务；约 1 分的差距可能是噪声。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/fstandhartinger/jevbench</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">10. davila7/claude-code-templates：给 Claude Code 做配置和监控的 CLI</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 6.4/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 单日 +64 星，总星 31,108</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个用于配置和监控 Claude Code 的 CLI 工具，31,108 总星的老项目，昨日单日 +64 星重新进入 GitHub Trending。它把 Claude Code 的配置管理、模板分发和运行状态监控收进命令行，避免手动维护散落的配置文件。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx claude-code-templates@latest</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">在 Claude Code 生态工具里属于存量规模最大的几个之一（<strong style="color:#07c160;font-weight:bold;">3.1 万星</strong>），仍保持每日数十星的自然增长。对于要把 Claude Code 铺到团队里、需要统一配置和可观测性的场景，它是目前集成度最高的现成方案之一。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">昨日 +64 星的增量低于本榜单其他条目，属于慢速自然增长而非爆发，入选原因是总星规模足够大且昨日仍有明确增量。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">与本期主题相关的是：它代表了一类"围着 agent 做配套工具"的项目正在成为 GitHub Trending 的稳定供给。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/davila7/claude-code-templates</span></code></p>
+
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">GPT-6 Astra 破译 1941 年 Enigma 密文 <span style="font-size:13px;font-weight:normal;color:#999999;">HN 563 分 / 361 条评论</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">一条 82 字母、编号 MVUEH 的德军密电，自 2005 年起挂在 CryptoCellar 上无人破解。Astra 用约 10 小时、约 1480 万次密钥测试解出明文是"请指明行军路线，我在 Rosenow，立即电台回复"。密码学研究者 Frode Weierud 确认了密钥与明文，并称它"完全靠自己完成"这件事是"最令人震惊的"。案例研究本身声明这不构成对 Enigma 的首次破解。 <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">https://www.schneier.com/?p=72666</code></p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">WorldCrafter <span style="font-size:13px;font-weight:normal;color:#999999;">TencentARC，HF 113 upvotes</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">腾讯 ARC Lab 与北大合作的视频世界模型，学习一套可被相机查询的隐式 3D 感知记忆，从单张图或文本生成可相机控制的连贯场景探索。相比最强基线 Lyra 2.0，重访一致性提升 47.6%，LPIPS 从 0.487 降到 0.255，PSNR 从 14.050 dB 升到 18.016 dB。已开源 WorldCrafter-Base 和蒸馏版 WorldCrafter-Fast。 <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">https://github.com/TencentARC/WorldCrafter</code></p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Hugging Face Transformers 原生支持 GGUF <span style="font-size:13px;font-weight:normal;color:#999999;">腾讯研究院 AI 速递等中文渠道报道</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">Transformers 库直接支持 GGUF 格式与 llama.cpp 量化模型，本地部署门槛再次下降。</p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">D-RAC <span style="font-size:13px;font-weight:normal;color:#999999;">HF 50 upvotes</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">文档检索感知分块，通过 PDF 归一化和多模态 Markdown 转换做企业文档的通用检索感知摄入。 <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">https://arxiv.org/abs/2609.24220</code></p>
+</section>
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">GameHorizon Suite <span style="font-size:13px;font-weight:normal;color:#999999;">HF 111 upvotes</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">面向游戏玩法的多时间跨度数据与评测套件。 <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">https://arxiv.org/abs/2609.25001</code></p>
+</section>
+
+<section style="background-color: #f5f7fa; border-radius: 8px; padding: 16px 18px; margin: 28px 0 0 0;">
+<p style="margin: 0 0 6px 0; font-size: 17px; font-weight: bold; color: #333333; text-align: left;">本期关键词</p>
+<p style="margin: 0; font-size: 15px; color: #555555; line-height: 2.0; text-align: left;">Agent 运行时 · Office Harness · 工具注册表 · 异步 harness · 自我进化正则化 · 价格战</p>
+</section>
+
+<section style="background-color:#f5f7fa;border-radius:10px;padding:18px 20px;margin:14px 0 0 0;">
+<p style="margin:0 0 8px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">数据来源说明</p>
+<p style="margin:0;font-size:15px;color:#555;line-height:2.0;text-align:left;">本期因 Tavily 与 Exa 额度耗尽，A 组搜索降级为内置 WebSearch + WebFetch 直接抓取。Tavily 高级搜索的渠道覆盖（X/Twitter 实时推文、Reddit 投票数、Product Hunt）未能完整执行，Reddit 与 X 渠道本期无数据。GitHub Trending、HN、HF Papers、Lobsters 四个渠道均为直接抓取，数据完整。</p>
+</section>
+
+</section>
