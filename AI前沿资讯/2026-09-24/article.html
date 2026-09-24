@@ -1,0 +1,390 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-24</p>
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+<p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0;">本期覆盖 2026-09-23 至 2026-09-24 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Lobsters / arXiv / HF Papers / 各项目官方仓库。精选 10 条按评分排序。</p>
+<p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0;"><strong style="color:#07c160;">核心主题：</strong>Google 把 Agent 运行时做成了 kubectl。单日热榜前五里有四个是 Agent 基础设施，Anthropic 一天之内同时开源了金融行业 Agent 套件、Claude 自主发现新酶系统登上 HN 头条。</p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. google/ax：Google 开源 Agent 编排运行时，单日 +1,543 stars</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.2/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 1,543 stars/day，累计 9.2k stars / 438 forks</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Google 开源的声明式 Agent 编排器，把「跑一个 Agent」变成提交一份 YAML。四个原语：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Task</code> 在沙箱里跑不可信 Agent 代码并限制 CPU/内存；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Workspace</code> 预挂 Git 仓库、MCP server、skill 包，Agent 一启动就是热的；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Gateway</code> 把出网流量锁死在显式主机白名单；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Model</code> 配置平台自己用哪个 LLM，凭据来自 Kubernetes secret。CLI 是 kubectl 形状（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">apply</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">get</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">describe</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">watch</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">delete</code>），走 gRPC 连控制面，跟随当前 kube context。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>go install github.com/google/ax/cmd/ax@latest
+
+make deploy AX_IMAGE_REPO=&lt;your-registry&gt;   # 部署控制面到 ax-system
+ax apply -f examples/task.yaml
+ax get tasks
+ax ssh task123 -- ls -la /workspace          # 进沙箱看 Agent 在干什么
+ax suspend task task123                      # 挂起空闲 Agent
+ax resume task task123                       # 从原地恢复</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">此前让 Agent 上生产要自己拼沙箱隔离、网络策略、状态持久化三套东西，ax 把它们收进一个控制面，官方定位是单集群跑十亿级 Agent 任务。代价是它需要 Kubernetes 集群加 Agent Substrate 控制面，本地跑不起来。README 明确标注核心概念和协议「会有重大破坏性变更」，Releases 区还是空的，没有正式版本号。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">同日 GitHub 上 Google 两个仓库同时上榜：google/ax 1,543 stars/day 与 agent-substrate/substrate 558 stars/day，构成「运行时 + 编排器」两层</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">仓库 39 个 open issue、0 个 open PR，作者在 README 顶部主动挂了 breaking changes 警告，说明还在概念打磨期</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/google/ax</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. dream-num/univer：给 AI Agent 用的 Office 引擎，+1,142 stars</p>
+<p style="margin:0 0 14px 0;">![Univer 办公运行时演示](./univer-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.8/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 1,142 stars/day，累计 16.4k stars / 1.4k forks</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Univer 原本是开源 Office SDK（表格/文档/幻灯片），这次榜单简介改成了 "The Office Harness for AI Agents"。关键能力是能在 Node.js 里 headless 跑：工作簿逻辑、公式引擎、文档模型都不依赖浏览器，适合放进 Agent 和 server 端工作流。Agent 通过统一 Facade API 读写工作簿、区域、公式和文档，浏览器和 Node.js 一套接口。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>pnpm add @univerjs/presets @univerjs/preset-sheets-core
+
+# 本地跑起来看
+git clone https://github.com/dream-num/univer.git
+cd univer &amp;&amp; pnpm install &amp;&amp; pnpm dev</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 处理 Excel 一直是短板，要么调闭源 API，要么自己啃 xlsx 格式。Univer 提供完整公式引擎，Agent 改完还能通过渲染截图和布局诊断自检结果，不必靠人工验算。同时支持 worktree 式协作：Agent 在隔离草稿里改，人来决定合并哪些。16.4k stars、5,804 commits、Apache-2.0，表格是当前最成熟的产品面，Docs 和 Slides 共用同一架构。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">单日 1,142 stars，进入日榜前二；仓库 1.4k forks 说明有大量二次开发</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">生态侧已有 Univer Workspace、Univer CLI，以及面向 DeepSeek Harness 的 Univer Office</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/dream-num/univer</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. browser-use/video-use：用 Coding Agent 剪视频，+746 stars</p>
+<p style="margin:0 0 14px 0;">![video-use 剪辑流程演示](./video-use-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.6/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 746 stars/day，累计 26.5k stars / 3.2k forks</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">browser-use 团队做的视频剪辑 skill。素材丢进文件夹后跟 Agent 对话，产出 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">edit/final.mp4</code>。具体处理：去口头禅和停顿、删废片间的死时间、逐段自动调色、每个切点加 30ms 音频淡入淡出防爆音、烧字幕（默认两词大写分块）、用 HyperFrames/Remotion/Manim/PIL 生成动画覆盖层且每个动画跑一个并行子 Agent。流程是转写 → 打包 → LLM 推理 → 生成 EDL → 渲染 → 自检，自检最多重试 3 次，会话状态存在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">project.md</code>。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/browser-use/video-use ~/Developer/video-use
+ln -sfn ~/Developer/video-use ~/.claude/skills/video-use
+
+cd ~/Developer/video-use
+uv sync                    # 或 pip install -e .
+brew install ffmpeg
+brew install yt-dlp        # 可选，用来下载网络素材
+cp .env.example .env       # 填 ELEVENLABS_API_KEY</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">核心是 token 成本设计。朴素做法把 30,000 帧全喂给模型，README 自己算过是 <strong style="color:#07c160;">45M tokens</strong> 的噪声。它改成两层读取：约 12KB 的打包转录稿 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">takes_packed.md</code> 作为主要推理依据，只在需要判断的切点才拉取 filmstrip 加 waveform 合成图。语音转写用 ElevenLabs Scribe，带词级时间戳和说话人分离，所以必须配 ElevenLabs key。支持的 Agent 包括 Claude Code、Codex、Hermes、Openclaw，以及任何有 shell 权限的 Agent。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">仓库只有 21 个 commit，却挂着 95 个 open PR，社区提交速度明显超过维护者合并速度</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">单日 746 stars，26.5k stars 的总量说明「Agent 剪视频」这个方向被反复验证过</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/browser-use/video-use</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. anthropics/financial-services：Anthropic 官方金融 Agent 套件，+664 stars</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 664 stars/day，累计 37.0k stars / 5.4k forks</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Anthropic 自己开的仓库，定位是投行、股票研究、PE、财富管理场景的 Agent、Skill 和数据库连接器参考实现，形态上是插件包而非单个 MCP server。同一份源码两种交付方式：装成 Claude Code / Cowork 插件，或通过 Claude Managed Agents API 部署到自己的 workflow 引擎后面。10 个具名 Agent（Pitch Agent、会议准备、市场研究、财报复核、估值复核、GL 对账、月末结账、对账单审计、KYC 筛查等），11 个数据连接器（Daloopa、Morningstar、S&P Global、FactSet、Moody's、LSEG、PitchBook 等）。内容全是 markdown 和 JSON，没有构建步骤。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>claude plugin marketplace add anthropics/financial-services
+
+# 先装核心 skills + 连接器
+claude plugin install financial-analysis@claude-for-financial-services
+
+# 按需装具名 Agent
+claude plugin install pitch-agent@claude-for-financial-services
+claude plugin install gl-reconciler@claude-for-financial-services
+claude plugin install equity-research@claude-for-financial-services
+
+# 或走 Managed Agents 部署
+export ANTHROPIC_API_KEY=sk-ant-...
+scripts/deploy-managed-agent.sh gl-reconciler</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">包含 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/comps</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/dcf</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/lbo</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/3-statement-model</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/earnings</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/ic-memo</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/dd-checklist</code> 等斜杠命令。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">37.0k stars、5.4k forks，是「垂直行业 Agent 模板」路线目前唯一的大厂官方样本。同一套 skill 既能当插件跑、又能通过 Managed Agents API 部署，说明 Anthropic 在推 Managed Agents 这个新交付面，而不是只做编辑器插件。README 顶部有免责声明：每个输出都必须人工签核。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">单日 664 stars；仓库只有 73 个 commit，收了 127 个 open PR，社区在往上补自己的垂直插件</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">partner-built/</code> 目录下已有 LSEG 和 S&P Global 署名的插件，数据供应商直接进场</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/anthropics/financial-services</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. agent-substrate/substrate：Agent 沙箱运行时，+558 stars</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.4/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 558 stars/day，累计 3.5k stars / 416 forks</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Google 的 Agent 执行运行时，把大量「actor」（Agent 应用）映射到少量「worker」上。出发点很实在：Agent 大部分时间在等 LLM 返回，没必要每个会话都占一个容器。隔离靠 microVM 和 gVisor，做原生零信任的内核与网络隔离。在 Kubernetes 的 Pod 和自动伸缩之上加了 Agent 专用调度。框架无关，README 列了 ADK、LangChain、Claude Code、CodeX 和沙箱化 MCP server 的兼容性。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 本地 kind 集群跑通
+hack/create-kind-cluster.sh
+hack/install-ate-kind.sh --deploy-ate-system
+hack/install-ate-kind.sh --deploy-demo-counter
+go install ./cmd/kubectl-ate
+
+kubectl ate create actor my-counter-1 -a ate-demo-counter --template counter
+kubectl port-forward -n ate-system svc/atenet-router 8000:80
+curl -X POST -H "ate-target-actor: ate-demo-counter/my-counter-1" -i http://localhost:8000/</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方给的数字是比标准容器运行时 <strong style="color:#07c160;">高 10 倍密度、resume 低于 500ms、每秒 500 次以上</strong> suspend/resume。这是 Agent 上云的真实瓶颈所在，不是模型慢，是每个会话都占着资源不放。要注意 README 明说「还不能用于生产」，API 会变，也不是 Google 官方支持产品。3.5k stars / 978 commits / Apache-2.0。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">与 google/ax 同日上榜，两者是配套的两层：substrate 管沙箱生命周期，ax 管任务编排</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">已有 CNCF Sandbox 项目 kagent 接入生态</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/agent-substrate/substrate</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. superdesigndev/treg：Agent 工具的 OpenRouter，+506 stars</p>
+<p style="margin:0 0 14px 0;">![treg 工具注册表与调用演示](./treg-demo.png)</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.3/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 506 stars/day，累计 2.7k stars / 242 forks</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一句话定位是「OpenRouter 之于模型，treg 之于工具」。一个工具注册表加代理服务：Agent 指向一个 base URL、拿一个 token，就能调外部 API 和团队自己的工具。目录里有 3,000+ 端点、60+ 供应商，覆盖 SEO 和外链、社交趋势、人物与公司信息补全、广告数据、爬虫、图像视频生成，按次计费、从一分钱起、不需要单独去各家注册。代理只做转发不改造请求，认证在服务端注入，调用方全程拿不到密钥。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>curl -fsSL https://treg.to/install.sh | sh
+treg login
+treg catalog search "backlinks for a domain"
+treg call tikhub.tiktok.user.profile --query uniqueId=tiktok
+treg balance
+
+# Claude Code 插件
+/plugin marketplace add superdesigndev/treg
+/plugin install treg@treg</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">凭据阶梯是设计重点：团队工具 → 团队密钥 → 已验证的公开路由（免费免 key）→ treg 自己的 key 按团队预付费余额计费。没定价的端点会直接拒绝，不会当作免费服务放出去。自己的 key 永远优先于 treg 的，且这部分调用不计费。支持 CLI、Claude Code 插件、MCP/Claude.ai connector、网页控制台和纯 HTTP API，团队带 owner/admin/member/viewer 四级角色。Apache-2.0 附加条款，鼓励自托管。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">单日 506 stars；README 反复强调「谁都不该持有别人的 key」，这是 Agent 工具链密钥管理问题的直接回答</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">同一入口同时提供 CLI、插件和 MCP 三种接法，覆盖面比同类注册表宽</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/superdesigndev/treg</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. obra/superpowers：把开发方法论固化成 skill，+474 stars</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.1/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 474 stars/day，累计 290.7k stars / 26.0k forks</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个 Agentic skills 框架加开发方法论。做法是不让 Agent 一上来写代码：先追问需求逼出 spec，把设计切成可读的小块呈现，再产出实施计划。计划的读者设定是「一个热情但没品味、没判断力、没项目上下文、还讨厌测试的初级工程师」，每个任务拆到 2 到 5 分钟能做完，强调 TDD、YAGNI、DRY。核心 skill 链是 brainstorming → using-git-worktrees → writing-plans → subagent-driven-development → test-driven-development → requesting-code-review → finishing-a-development-branch。还带一个四阶段的 systematic-debugging。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code
+/plugin install superpowers@claude-plugins-official
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace
+
+# 其他 harness
+gemini extensions install https://github.com/obra/superpowers   # Gemini CLI
+qwen extensions install obra/superpowers                        # Qwen Code
+copilot plugin marketplace add obra/superpowers-marketplace     # Copilot CLI</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Cursor 用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/add-plugin superpowers</code>，Devin 用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">devin plugins install obra/superpowers</code>。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#07c160;">290.7k stars、26.0k forks</strong>、MIT 许可，覆盖 15 个以上 harness：Claude Code、Cursor、Codex、Gemini CLI、Copilot CLI、Devin、Grok Build、Kimi Code、Qwen Code、OpenCode、Antigravity、Hermes 等。README 提到常见情况是 Agent 自主按计划连续工作两小时不偏离。这是「把工程方法论固化成可安装 skill」这条路上目前体量最大的实现，也是本会话正在运行的框架之一。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">单日 474 stars，26k forks，fork 数约为 star 数的十一分之一，说明大量使用者在改自己的分支</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">MIT 许可加商业支持邮箱，个人免费加企业付费的路线已经跑通</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/obra/superpowers</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. davila7/claude-code-templates：Claude Code 配置分发 CLI，+389 stars</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.9/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 389 stars/day，累计 31.5k stars / 3.6k forks</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一条 npx 命令装 Claude Code 配置。目录里有 100 多个条目：agents（安全审计员、React 性能优化等）、commands（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/generate-tests</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/optimize-bundle</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/check-security</code>）、settings、hooks、MCP 集成（GitHub、PostgreSQL、Stripe、AWS、OpenAI）、skills 和项目模板。除常规安装外还有 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--analytics</code> 用量分析、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--chats --tunnel</code> 通过 Cloudflare Tunnel 远程访问会话、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--health-check</code> 配置体检、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--plugins</code> 插件管理。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx claude-code-templates@latest                       # 交互式浏览安装
+npx claude-code-templates@latest --agent development-tools/code-reviewer --yes
+npx claude-code-templates@latest --command performance/optimize-bundle --yes
+npx claude-code-templates@latest --mcp database/postgresql-integration --yes
+npx claude-code-templates@latest --health-check</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">31.5k stars、3.6k forks、1,665 commits。它解决的是 Claude Code 配置无法复用的问题：把 agent、command、hook、MCP 配置变成可 npx 安装的包，配上网页目录 <code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas, monospace;font-size:14px;">aitmpl.com</code> 可以直接浏览挑选。对团队来说，这意味着新成员配环境不用再照 wiki 手抄。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">单日 389 stars，是当日 Claude Code 生态三个上榜项目之一（另有 anthropics/financial-services 和 obra/superpowers）</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">同类工具里覆盖面最宽，100+ 条目加网页目录</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/davila7/claude-code-templates</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. pbakaus/impeccable：给 AI 编码工具装上设计约束，+304 stars</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 304 stars/day，累计 70.4k stars / 4.3k forks</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个 design skill 加设计语言，装进 Claude Code、Cursor、Codex、GitHub Copilot、Gemini CLI、Grok Build 等 harness。含 1 个 skill、24 条命令（polish、audit、critique、distill、animate、bolder、quieter、harden、live）和 61 条确定性检测规则。检测器不用 LLM 也不用 API key，扫代码或 URL 就能找出 AI 生成 UI 的典型毛病：侧边 tab 边框、紫色渐变、bounce 缓动、暗色发光，以及行长过长、内边距局促、触控目标过小、标题层级跳级。安装时会把产品上下文写进 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">PRODUCT.md</code>、视觉方向写进 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">DESIGN.md</code>，后续改动有据可依。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx impeccable install
+npx impeccable update
+
+# 在 AI 工具里初始化
+/impeccable init
+
+# 单独跑检测器（不消耗 token）
+npx impeccable detect src/
+npx impeccable detect --json .</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">70.4k stars、4.3k forks、1,913 commits。61 条规则是硬编码的确定性检查，零 token 成本，还能当 CI 门禁用。README 自己划了边界：检测器全绿是证据，不等于视觉和可访问性达标。这个自我限定反而让它可信度更高。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">单日 304 stars。AI 生成 UI 的「看起来都一样」是近期社区反复讨论的话题，impeccable 把它拆成了可枚举的规则清单</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">同时提供 VS Code 扩展（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">code --install-extension renaissance-geek.impeccable</code>）和 git submodule 两种接入方式，适合不想全局安装的团队</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/pbakaus/impeccable</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">10. Gemini 3.8 Flash TTS：130 语言加 30 秒声音克隆</p>
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.6/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 首页 255 points / 124 评论，9 月 23 日发布即上线 API</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Google 在 9 月 23 日发布两个语音合成模型。Gemini 3.8 Flash TTS 面向创作场景（游戏、有声书、播客、互动媒体），支持 130 种语言；Gemini 3.8 Flash-Lite TTS 面向配音和批量音频，支持 101 种语言，替代 4 月的 gemini-3.1-flash-tts-preview。能力包括用自然语言描述生成全新音色、2000 多个现成音色库（含墨西哥西班牙语、魁北克法语、苏格兰英语等地区变体）、<strong style="color:#07c160;">30 秒音频样本复刻声音</strong>（需通过同意验证，输出带 SynthID 水印和 C2PA 凭证）、脚本里直接写舞台指示和非语言元素如 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">&lt;laughs&gt;</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">&lt;sigh&gt;</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">|mhm|</code>、单个脚本生成双人对话、以及数小时长音频的音色漂移控制。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>curl -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent" \
+  -H "x-goog-api-key: $GEMINI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"contents":[{"parts":[{"text":"&lt;laughs&gt; 用嘲讽的语气读这句话"}]}],
+       "generationConfig":{"responseModalities":["AUDIO"]}}'</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">也可以直接在 Google AI Studio 里试听和调用。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">定价是这次的主要动作。Flash TTS 输入 $0.50 / 百万文本 token、输出 $9.00 / 百万音频 token（2026 年 12 月 31 日前，之后涨到 $18.00）；Flash-Lite 是 $0.50 / $6.00（之后 $12.00），第三方换算约为每小时 0.54 美元起。跑分上 Flash TTS 在 Hume AI 的 Voice Design Benchmark 拿到 71.4 分排第一，口音建模 60.8 分，两个模型包揽 Overall Quality Index 前两名，并在日语、巴西葡语、越南语、现代标准阿拉伯语、墨西哥西班牙语、印地语的盲测偏好中领先。接入方包括 Figma、HeyGen、Wondercraft、Agora、LiveKit、Pipecat、Vercel。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 首页 255 points、124 条评论，讨论集中在克隆声音的同意验证机制和 SynthID 水印是否够用</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">发布会署名作者之一是 Alan Cowen（Hume AI 创始人，2026 年加入 Google DeepMind），而打了第一名的 benchmark 也来自 Hume AI</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span> <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-text-to-speech/</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://siliconangle.com/2026/09/23/google-launches-two-benchmark-topping-speech-generation-models/</span></code></p>
+
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Anthropic：Claude 自主发现新酶系统 ART <span style="font-size:13px;font-weight:normal;color:#999999;">HN 509 points / 534 评论，9 月 23 日</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">约 950 个 Claude agent 在 DNA 数据库里跑了 21 小时、消耗约 2.1 亿 token，收集 20 万个逆转录酶、缩小到 3,500 个候选系统、最终挑出约 20 个交人工复核，发现了一种带 CRISPR 式重复序列的新系统（array-associated reverse transcriptases）。湿实验显示该阵列会转录成短 RNA，但功能未知，预印本未经同行评审。CRISPR 先驱张锋评价「确实有意思，值得进一步研究」，Dario Amodei 在联合国安理会称这「可能构成新的基因编辑机制」。一个耐人寻味的细节：同样的搜索 campaign 跑了十次都没能重新发现该阵列。 来源：<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">https://www.anthropic.com/news/claude-discovers-novel-enzyme-system</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">DeusData/codebase-memory-mcp <span style="font-size:13px;font-weight:normal;color:#999999;">190 stars/day，累计 44.6k stars</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">C 写的 MCP server，把代码库索引成持久化知识图谱，让 Agent 查结构而不是 grep。单文件原生可执行，无需语言运行时和 API key，158 到 162 种语言的 tree-sitter 语法，17 个 MCP 工具（含只读 Cypher 子集查询）。官方称 token 消耗比逐文件探索少 120 倍、降幅 99.2%，Linux 内核 2800 万行 3 分钟建完索引，查询亚毫秒。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npm install -g codebase-memory-mcp@latest</code> 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pip install -U codebase-memory-mcp</code>。 来源：<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">https://github.com/DeusData/codebase-memory-mcp</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">strands-agents/harness-sdk <span style="font-size:13px;font-weight:normal;color:#999999;">115 stars/day，累计 7.9k stars</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">AWS Strands 的 Agent harness，一个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">create_harness()</code> 就带齐生命周期控制、工具、结构化输出、MCP、多 Agent 模式、记忆、会话、流式、护栏、追踪和评测，跑在自己进程里，没有托管控制面。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pip install strands-harness</code> 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npm install @strands-agents/harness</code>，Python 3.10+ / Node 22+，官方称对 Amazon Bedrock、Anthropic、OpenAI、Gemini 有一等支持。 来源：<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">https://github.com/strands-agents/harness-sdk</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Mercury 2.5 <span style="font-size:13px;font-weight:normal;color:#999999;">HN 55 points</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">Inception 的扩散语言模型，靠并行去噪生成文本，不走逐 token 的顺序解码。第三方 Artificial Analysis 实测输出 770.4 tokens/s（同价位推理模型中位数 108.6），厂商自称生产环境 1,107 tokens/s。260K 上下文、可调推理档位、原生并行工具调用、schema 对齐的 JSON 输出。定价 $0.25/$0.75 每百万 token，首发折扣后 $0.04/$0.15。注意这是 9 月 8 日的发布，今天重新上了 HN 首页。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Apple LensVLM <span style="font-size:13px;font-weight:normal;color:#999999;">HN 57 points</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">把长文本渲染成图片来压缩上下文，再用学到的 Expand 工具只把相关页面还原成高清。基于 Qwen3.5-9B，4.3 倍压缩下精度与全文上界持平，10.1 倍压缩下仍优于检索和文本压缩基线，覆盖七个文本 QA benchmark 且只用 CPU 预处理。模型权重 apple/LensVLM-9B，代码在 <code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">github.com/apple/ml-lensvlm</code>。5 月的论文，今天重新上 HN。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">TNT-Likely/PanWatch <span style="font-size:13px;font-weight:normal;color:#999999;">95 stars/day</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">自托管 AI 盯盘助手，多 Agent 对 A 股、港股、美股做投资决策，带实时价格和提醒。 来源：<code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">https://github.com/TNT-Likely/PanWatch</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">arXiv 2609.27891「Schrödinger's Code Repository: Have LLMs Learned SWE-bench or Memorized It?」 <span style="font-size:13px;font-weight:normal;color:#999999;">HF Papers 当日热门</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">直接质疑 SWE-bench 分数里有多少来自记忆而非能力，是评估方法论方向值得跟的一篇。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">BuilderIO/agent-native <span style="font-size:13px;font-weight:normal;color:#999999;">87 stars/day</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">TypeScript 的 agentic 应用框架。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">HKUDS/CLI-Anything <span style="font-size:13px;font-weight:normal;color:#999999;">57 stars/day</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">把命令行软件改造成 Agent 原生接口。</p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<section style="background-color:#f5f7fa;border-radius:10px;padding:18px 20px;margin:14px 0 0 0;">
+<p style="margin:0 0 8px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">本期关键词</p>
+<p style="margin:0;font-size:15px;color:#555;line-height:2.0;text-align:left;">Agent 运行时 · Office Harness · 工具注册表 · 声音克隆 · MCP 知识图谱</p>
+</section>
+
+</section>

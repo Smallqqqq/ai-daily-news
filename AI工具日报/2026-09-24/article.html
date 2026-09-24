@@ -1,0 +1,172 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-24</p>
+<p style="margin:0 0 14px 0;">![今日三个工具速览](./summary.png)</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三个工具都在回答同一个问题：编码 Agent 凭什么做决定。一个管流程纪律，一个管证据来源，一个管工具入口。</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">agent-skills — 把高级工程师的流程拆成 25 个技能，让编码 Agent 照着走</p>
+<p style="margin:0 0 14px 0;">![agent-skills 仓库概览](./agent-skills-demo.jpg)</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">编码 Agent 最稳定的毛病是走捷径：需求还没说清楚就开始写，测试跳过，安全审查略过。这跟模型能力关系不大，缺的是一套「什么时候该停下来」的判据。Addy Osmani（Google Chrome 团队）把这套判据做成了 <strong style="color:#07c160;">25 个技能</strong>，每个技能是一份带步骤、检查点、退出标准的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">SKILL.md</code>。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">每个技能结构统一：Overview、When to Use、Process、Rationalizations、Red Flags。前三段算常规，真正起作用的是第四段——它把 Agent 常用的借口逐条列出来当场反驳，比如「这个改动太小，不用写测试」会被显式标成 red flag。技能按工作类型自动激活，也能用斜杠命令手动调。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">九个命令对应完整生命周期：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/spec</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/plan</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/build</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/test</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/constraints</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/review</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/webperf</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/code-simplify</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/ship</code>。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/build auto</code> 批准一次后自主执行，但仍然逐任务跑测试驱动开发、逐个提交，碰到失败或高风险步骤会停下来等人。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">附带 4 个评审人格（code-reviewer、test-engineer、security-auditor、web-performance-auditor）和 7 份参考清单（definition-of-done、security-checklist、observability-checklist 等）。内容吸收了不少 Google 工程实践，Hyrum 定律、Beyonce 规则、Chesterton's Fence 都在里面。仓库还自带三层 eval 框架（结构、路由、行为），部分跑在 CI 上——同类技能包里很少有人做自测，这一点比较少见。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 通用：skills CLI，支持 70+ 种 Agent
+npx skills add addyosmani/agent-skills              # 装全部 25 个技能
+npx skills add addyosmani/agent-skills --list       # 先看清单
+npx skills add addyosmani/agent-skills --skill test-driven-development
+
+# Claude Code
+/plugin marketplace add addyosmani/agent-skills
+/plugin install agent-skills@addy-agent-skills
+
+# Codex CLI 0.122+
+codex plugin marketplace add addyosmani/agent-skills
+codex plugin add agent-skills@agent-skills</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">单技能安装只复制 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">skills/&lt;name&gt;/</code>，不含仓库级 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">references/</code>，共享清单的路径会失效（issue #361），要完整的就整包装。</p>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">agent-skills（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx skills add addyosmani/agent-skills</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>覆盖 SDLC 六个阶段，每个技能带反理据表和 red flags，仓库内自带 eval</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 98,724</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Superpowers</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/plugin marketplace add obra/superpowers</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>方法论最完整，TDD 执行最严，适合长时间自主任务</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 290,720</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">mattpocock/skills</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Claude Code 插件</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>需求追问（grill）最强，偏个人日常工作流</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 268,529</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">OpenSpec</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npm i -g @fission-ai/openspec</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>规范驱动开发，每次变更独立成文件夹</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 70,061</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">三套技能包共用同一套 Markdown + YAML frontmatter 机制，差别在形状。Superpowers 的 stars 接近它的三倍，但覆盖面偏向构建内循环；agent-skills 是从 spec 一路管到 CI/CD、可观测性和发布，适合把一个完整功能推完。mattpocock 的重心在需求追问。三者共同的短板是跨会话的长期记忆，目前谁都没解决。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Om Mishra 在同一仓库、同一模型、同一 prompt 下做过对照：agent-skills 约 <strong style="color:#07c160;">8 分钟</strong>出代码、跑了 7 轮验证，Superpowers 约 <strong style="color:#07c160;">12 分钟</strong>、5 轮验证，前者顺带发现了一个不在本次改动范围内的兼容性问题。样本只有一个任务，不能当基准看，方向可以参考。选型上不建议两个包同时当活跃路由，命令名会撞车，TDD 理念也不一致。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 Claude Code 插件市场 · ⭐ 98,724 · v0.6.3 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/addyosmani/agent-skills</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://skills.addy.ie</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">gcx — 让编码 Agent 去查生产数据，而不是猜</p>
+<p style="margin:0 0 14px 0;">![gcx 命令行查询效果](./gcx-demo.png)</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 写性能相关的代码时只能凭训练数据猜：超时设多少、mock 返回几条、这个接口正常该多快。这些数字在生产环境里全都查得到，只是要跳好几个页面。Grafana 把这件事收进了一条命令行。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">gcx 是 Grafana 官方发布的 agentic CLI，覆盖 Cloud、Enterprise 和自建 OSS（自建要求 Grafana 12 以上，官方推荐 13+）。查询面包括 metrics、logs、traces、profiles，往外还有告警规则、SLO、Synthetic Monitoring、IRM OnCall、k6 压测、Frontend Observability 和 Agent Observability。输出是 JSON/YAML，配结构化错误和分级退出码。它能自动识别 Claude Code、GitHub Copilot、Cursor 这类环境，切到 agent 模式。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">配套的 Agent Skills 随 CLI 一起装，覆盖告警排查、仪表盘创建与 GitOps、数据源探索、结构化调试、SLO 管理、可观测性落地。装完之后 Agent 遇到线上问题会先 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">logs query</code> 再开口。</p>
+<p style="margin:0 0 14px 0;">![gcx 安装的命令输出](./gcx-demo-2.png)</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">典型用法是拿 RED 指标和 p95 延迟反推测试里的 mock 参数，或者把生产看板的查询拉到本地 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">grafana/otel-lgtm</code> 栈上复现。官方给的定位是「不要猜，查真实生产数据」，落到 PR 上就是可以把看板链接直接贴进描述里，评审时看的东西从「Agent 有没有看懂需求」变成「跑起来的系统符不符合预期」。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 安装（三选一）
+brew install gcx
+curl -fsSL https://raw.githubusercontent.com/grafana/gcx/main/scripts/install.sh | sh
+go install github.com/grafana/gcx/cmd/gcx@latest
+
+gcx login
+
+# 给 Agent 装技能
+/plugin marketplace add grafana/gcx                 # Claude Code
+/plugin install gcx@gcx-marketplace
+
+gcx agent skills list                               # Codex / OpenCode / Pi 等 .agents 兼容框架
+gcx agent skills install --all
+
+gcx metrics query --help                            # 查询入口
+gcx --version                                       # 核对版本</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">gcx（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">brew install gcx</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>官方 CLI，覆盖 20+ Grafana 产品面，输出面向 Agent 设计，自带技能包</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 743</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Grafana MCP server</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">uvx mcp-grafana</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>官方 MCP 服务器，工具集固定更收敛，可自建或用 Cloud 托管端点</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3,487</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">obs-mcp（Red Hat）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>OpenShift 内置</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>面向 OpenShift 的 Prometheus / Thanos / Loki / Tempo 桥接，带协议级护栏防宽泛正则查询</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">直接调 Grafana HTTP API</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">curl</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>无额外依赖，认证、分页、schema 全得自己处理</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">gcx 和官方 MCP server 是同一次 GA 发布的两个入口。MCP server 工具集固定，适合「我就要那几个查询」；gcx 是一条命令面上的全部能力，适合让 Agent 自己组合，两者可以同时装。只装一个的话，我会选 gcx，多出来的技能包才是关键，它决定 Agent 知不知道什么时候该去查。留意一处不一致：官方公告说 GA，但 pkg.go.dev 上 gcx 的模块页仍标着 public preview、无 SLA。介意的可以自己核一下版本。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 Grafana 官方 GA · ⭐ 743 · Apache-2.0 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/grafana/gcx</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/grafana/mcp-grafana</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">treg — Agent 工具的 OpenRouter，按次调用，不用给每个供应商开账号</p>
+<p style="margin:0 0 14px 0;">![treg 目录与调用示例](./treg-demo.png)</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 要干活就得有工具，麻烦在于真实工作需要的工具大多在订阅墙后面：Semrush 一个月 <strong style="color:#07c160;">139 美元</strong>、Moz 99、Crunchbase 99、Apollo 每个席位 59，有的干脆没有公开 API。给每个供应商注册账号、管密钥、盯配额，成本比用工具本身还高。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">treg 把自己放在代理层：它持有这些账户，按调用次数计费，最低一分钱一次，调用方不碰密钥。目录里现在有 60 多个供应商、<strong style="color:#07c160;">3,000 多个端点</strong>。有条硬规则是它只转发、不做模型（the proxy relays, never models the upstream），认证在服务端注入，上游 API 改了调用方也不受影响。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">凭据解析有固定顺序：团队自注册的工具，再是团队为该供应商存的密钥，然后是已验证的公开路径（免费），最后才落到 treg 自己的密钥、计入团队预付余额。没有公开定价的端点会被直接拒绝，不会白送；余额不够返回 HTTP 402。鉴权头是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">X-Treg-Token</code>，代理入口在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/call/{...}</code>。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">入口有三个：CLI、Claude Code 插件、给其他 Agent 用的 skill。检索方式是按任务而不是按供应商，官方那句 Ask for the task, not the tool 说得挺准。</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># CLI
+curl -fsSL https://treg.to/install.sh | sh
+treg login
+treg catalog search "backlinks for a domain"
+treg call tikhub.tiktok.user.profile --query uniqueId=tiktok
+treg balance
+
+# Claude Code 插件
+/plugin marketplace add superdesigndev/treg
+/plugin install treg@treg
+
+# 其他 Agent
+npx skills add superdesigndev/treg -s treg
+
+# 自托管服务端
+pip install "tools-registry[server]"</code></pre>
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">treg（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">curl -fsSL https://treg.to/install.sh | sh</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>代理层持有账号，按调用付费，调用方无密钥，可自托管</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>按调用计费，$0.01 起</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 2,744</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Smithery</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>托管注册中心</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>MCP 服务器的发现与部署，已被 Arcade.dev 收购</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费 + 托管费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Orthogonal</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>MCP 接入</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>30+ API 合作方，按调用付费，MCP 原生、无密钥管理</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>按调用计费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">ToolRouter</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>托管网关</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>254 个工具 + 1,345 个技能，按成功调用计费，失败不收</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>$0.005/次 + 工具价</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这一类比的都是「Agent 怎么拿到外部工具」。Smithery 那条路解决的是 MCP 服务器的托管，质量与定价归发布者管；treg 自己承担账号和计费，换来调用方零配置，自托管也可以。它的目录偏外部数据类 API，工程向的工具反而不多，这是现阶段的短板。许可证要留意：Apache 2.0 加了附加条款，自由使用和自托管没问题，但未经书面许可不能把代码再分发成竞品的托管服务。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 2,744 · Apache-2.0（附加条款）· </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/superdesigndev/treg</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://treg.to</span></code></p>
+</section>
