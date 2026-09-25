@@ -1,0 +1,166 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-25</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">把原始素材丢进一个文件夹，跟 Claude Code 说一句 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">edit these into a launch video</code>，拿回 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">final.mp4</code>。没有模板、没有菜单、没有时间轴 UI，全程对话。这个 skill 来自 browser-use 团队，26.9k stars，MIT 协议，今天值得花十分钟装好。</p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+<p style="margin:0 0 14px 0;">![video-use 演示 1：从素材到成片](./video-use-demo-1.png)</p>
+<!-- 跳过源图 video-use-demo-2.svg：SVG 格式发布上传接口不支持（同 webp 规则，仅注释说明） -->
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">它解决什么问题</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你要给产品发一条三分钟上线视频。素材是四段录屏加口播，里面有"呃""那个"、有说错重来的半句话、有中间停了五秒的空白。用剪映或 Premiere，这些活全得手动对轴：听一遍、标一个点、拖一次，四十分钟素材删口头禅能吃掉一个下午。用 AI 视频工具，大多是给你生成一段新画面，不是剪你手上这一堆。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">video-use 走的是第三条路。它不碰画面生成，只做剪辑本身：找废镜头、删填充词、切干净、调色、烧字幕、加动画叠加层。你确认剪辑策略，它执行，然后自己检查渲染结果。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">核心原理</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">整个设计的出发点是一句话：<strong style="font-weight:bold;color:#000;">LLM 不看视频，它读视频。</strong></p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">把三万帧截图喂给模型是所有人的第一反应，但按 1500 token 一帧算是 4500 万 token 的噪音。video-use 换了个介质：</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">第一层是文本，常驻上下文。对每个素材调一次 ElevenLabs Scribe，拿到词级时间戳、说话人分离，还有笑声掌声这类音频事件，全部打包进一个约 12KB 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">takes_packed.md</code>。这就是模型"看片"的主要视图，它按静音间隔（≥0.5 秒）断句，每行带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">[start-end]</code> 时间区间。填充词标注、重录识别、镜头分类这些都不预先算，到决策那一刻才从文本里推。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">第二层是图，按需生成。模型对某个剪切点拿不准时，调 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">timeline_view</code> 生成一张胶片条加波形的 PNG，只看那个时间窗。读原始素材那两三层楼高的 token 账单，被压成了 12KB 文本加几张图。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">然后是流水线：转录 → 打包 → 推理产出 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">edl.json</code>（Edit Decision List，含源文件、时间区间、调色、叠加层、字幕）→ ffmpeg 渲染 → 在每个剪切点取 ±1.5 秒窗口自评，查跳帧、爆音、字幕被盖、叠加层错位，发现问题就修了重渲，最多三轮。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">SKILL.md 里有 12 条不可协商的硬规则，其余全是创作自由。挑几条最见功力的：</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">字幕永远排在滤镜链最后</strong>，在叠加层之后。反过来的话动画会盖住字幕。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">逐段抽取再无损拼接</strong>（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">-c copy</code>），不用单趟 filtergraph，避免二次编码掉画质。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">每个剪切边界加 30ms 音频淡入淡出</strong>：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">afade=t=in:st=0:d=0.03,afade=t=out:st={dur-0.03}:d=0.03</code>，防爆音。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">绝不在词中间下刀</strong>，边缘吸附到 Scribe 的词边界上。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">每个切边留 30 到 200ms 余量</strong>，吸收 50 到 100ms 的时间戳漂移。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">主字幕轨用输出时间轴偏移</strong>：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">output_time = word.start - segment_start + segment_offset</code>。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">叠加层用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">setpts=PTS-STARTPTS+T/TB</code> 平移，让第 0 帧落在窗口起点。</li>
+</ul>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">安装配置</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">最省事的方式是把这句话粘给任何一个有 shell 权限的 agent（Claude Code、Codex、Hermes、Openclaw 都行），它会自己去读 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">install.md</code>，完成克隆、依赖、技能注册，然后向你要 API key：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>Set up https://github.com/browser-use/video-use for me.</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">手动装是四步：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/browser-use/video-use ~/Developer/video-use
+
+# 软链进 skills 目录（Codex 用 ~/.codex/skills/video-use）
+ln -sfn ~/Developer/video-use ~/.claude/skills/video-use
+
+cd ~/Developer/video-use
+uv sync                       # 或 pip install -e .
+
+brew install ffmpeg           # 必需
+brew install yt-dlp           # 可选，要从链接抓素材才装
+
+cp .env.example .env          # 填入 ELEVENLABS_API_KEY</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">冷启动检查项：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ELEVENLABS_API_KEY</code> 能从环境变量或仓库根的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.env</code> 解析到、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ffmpeg</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ffprobe</code> 在 PATH 上、Python 依赖装好。Node 只在用到 HyperFrames 或 Remotion 动画引擎时才需要，HyperFrames 要求 Node 22+。Manim、Remotion、yt-dlp 也都是首次用到才装。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">所有产物落在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">&lt;videos_dir&gt;/edit/</code>，不污染项目目录：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">project.md</code>（会话记忆）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">takes_packed.md</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">edl.json</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">transcripts/</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">clips_graded/</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">animations/slot_&lt;id&gt;/</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">master.srt</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">verify/</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">preview.mp4</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">final.mp4</code>。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">使用指南</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">skill 自带六个 helper，都是在素材目录里直接调的：</p>
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #e8e8e8;">
+<thead>
+<tr>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">命令</th>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">作用</th>
+</tr>
+</thead>
+<tbody>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">transcribe.py &lt;video&gt;</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">单文件 Scribe 转录，带缓存，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">--num-speakers N</code> 指定人数</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">transcribe_batch.py &lt;videos_dir&gt;</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">4 worker 并行转录整目录</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">pack_transcripts.py --edit-dir &lt;dir&gt;</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">打包成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">takes_packed.md</code>，静音 ≥0.5s 断句</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">timeline_view.py &lt;video&gt; &lt;start&gt; &lt;end&gt;</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">胶片条＋波形 PNG，只在决策点调</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">render.py &lt;edl.json&gt; -o &lt;out&gt;</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">抽取、拼接、PTS 平移叠加层、字幕压最后；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">--preview</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">--build-subtitles</code></td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">grade.py &lt;in&gt; -o &lt;out&gt;</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">调色滤镜链，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">--preset</code> 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">--filter '&lt;原始 ffmpeg 链&gt;'</code></td>
+</tr>
+</tbody>
+</table>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">场景一：播客口播剪成发布视频</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">四段原始素材放进一个目录，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">cd</code> 进去启动 Claude Code，说 "edit these into a 4-6 minute launch video for a developer audience"。它会先跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ffprobe</code> 盘点、批量转录、打包，再给你一段四到八句话的剪辑策略，覆盖结构、选用的 take、剪切方向、动画、调色、字幕和成片时长。你点头之后才动手。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">有实测记录的一次会话：4 个 take 走到成片，墙钟时间约 8 分钟，其中转录占了大头。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">场景二：多 take 选优</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">产品演示录了八遍，每遍都有瑕疵。你不必自己逐条比对，转录文本里每个 take 的措辞、口误、停顿都摊在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">takes_packed.md</code> 里，模型读完直接告诉你为什么选第 3 段的开头接第 6 段的结尾。剪切点全部吸附在词边界上，不会切出半个字。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">场景三：跨会话改片</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">"再紧凑一点。""把开场那句话换掉。"这两句是实测里的真实后续指令，模型直接重新渲染，<strong style="font-weight:bold;color:#000;">不重新转录</strong>，因为转录结果按源文件缓存。会话记忆写在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">project.md</code>，隔天回来接着改，它还记得上次那版剪辑计划。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">场景四：抓链接素材再剪</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">yt-dlp</code> 是可选项，装上之后可以直接把视频链接交给它下载到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">downloads/</code>，再进入同一条流水线。适合做二创剪辑或把长直播切短。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">进阶技巧</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">把动画叠加层并行铺开。</strong> SKILL.md 硬规则第 10 条要求用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Agent</code> 工具并行跑多个动画，绝不串行。五个动画的发布视频因此从七分多钟压到 90 秒。动画引擎按槽位选：HyperFrames、Remotion、Manim、PIL + ffmpeg 都行，时长下限约 3 秒、常见 5 到 7 秒，末帧要保持 1 秒以上，缓动曲线禁用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">linear</code>。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">调色说人话，也可以直接写滤镜。</strong> 内置预设就三个：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">warm_cinematic</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">neutral_punch</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">none</code>，逐段应用。不够用就绕过预设直接给原始链：</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>helpers/grade.py -i in.mp4 -o graded.mp4 --preset neutral_cinematic
+helpers/grade.py -i in.mp4 -o graded.mp4 --filter 'curves=preset=medium_contrast,eq=saturation=1.05:gamma=0.98'</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">字幕分块是可以调的。</strong> 默认 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">bold-overlay</code> 风格：两个字一组大写、Helvetica 18 Bold、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">MarginV=35</code>。分块粒度、大小写、位置都在 SKILL.md 里当参数而非硬编码，改成中文双语字幕这类需求直接说就行。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">挂到无头环境常驻。</strong> 官方给了 Browser Use Box 的路径，可以放在自己的 VPS 或 Telegram 上跑 agent，不用守着终端。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">常见踩坑</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">下面这几条是我从官方 SKILL.md 的硬规则和实测文章里挑出来的，都是真会影响你能不能跑通的问题。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">ElevenLabs 是硬依赖，没有本地兜底。</strong> 敏感素材用它等于把音频传出去，直接出局。一篇 dev.to 实测文章和社区反馈里，最集中的批评就是这条，还加上长素材首次转录的费用。仓库里有个 fork 叫 freecut（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">github.com/Moh4696/freecut</code>），把 Scribe 换成了可插拔后端：本地 Whisper（mlx-whisper / faster-whisper）、VibeVoice，或者继续用 ElevenLabs。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">时间戳会漂。</strong> Scribe 的词级时间戳有 50 到 100ms 的漂移，所以硬规则要求每个切边留 30 到 200ms 余量，且必须在词边界下刀。如果你剪的是脱口秀那种节奏极紧的稿子，手工剪可能还是更稳。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">纯视觉素材用不了。</strong> 没有语音就没有可推理的文本层，它的整套设计是围绕"说出来的话"建的。旅行 B-roll 得配旁白或者音乐叙事才转得起来。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">动效有天花板。</strong> 叠加层是浮在画面上的，不做抠像和跟踪。需要 After Effects 级别的运动图形，还是得回 AE。原话是 "ffmpeg is the ceiling"。</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Windows 支持偏弱。</strong> 文档和社区都是 macOS / Linux 优先，Windows 上建议走 WSL2。</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">同类技能对比</p>
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">video-use（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">ln -sfn</code> 软链 + <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:13px;">uv sync</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>文本优先的 agent 剪辑，EDL 可复现，剪切点自评</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>语音为主、要快出草稿</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 26.9k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">freecut</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>同上游 fork</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>去掉 ElevenLabs 付费依赖，本地 Whisper 可插拔</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>敏感素材、不想付转录费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>上游的 fork</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">OpenMontage</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>更重的完整装配</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>12 条 pipeline、500+ skills 的全 agentic 流水线</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>要覆盖更多视频工种</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>体量更大</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Descript</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>商业订阅</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>文本式编辑加精致 UI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>不写代码、要图形界面</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>闭源云服务</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">DaVinci / Premiere</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>桌面软件</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>调色关键或重运动图形</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>要帧级控制</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>每个片子几小时</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">yt-dlp + ffmpeg</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>自己写</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>一次性片段抽取</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>你愿意自己搭整条链</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>从零开始</p>
+</section>
+</section>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:1.4em 0 1.4em 0;text-indent:2em;">video-use 胜出的条件是三条同时成立：素材以语音为主、迭代速度比像素级控制重要、你本来就在用 Claude Code 或 Codex。它不负责精修，只负责把你从原始素材送到"够用的草稿"。</p>
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 26.9k · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/browser-use/video-use</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://deepwiki.com/browser-use/video-use</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">适合做播客、口播、教程、访谈、产品发布视频的人，尤其是那种"素材录完了，剪不动"的状态。装它花十分钟，成本上二十分钟播客约几美分，长素材首次转录到几美元，之后靠缓存迭代基本不花钱。换来的是：一个下午的手工对轴，变成一句"edit these into a launch video"加一次策略确认。</p>
+</section>
