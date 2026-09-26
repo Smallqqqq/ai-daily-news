@@ -1,0 +1,188 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-09-26</p>
+
+<p style="margin:0 0 14px 0;">![今日三个工具速览](./summary.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三个工具的共同点是都站在 Agent 外面：一个替它记，一个量它，一个给它连数据库。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Hindsight — 让 Agent 记住，而且从记忆里学出东西</p>
+<!-- 跳过源图 hindsight-demo.webp：WebP 格式发布上传接口不支持，仅注释说明 -->
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">编码 Agent 的上下文是易失的。会话一关，昨天调试了三小时的结论、你纠正过它的那几条偏好、这个仓库为什么绕开了某个库，全部清零。下一轮从零开始解释，是每天都要付的税。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">现有做法大多是把聊天记录向量化再检索，本质是翻旧账。Hindsight 走的是另一条路：把记忆按生物拟态的结构分四类存，世界事实、Agent 自身的经历、整合后的观察、以及心智模型，然后用三个动作操作它们。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">retain</code> 写入时，先用 LLM 从对话里抽出事实、时间、实体和关系，归一化成标准实体、时间序列和索引。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">recall</code> 读取时四路并行：向量语义、BM25 关键词、图（实体、时间、因果链）、时间区间过滤，四路结果用 RRF 融合后再过一遍 cross-encoder 重排。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">reflect</code> 则是在已有记忆之间找新连接，回答需要推理而不是查找的问题。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">bank</code> 隔离是硬边界：一个用户、一个 Agent 或一个项目独占一个 bank，跨库不串，多租户场景不用自己在外面再包一层。另一个容易被忽略的是心智模型，对预设问题（比如这个项目的发布流程是什么）后台持续生成常备答案并重写，读取时是一次纯数据库读，既不跑检索也不调 LLM，延迟和成本都是零。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方称在 LongMemEval 上取得当前最好结果，复现来自 Virginia Tech 的 Sanghani Center 和华盛顿邮报。这个数字是自报的，但可复现路径公开了。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 起服务（Docker）
+docker run -it --pull always --name hindsight --restart unless-stopped \
+  -p 8888:8888 -p 9999:9999 ghcr.io/vectorize-io/hindsight:latest
+
+# 或嵌进进程里跑，不起服务
+pip install hindsight-all
+
+# 给编码 Agent 装记忆，自动接到 Claude Code / Codex / Cursor 等
+npx @vectorize-io/hindsight-coding-agents install all</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">LLM 侧支持 25 家以上供应商，ollama、lmstudio、llamacpp 这类本地运行时也在内；有 LiteLLM 包装器覆盖 100 多个模型，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">wrap_anthropic()</code> 直接包 Anthropic SDK。存储后端是 PostgreSQL + pgvector 或 Oracle AI Database 23ai，带 Prometheus 指标、admin CLI 和 webhook。另有可选的 Memory Defense，按 bank 扫 secrets 和 PII，45 条模式，可脱敏或直接拦。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Hindsight（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @vectorize-io/hindsight-coding-agents install all</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>retain/recall/reflect 三段式，四路召回 + RRF + 重排，bank 硬隔离，心智模型读取不调 LLM</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（MIT），云版另计</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 29.9k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Mem0</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install mem0ai</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>生态最广，写入侧自动抽事实，托管版成熟</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源 + 云版付费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 59k+</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Zep</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Docker / 云</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>主打 Graphiti 时序知识图谱，会话级记忆强</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源 + 云版付费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 24k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Letta（原 MemGPT）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install letta</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>记忆做进 Agent 运行时，分页式上下文管理</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 21k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Mem0 的 stars 是它的两倍。我选 Hindsight 的理由落在延迟和成本上：recall 四路并行再融合，比单路向量召回更抗「记了但查不出来」；心智模型后台就生成好，读的时候一次 LLM 调用都不发。多租户的 bank 硬隔离也是开箱即用。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 npm · ⬇ 127,880 次/月 · PyPI · ⬇ 12,537 次/月 · ⭐ 29.9k · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/vectorize-io/hindsight</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://hindsight.vectorize.io</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">AgentSight — 从内核层看 Agent 到底把时间花在哪</p>
+<p style="margin:0 0 14px 0;">![AgentSight 演示](./agentsight-demo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 跑得慢、烧 token，最常见的解释是模型不行。真正的情况往往藏在几十轮工具调用里：某一步重试了七次、某个文件被反复读、某个 skill 一直在走弯路。这些在对话记录里看不出来。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">现有的 LLM 可观测性工具都要你先接进去，挂 SDK、改 base_url、装中间件。问题是 Claude Code、Codex 这类闭源 CLI 你改不动，它们的进程内部对你是个黑盒。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AgentSight 换了个位置，坐在操作系统层面。它用 eBPF 挂探针，再在调用边界做 SSL/TLS 明文追踪，因此不需要任何 SDK、代理或供应商配合就能看到 Agent 的进程、资源、模型调用、工具调用、文件与网络访问。对被测程序来说它不存在。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它给出的几个视图直接对应上面那些问题：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">top</code> 排行看哪个会话最费；把 prompt 和 skill 关联到报错上，用来改指令；把慢步骤、重试循环、重复调用、token 密集的会话单独挑出来；以及审计数据流动和敏感操作。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">配套的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agentpprof-flamegraph</code> skill 把一次会话渲染成语义火焰图，可以按 tokens、文件、网络、时间、操作五种维度切，输出 SVG、pprof 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.pb.gz</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.folded</code> 或 JSON。背后的论文 AgentPProf（arXiv 2609.20301，9 月 18 日）在 CodeTraceBench 上做到 <strong style="font-weight:bold;color:#000;">0.764 的 B³ F1</strong>，三个问题定位基准上 MAP 最高提升 <strong style="color:#07c160;font-size:20px;">56%</strong>。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Rust 工具链
+cargo install agentsight
+
+# 或直接拿二进制
+wget https://github.com/eunomia-bpf/agentsight/releases/latest/download/agentsight &amp;&amp; chmod +x agentsight
+
+# Homebrew（Linux x86-64）
+brew tap eunomia-bpf/tap &amp;&amp; brew install eunomia-bpf/tap/agentsight</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它的限制很明确：采集依赖 eBPF，需要 Linux 内核 4.1 以上（建议 5.0+）且要 sudo 权限，Windows 和 macOS 上跑不了采集。官方给出的开销是典型负载下 CPU 占用低于 3%。可以观测的客户端包括 Claude Code、Codex、Gemini CLI、OpenCode、OpenClaw，或任意一个命令。输出除了终端视图，还有 SQLite 会话库、OTLP/HTTP 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">gen_ai.*</code> span，能接进现有后端。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">AgentSight（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">cargo install agentsight</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>eBPF 系统级采集，零 SDK，能观测闭源 CLI，CPU 开销 &lt;3%</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（MIT）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 708</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Langfuse</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">docker compose up</code> / 云</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>平台最完整：追踪 + 评估 + prompt 管理 + 数据集</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源自托管；云版每月 5 万事件免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 34.1k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">OpenLLMetry</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install traceloop-sdk</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>纯 OpenTelemetry 埋点库，后端可换</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 7.4k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Opik</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install opik</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Comet 出品，RAG 与 Agent 工作流评估全面</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 20k+</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Langfuse 的 stars 是它的 48 倍，但两者不在同一个位置：Langfuse 管的是你已经埋好点的应用层，AgentSight 管的是你改不动的那一层。已经在用 Claude Code、想知道这轮为什么烧了 20 万 token 的，前者帮不上忙。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 708 · MIT · Rust · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/eunomia-bpf/agentsight</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://agentsight.us</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">SqlKit — 十几 MB 的跨平台 SQL 客户端，AI 写 SQL 但凭据不出本机</p>
+<p style="margin:0 0 14px 0;">![SqlKit 界面](./sqlkit-demo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">桌面数据库客户端的痛点很具体：DBeaver 冷启动 8 秒、空载吃 800MB 内存；Navicat 和 DataGrip 要钱。而用 AI 写 SQL 这条路，绝大多数方案是把 schema 和你的问题一起发到云端。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">SqlKit 用 Tauri v2 构建，外壳是 Rust，界面是 Vue 3 + TypeScript，编辑器是 Monaco，没有 Electron、没有 JRE、没有内置 Chromium，安装包量级在十几 MB。功能覆盖跟成熟客户端差不多：多标签 SQL 编辑、schema 浏览器、查询历史、可排序的结果网格加行内编辑、DDL 查看、对象搜索，导出支持 CSV / JSON / Markdown。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agentic Data Studio 是它的差异点。你说要做什么，它读 schema、写 SQL、解释执行计划、出错了自己改。破坏性操作需要二次确认，凭据不会发给模型，这是把 AI 接进数据库客户端时最先要守住的两条线。AI 供应商支持 OpenAI、Anthropic、DeepSeek 和本地 Ollama，自带 key。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据库覆盖按适配策略分四层，加起来七十多种：原生 Rust 驱动覆盖 PostgreSQL、MySQL、SQL Server、SQLite；PG 线路兼容层带上 CockroachDB、Redshift、YugabyteDB、TimescaleDB、GaussDB、KingbaseES；MySQL 线路兼容层带上 MariaDB、TiDB、OceanBase、PolarDB、StarRocks、Doris；JDBC 桥接 Oracle、DuckDB、Snowflake、DB2、Databricks、BigQuery；HTTP 桥接 ClickHouse、Trino、Presto、Turso。跨引擎数据迁移带自动类型映射。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 普通用户：直接下安装包
+#   Windows .exe / macOS .dmg / Linux .AppImage、.deb
+#   下载页 https://geekfun.club/download
+
+# 源码运行（需要 Node.js ≥ 18 与 Rust 工具链）
+npm install
+npm run tauri dev</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">还有 SSH 隧道、系统钥匙串加密凭据、SSL/TLS 和断线自动重连。社区版 Apache-2.0 免费，Ultimate 订阅 $9.9/月或 $99/年，含 7 天试用。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">SqlKit（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>GitHub Releases 安装包</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Tauri 原生构建，七十多种库，AI 写 SQL 且凭据不出本机</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>社区版免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 508</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">DBeaver Community</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>安装包</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>100+ 库，ER 图、schema 对比、数据迁移齐全</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>社区版免费，PRO $11/月</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 50k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Beekeeper Studio</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>安装包</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Electron，界面友好，跨平台一致</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>社区版 GPLv3，付费版才带 AI</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 22k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">DBeaver 的 stars 是它的 98 倍，功能深度也确实在另一个量级，需要 ER 图、schema 对比、企业级冷门引擎的，直接装 DBeaver。SqlKit 值得试的是另外两点：Tauri 带来的启动和内存表现，以及 AI 走本机 key 直连而不是厂商云。它目前 stars 不多、还在快速迭代，适合当轻量客户端备一个。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 508 · Apache-2.0 · Rust + Vue 3（Tauri v2）· </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/geek-fun/sqlkit</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://geekfun.club/download</span></code></p>
+
+</section>
