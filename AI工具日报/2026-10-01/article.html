@@ -1,0 +1,197 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-01</p>
+
+<p style="margin:0 0 14px 0;">![今日三个工具速览](./summary.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三个工具各守一层边界：做出的界面对不对味（impeccable）、agent 能碰到什么（OpenShell）、agent 能操作什么 API（cf）。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">impeccable — 给 AI 写的前端做设计体检，61 条规则不花一分 token</p>
+
+<p style="margin:0 0 14px 0;">![impeccable 设计体检演示](./impeccable-demo.jpg)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AI 生成的前端有一批固定通病：什么项目都是 Inter 字体、紫蓝渐变、卡片套卡片、彩色背景上的浅灰文字。impeccable 的 README 把它归因得很直接——所有模型都训练自同一批 SaaS 模板。它的起点是 Anthropic 官方那个被广泛使用的 frontend-design skill，作者把它扩展成了一套完整的设计纪律：一个 skill、24 条命令、61 条确定性检测规则，外加浏览器里的实时迭代。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#07c160;">61 条规则</strong>是它和提示词方案的核心区别。不调用 LLM、不需要 API key，CLI 和浏览器扩展直接跑，改完界面想复核一遍，成本是零。命令覆盖设计流程的各段：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">audit</code> 跑技术质量检查（无障碍、性能、响应式），<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">critique</code> 做 UX 评审（层级、清晰度、情绪），<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">polish</code> 负责上线前收尾，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">bolder</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">quieter</code> 调视觉强度，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">distill</code> 做减法，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">harden</code> 补错误态和文本溢出的坑。常用命令还能用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/impeccable pin audit</code> 固定成独立的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/audit</code> 快捷命令。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">标准开局是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/impeccable init</code>：它把产品的受众、目的、运营语境、语气记进 PRODUCT.md，之后所有命令都读这份产品事实，避免和视觉方向混在一起；视觉系统单独写进 DESIGN.md。动手时 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">craft</code> 先定形态再写代码，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">live</code> 在浏览器里对着选定元素迭代，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">generate</code> 直接出变体，也可以一句话 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/impeccable redo this hero section</code>。它内置的反模式清单也很具体：默认别用 Arial/Inter/系统字体，别用彩色背景上的灰字，别用纯黑纯灰（永远带色调），别套娃卡片，别用弹性缓动。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方 Neo Mirai 案例展示了完整流程：从两张生成的参考图（页面 mockup 加品牌工具包）出发，转成一个响应式站点。浏览器检查环节抓出了元素重叠、图片裁剪、导航状态缺失和轮播问题，全是那种肉眼看不出、上线才炸的毛病。安装上，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx impeccable install</code> 会自动发现你机器上的 harness 目录（~/.claude、~/.codex、~/.cursor 等），并给 Claude Code、Cursor、Codex、Copilot、Grok Build 装上 provider 原生 hook。仓库 7.3 万 stars，npm 周下载 21.1 万次，当前 v4.1.0，Apache-2.0。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 在项目根目录安装，自动探测你的 AI 编码工具
+npx impeccable install
+# 在 AI 编码工具里初始化，写入产品上下文
+/impeccable init
+# 后续一键更新
+npx impeccable update</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">impeccable（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx impeccable install</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>24 命令 + 61 条确定性规则，装后即挂原生 hook，浏览器实时迭代</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 73K · npm 21.1 万/周</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Anthropic frontend-design</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>anthropics/skills 仓库</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>impeccable 的起点，纯提示词约束，没有检测器和命令体系</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 17.9 万（含该 skill 的整仓）</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">M3E Canvas</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>浏览器打开</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>在浏览器里拼好界面，再让 AI 写出对应代码</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 5.2K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Superdesign</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>开源部署</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>AI 产品设计 agent</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 7K</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">前两个是同源关系：frontend-design 用提示词告诉模型"别那么做"，impeccable 在它上面加了一层可执行的检查——61 条规则跑一轮不花 API 调用，改完立刻能验证。M3E Canvas 和 Superdesign 重在生成界面，impeccable 重在审查和修正已经生成的界面，按需搭配。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 73,051 · v4.1.0 · Apache-2.0 · 🏪 npm 211,318 次/周 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/pbakaus/impeccable</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://impeccable.style</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://impeccable.style/cases/neo-mirai</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">NVIDIA OpenShell — 给 agent 发一张受限的通行证，而不是一台随便跑的机器</p>
+
+<p style="margin:0 0 14px 0;">![OpenShell 沙箱演示一](./openshell-demo-1.png)</p>
+
+<p style="margin:0 0 14px 0;">![OpenShell 沙箱演示二](./openshell-demo-2.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 要干活，就得读文件、装依赖、调 API、用凭据，这些权限一旦给出去就很难收回来。今天 GitHub 日榜第一（+1,281 stars）的 OpenShell 是 NVIDIA 给出的答案：你按 agent 声明它能碰什么，运行时逐条强制执行。官方定位是"自主 agent 集群的安全、私密运行时"。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">两件机制撑着它。第一件是内核级强制：每个 agent 在隔离沙箱里运行，文件访问由 Landlock 拦，网络出口走 seccomp，每一条连接出门前先过策略检查。凭据从不进沙箱——agent 手里没有真 token，OpenShell 只在请求发往已批准端点时把凭据注入连接。第二件是策略变更要过形式化验证：prover 先算清一条新规则会新开什么口子（比如"能带着凭据访问一个新主机"），有风险就停下来等人审批，通过了才自动重载。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">架构分三层。Gateway 是控制平面：管沙箱生命周期、身份校验、策略分发，也是唯一的凭据签发者。Supervisor 在可信侧：评估请求、注入凭据、解析 DNS、开连接。Sandbox 在不可信侧：只上报意图，通过受信任的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/proc</code> 观察把请求归属到具体二进制上，自己不做策略判断，手里没有任何密钥。Supervisor 掉线，沙箱冻结 agent，只有原 supervisor 进程能恢复。同一份策略在 Docker、Podman、Kubernetes（Helm 部署）和 VM 上行为一致，因为裁决发生在共享的 supervisor 与策略引擎里，隔离后端不参与。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">上手两行命令：装 CLI 加本地 gateway，然后起一个默认沙箱（最小 Ubuntu 镜像，不带 agent）。官方教程用 OpenCode 接免费 OpenRouter 模型演示完整流程：agent 干活途中申请新权限，你在审批环节放行。还配了 agent skills（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx skills add NVIDIA/OpenShell</code>），教你的编码 agent 自己写 policy、驱动 CLI、排查 gateway；SDK 覆盖 Python、TypeScript、Go、Rust。硬性要求是 Linux、Apple Silicon macOS 或 WSL2（实验性），底层用 Docker、Podman 或宿主虚拟化。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>curl -LsSf https://raw.githubusercontent.com/NVIDIA/OpenShell/main/install.sh | sh
+openshell sandbox create --name demo</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">OpenShell（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">install.sh</code> 一键装</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>内核级策略 + 凭据代理 + 策略形式化验证，可全本地</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 12.8K（今日 +1.28K）</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">E2B</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>SDK / 云服务</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Firecracker microVM 云沙箱，主打给 agent 跑代码</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费层 + 付费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 14.1K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Daytona</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>自托管 / 云</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>默认容器共享内核，独立评测发现无 seccomp；代码已转闭源</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>商业</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 71.7K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">microsandbox</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>单二进制</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>本地 microVM，官方标注实验阶段</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 8.5K</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Daytona 的星数是它的 5 倍多，但两者卖的东西不同：Daytona 和 E2B 给 agent 一台云端机器跑代码，OpenShell 给 agent 一条受限的访问通道，策略、凭据、网络出口都留在自己手里，还能全本地跑。要执行不可信代码，microVM 类方案更直接；要让 agent 安全地碰你的文件、内网服务和 API，OpenShell 的模型更对症。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 12,770（今日 +1,281，GitHub 日榜第一）· v0.1.x · Apache-2.0 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/NVIDIA/OpenShell</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://docs.nvidia.com/openshell/latest/index.html</span></code><span>&nbsp;·&nbsp;</span><span>PyPI 包 </span><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">openshell</code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Cloudflare cf — agent 成了 API 的主要用户，于是 CLI 被重写了一遍</p>
+
+<p style="margin:0 0 14px 0;">![cf CLI 演示](./cf-demo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Cloudflare 9 月 28 日发布 cf（open beta）：一个覆盖整个 Cloudflare API 的命令行，<strong style="color:#07c160;">3,000+ 个操作</strong>，对比 Wrangler 的约 280 个。重写的理由写在官方博客的数据里——上周 Wrangler 的使用量中 <strong style="color:#07c160;">48%</strong> 来自 agent，今年 3 月还是约 25%，再往前一年是个位数。API 的主要用户已经换了物种，交互设计得跟着换。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">为 agent 重写体现在细节里。输出默认 JSON：对人 pretty print，对 agent 压缩；命令命名被强制统一（"永远用 get 不用 info；永远 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--force</code> 不用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--skip-confirmations</code>"），因为 agent 依赖一致性，命名歧义会直接变成调用错误；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">cf cli search</code> 支持自然语言找命令，agent 第一次跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--help</code> 就会被告知这个入口，省去把 3,000 个操作塞进上下文；配置从 TOML/JSONC 换成 cloudflare.config.ts，类型可被 LSP 感知，bindings 和 triggers 都有 helper。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">迁移路径也铺好了：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">cf init</code> 起新项目，默认走 Vite 和 Cloudflare Vite 插件；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">cf migrate</code> 把兼容的 Workers 项目迁到新配置模型；纯静态站点不需要配置文件。Wrangler 会在 beta 结束后继续维护 18 个月，之后的最终大版本会引导用户转向 cf。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">几个数据侧面：agent 每天用到的不同命令数是人的近 2 倍，用 6 个以上命令的概率约 4 倍；Cloudflare 顺手把自家 Wrangler 配置从 5,000+ 行砍掉了 40%。npm 包发布三天，周下载已经 <strong style="color:#07c160;">4.7 万次</strong>，当前版本 1.0.0-beta.9。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 全局安装（open beta）
+npm i -g cf
+# 自然语言找命令
+cf cli search "create a kv namespace"</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">cf（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i -g cf</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>3000+ API 操作、JSON 默认、自然语言命令检索、TS 配置</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费（平台服务照常计费）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 npm 4.7 万/周（beta）</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Wrangler</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i -g wrangler</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>约 280 个操作，Workers 工作流的老手</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>npm 2,772 万/周</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">AWS CLI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>安装包</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>覆盖全 AWS，但输出面向人、命名不统一</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">gcloud</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>安装包</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>GCP 同类</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Wrangler 的周下载是它的五百多倍，但两者不是一个世代的东西：Wrangler 的交互假设终端前坐的是人，cf 的交互假设读输出的是 agent。现在是 beta，生产项目可以先并行跑着，新项目我会直接上 cf。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 573（issues 仓库）· v1.0.0-beta.9 · Apache-2.0 · 🏪 npm 47,305 次/周 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/cloudflare/cf</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://developers.cloudflare.com/cf/</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://blog.cloudflare.com/cloudflare-cf-cli-launch/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">magpie</p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">菜单栏小工具，给编码 agent 换底下的模型：Codex 跑 DeepSeek、Claude Code 跑 Kimi，改完即生效。作者 yetone（avante.nvim 那位），9 月 23 日建仓，一周多冲到 3,806 stars，MIT，Go 写的。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/yetone/magpie</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Univer</p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">Office Harness for AI Agents：把表格、文档、演示、看板、PDF 收进一个 runtime，Canvas 渲染加公式引擎，浏览器和 Node 通用一套 Facade API，插件架构可按需裁剪。本周 +6,091 stars，共 22,181 stars，Apache-2.0。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/dream-num/univer</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Ponytail</p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">让 agent 像"房间里最懒的资深工程师"那样思考，信条是"最好的代码是你从没写过的代码"和"他什么也不说，写一行，能跑"。兼容 20 种编码 agent 的插件，npm 周下载 2.15 万，149,237 stars，MIT。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/DietrichGebert/ponytail</code></p>
+</section>
+
+</section>
