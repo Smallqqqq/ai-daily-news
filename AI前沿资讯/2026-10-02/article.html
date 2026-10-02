@@ -1,0 +1,368 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-02</p>
+
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+<p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;">本期覆盖 2026-10-01 至 2026-10-02 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Bluesky / Lobsters / arXiv / HF Papers / 知乎 / AI 实验室博客。精选 10 条按影响力排序。</p>
+<p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;"><strong style="color:#07c160;">核心主题：</strong>Cloudflare 用决策模型 Clef 以 435 分登顶 HN，"不做对话的 AI"正在进入生产环境；模型路由、上下文压缩、Agent 审计三类基础设施同日升温；机器人操控与骨骼动画研究各自交出开源可跑的成果。</p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. Cloudflare Clef：开源决策模型 + RL 微调平台，435 分登顶 HN</p>
+
+<p style="margin:0 0 14px 0;">![Cloudflare Clef 决策模型演示](./clef-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.2/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 435 分 / 163 评论（当日第一）+ Apache-2.0 权重开源</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Cloudflare 发布首个自训模型家族 Clef：Clef 基于冻结的 Qwen3.8-27B，Clef-flash 基于 Qwen3.5-9B，外加一套 RL 微调平台。它只做"有界决策"：每条请求返回带概率的结构化答案（紧急与否、工单分给谁、严重度几分），代码直接拿去做路由、升级或转人工。架构上原模型权重冻结，只训练 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">routing head</code> 加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">rank-256 LoRA</code>，损失用 label-smoothed 交叉熵加 Brier loss 做校准，再叠加 RLCD 强化学习；推理走纯 prefill，决策步非自回归、并行打分。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>curl https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/ai/run/@cf/cloudflare/clef \
+  -X POST -H "Authorization: Bearer $CLOUDFLARE_AUTH_TOKEN" \
+  -d '{"model":"clef","state":"...","questions":{...}}'
+
+# 权重（Apache-2.0）：huggingface.co/Cloudflare/clef 与 huggingface.co/Cloudflare/clef-flash
+# 文档：developers.cloudflare.com/workers-ai/models/clef</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">对标竞品 Jev：官方 benchmark 里 Clef 双模型的 BFCL case-exact 为 <strong style="color:#07c160;">98.47 / 98.76</strong>，Jev 95.75。BANKING77 macro-F1 为 <strong style="color:#07c160;">94.20 / 90.93</strong>，Jev 79.74。延迟中位数 Clef <strong style="color:#07c160;">209.3ms</strong>、Clef-flash <strong style="color:#07c160;">38.8ms</strong>，Jev 524.1ms。Cloudflare 称它在其 Jev Decision Index 评测上目前领先。相对 Jev 系它还多了视觉编码器和 64k 上下文（Jev 为 32k），输出完全 Jev-API 兼容，迁移只需改 endpoint。配套 RL 微调服务复用 AI Gateway（自动生成请求数据集）、Containers（RL 沙箱）与新 Trainer，先以 FDE 服务形式交付，后续开放自助。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">ralusek</strong> 贴出实测："Just tested clef-flash vs jev: Jev/TypeSafe 230ms median... Clef Flash: 661ms median, 806ms mean. What gives?" 第三方实测与官方 38.8ms 的数字差了一个量级，帖内暂无官方回应。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">fooker</strong> 给了个挑战题："看一个 1M 上下文窗口，在 50-100ms 内产出 N 个不同查询的决策"，他认为竞争会把这类模型再压下去几个数量级。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://blog.cloudflare.com/clef-decision-models/</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=49923692</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. Weave Router 2.0：开源模型路由，把 Astra 级表现打到一半成本</p>
+
+<!-- 跳过源图 weave-router-demo.svg：SVG 格式发布上传接口不支持（同 webp 规则，仅注释说明） -->
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.9/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Show HN 81 分 / 24 评论，Apache-2.0 开源</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">weave-os 开源的模型路由器（Go 编写，Apache-2.0），定位是给 agent 系统用的"OpenRouter"：每个 prompt 按动作路由到最合适的模型，决策耗时小于 50ms。2.0 换掉了 prompt 启发式，用一个本地小 embedder 对每次 action 打分，并用隐藏马尔可夫模型跟踪会话状态、把会话映射到模型"桶"，同时改进缓存驱逐的影响估算。它作为 drop-in 代理同时兼容 Anthropic Messages、OpenAI Chat Completions、Gemini 原生三种 API，流式、工具调用、视觉都支持；上游密钥留在本地加密存储（BYOK）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 宿主版一键接入（Node ≥ 18）
+npx @weave-os/router --claude          # 接入 Claude Code
+npx @weave-os/router --codex           # 接入 Codex CLI
+npx @weave-os/router --opencode --pi   # 其他 harness
+npx @weave-os/router off|on|status|models
+
+# 自托管
+git clone https://github.com/weave-os/router &amp;&amp; cd router
+cp .env.example .env.local   # 填 OPENROUTER_API_KEY、ROUTER_ADMIN_PASSWORD
+make full-setup              # 路由在 localhost:8080，控制台在 /ui/</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方对比 GPT-6 Astra 直连：Terminal Bench 4.0 同通过率下成本为 <strong style="color:#07c160;">52%</strong>、快 <strong style="color:#07c160;">2.2 倍</strong>；SWE Atlas 成本 <strong style="color:#07c160;">54%</strong>、快 <strong style="color:#07c160;">2.5 倍</strong>。典型会话约 100 个 agent 回合，官方称路由路径空间约 10^100，所以它把决策做成按 action 而非按会话。已适配 Claude Code、Codex CLI、opencode、pi，Cursor 处于早期 beta（走 OpenAI base-url 覆盖）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">有人问和 Cursor / Copilot auto mode 的区别，作者 <strong style="font-weight:bold;color:#000;">adchurch</strong> 回应：那些产品"每个会话只路由一次"，他认为这 "basically impossible to do correctly"；按 action 路由、且不绑定单一厂商的模型，是它和 harness 内置路由的分野。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">关于"用前沿模型的标注数据训练，怎么可能超过前沿模型"，作者的回答短："Different frontier models are good at different things!"</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/weave-os/router</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=49911500</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. iFixAi：给 AI Agent 做独立审计，60 项检查出 A–F 评分卡</p>
+
+<p style="margin:0 0 14px 0;">![iFixAi Agent 审计评分卡演示](./ifixai-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.7/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +340 stars/day（10-01），总 18.5K，Product Hunt 当日第 3</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">开源的 Agent 独立审计工具（Apache-2.0，Python 3.10+），回答"你的 agent 是否在做它应该做的事"。一次完整运行跨 25 个类别跑 60 项检查，围绕五个打分维度：捏造、操纵、欺骗、不可预测、不透明（操纵权重 0.35 最高），另加 sabotage、benchmark 污染等高级类别，最终输出 A–F 字母等级（A 不低于 0.90，及格线 0.85）。支持黑盒测试（对任意 OpenAI 兼容 endpoint）或接 adapter 拿内部可见性；"无法评分"的能力如实标注，不扣分。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>pip install "ifixai[openai]"
+ifixai setup &amp;&amp; ifixai run                 # 向导模式
+ifixai run --provider mock                 # 无 key 冒烟测试
+ifixai run --provider http --endpoint &lt;你的agent地址&gt; --grounding sut
+
+# 作为 Claude Code / Codex 插件
+/plugin marketplace add ifixai-ai/iFixAi &amp;&amp; /plugin install ifixai@ifixai-community
+codex plugin marketplace add ifixai-ai/iFixAi &amp;&amp; codex plugin add ifixai@ifixai-community</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 评估大多停在"任务做没做完"，iFixAi 把"值不值得信任"变成可复现的评分卡：要拿"可引用"评级必须提供两个不同厂商的 key（被测模型 + 裁判模型），避免自测自评；整套 60 项的裁判成本约 <strong style="color:#07c160;">12 到 18 美元</strong>（单个 Sonnet 裁判），Gemini/GPT 组合约 <strong style="color:#07c160;">10 到 14 美元</strong>。评测套件分 smoke(3) / strategic(8) / core(32) / extended(28) / all(60) 五档，可接 CI。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Product Hunt 上它拿到当日第 3，页面强调定位差异："Unlike relying solely on evals and observability tools, its multifaceted audit includes..."（把 AI 红队、运营保障和伦理、社会学视角合在一起，而不是只做 evals 和可观测性）。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">LinkedIn 上的从业者分享把它概括为："iFixAi helps teams audit AI agents for these hidden risks through independent AI red teaming, operational assurance, and compliance inspections."</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/ifixai-ai/iFixAi</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/products/ifixai/awards</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. 腾讯云 Octop：自托管多用户多 Agent 助手，一条命令起服务</p>
+
+<p style="margin:0 0 14px 0;">![Octop 多 Agent 助手界面](./octop-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +285 stars/day（10-01），总 6.3K，V2EX 与腾讯云社区热议</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">腾讯云开源（MIT）的自托管 AI 助手平台：多用户、多专家、多 agent，面向家庭和小团队。每人在同一套部署里建多个"专家"，内置 16 种 MBTI 人格模板和专家库；AgentTeams（Beta）让协调者调度多个专家做多步任务。技术栈 Python 3.12 + FastAPI + React 18，默认 SQLite（可换 PostgreSQL），单进程架构，全部状态在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.octop/</code> 下，重启从控制面数据库恢复。前身是腾讯内部项目 LightClaw ACE。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Windows
+irm https://finnie-1258344699.cos.ap-guangzhou.myqcloud.com/octop/install.ps1 | iex
+# macOS / Linux
+curl -fsSL https://finnie-1258344699.cos.ap-guangzhou.myqcloud.com/octop/install.sh | bash
+# 或：pip install octop / docker compose -f docker/docker-compose.yml up -d
+
+octop init   # 建库、生成 JWT 密钥、创建首个管理员
+octop run    # 打开 http://127.0.0.1:8088</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">IM 通道覆盖是差异点：飞书、钉钉、企业微信、微信、QQ、Telegram、Discord 全部自带桥接。知识库走 Karpathy 的 llm-wiki 路线，把原始资料持续编译成互相链接的 Markdown Wiki，检索时不再重新向量化整个语料。安全侧默认不信任专家运行环境：JWT 多用户隔离、工具审批、shell 命令护栏、PII 脱敏，agent 读写限定在工作区。1.0 还补齐了 macOS/Windows/Linux 桌面端、飞牛 NAS 应用、页面级 ACL 加 token 额度、插件向控制台注入自定义 UI。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">腾讯云社区文章转述 V2EX 反馈：一键部署加 IM 通道体验不错；但同帖有人指出核心依赖（harness-agent、harness-memory、harness-browser）以外部包形式引入、尚未开源，与官网"完全开源"的说法存在张力。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">同一来源提醒两点风险：SQLite 在多用户高并发下的写锁瓶颈、远程桌面加浏览器操控带来的攻击面；默认管理员密码 octop 必须第一时间改。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/TencentCloud/Octop</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://developer.cloud.tencent.com/article/2743438</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. mksglu/context-mode：把 MCP 工具输出拦在上下文之外，省 98%</p>
+
+<p style="margin:0 0 14px 0;">![context-mode 上下文压缩演示](./context-mode-demo.jpg)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.4/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 362 stars/day，总 24.8K，HN 历史第一（570+ 分）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">给编码 agent 做"上下文沙箱"的 MCP server 加 hooks 系统。工具输出不进对话，先在隔离子进程里执行，只把结果放进上下文；原始数据落到本地 SQLite，用 FTS5 索引（BM25 + Porter 词干 + 三元组双路 RRF 融合、邻近重排、Levenshtein 纠错）按需检索。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ctx_execute</code> 支持 12 种运行时（JS/TS/Python/Shell/Ruby/Go/Rust/PHP/Perl/R/Elixir/C#），压缩前还会写一份不超过 2KB 的优先级会话快照（在改哪些文件、当前任务、未解决错误），会话续接时自动注入。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code（推荐，插件 + hooks 全量能力）
+/plugin marketplace add mksglu/context-mode
+/plugin install context-mode@context-mode
+/context-mode:ctx-doctor   # 验证安装
+
+# 其他平台（Codex / Gemini CLI / VS Code Copilot / Pi / OpenCode 等，共 17 个）
+npm install -g context-mode</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它的账很好算：一次 Playwright 快照 <strong style="color:#07c160;">56KB 压到 299B</strong>；ctx_batch_execute 把 <strong style="color:#07c160;">986KB 压到 62KB</strong>；README 宣称整体 <strong style="color:#07c160;">98%</strong> 的上下文节省，会话时长从 30 分钟量级拉到 3 小时以上。对照实验是 47 次 Read() 合计 700KB 的活，一次 ctx_execute 用 3.6KB 完成。MCP 工具共 11 个，超过 5KB 的输出走 intent 过滤，只回匹配片段。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">我核对了 README 上的 HN 徽章：570 分来自项目早期那篇热帖，今天上 Trending 的推力是 362 stars/day。帖里用户 blakec 指出纯 BM25 对工具输出（JSON、表格、配置与自然语言混杂）会失效，建议上混合检索；现在 README 的知识库正是 porter + trigram 双路融合加邻近重排。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">作者 mksglu 回应"Claude Code 会截断输出"的质疑："25k tokens is still a lot... Three or four Playwright snapshots or a batch of GitHub issues and you've burned 100k tokens"，context-mode 把每次调用压到 1-2k，同时全量输出保持可检索。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/mksglu/context-mode</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. HeyGen HyperFrames：用 HTML 写视频，为 Agent 设计的渲染框架</p>
+
+<!-- webp 格式图片不支持上传，已跳过：hyperframes-demo.webp -->
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.3/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 627 stars/day，总 55.4K，tldraw / TanStack 生产使用</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">HeyGen 开源的（Apache-2.0）HTML 转 MP4 渲染框架：一段视频就是一页带 data-* 时间属性的 HTML，动画用 GSAP、CSS、Lottie、Three.js、Anime.js、WAAPI 或自定义 adapter；渲染器在 headless Chrome 里逐帧 seek，FFmpeg 编码，确定性输出（同输入同字节）。CLI 默认非交互，随包 21 个 skills，覆盖 /product-launch-video、/pr-to-video、/faceless-explainer 等创作流程。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx hyperframes init my-video &amp;&amp; cd my-video
+npx hyperframes preview   # 浏览器实时预览
+npx hyperframes render    # 输出 MP4
+
+# Claude Code 插件 / skills
+claude plugin marketplace add heygen-com/hyperframes &amp;&amp; claude plugin install hyperframes@hyperframes
+npx skills add heygen-com/hyperframes</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">视频进入代码工作流：版本控制、review、CI 回归、可复现构建。和 Remotion 同走 headless Chrome + FFmpeg 路线，差异在授权与写法：Apache-2.0、无按次渲染费、无公司规模门槛（Remotion 为 source-available，大公司需付费），写纯 HTML、不需要 React 和 bundler。CLI 已到 0.8.27，带托管渲染、AWS Lambda 与 Cloud Run 路径；HeyGen 自家生产使用，社区侧 tldraw、TanStack 在用。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">andrew.ooo 的评测："It's not as mature as Remotion. The catalog is thin, render throughput on a single machine is unimpressive... But for the specific job of 'wire video generation into an automated content pipeline driven by Claude Code or similar,' nothing else comes close right now."</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Kompozy 评测给 3.8/5，把边界也说得清楚："渲染一段片子就结束，不含写脚本、数字人、发布。按渲染框架评很强；按给非技术创作者出片的工具评，就是错的工具。"</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/heygen-com/hyperframes</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. Suno Speech：语音与配乐一次生成，向所有用户开放 Beta</p>
+
+<p style="margin:0 0 14px 0;">![Suno Speech 生成演示](./suno-speech-demo.jpg)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.9/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Bloomberg 报道 + 全量 Beta 开放（移动端 / Web）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Suno 10 月 1 日把 Speech 推向 Beta，所有用户可在移动端和 Web 使用。官方称它是第一个把语音与音乐放在一个模型里、一次生成一条完整音轨的音频模型：输入你写的文字（诗、冥想词、演讲稿），描述想要的声音与音乐风格，直接产出带原创配乐的 spoken-word 作品。CPO Jack Brody 给的场景：钢琴垫底的睡前故事、体育场鼓点的热血演讲、ASMR 购物清单。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 无 CLI。打开 suno.com 或 App，进入 Speech（Beta）：
+# 1) 输入文本  2) 描述 voice 与 musical style  3) 生成
+# 免费档每天 50 credits；商用授权仅限付费档</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">spoken-word 创作者过去要在 TTS 念白和音乐生成两条流水线之间拼装，Speech 把两者合成进一次生成。Suno 估值超 <strong style="color:#07c160;">50 亿美元</strong>，9 月刚发布与 Warner、BMG、Believe 合作的 v6 音乐模型；Speech 是它从音乐工具向通用创作平台扩张的第一步。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Bloomberg："Suno Inc., the AI music startup valued at more than $5 billion, is launching a new tool that'll let users put background music to their spoken-word creations, like poems, meditations and speeches."</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">官方博客自己先把槽点兜底了："beta 就是 beta，英音偶尔会漂去澳洲再漂回来；戏剧性停顿可能过于戏剧性。"此前社区想在 Suno 里做纯念白，要靠 [Spoken narration] 标签和各种 prompt 偏方，Speech 正面解决了这个需求。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://suno.com/blog/introducing-speech-beta</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.bloomberg.com/news/articles/2026-10-01/ai-startup-suno-s-new-tool-puts-music-to-spoken-word</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. RoboICL：冻结 GPT-6 Astra，用"看一遍"学会机器人操控</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">alphaXiv Trending 第三 + 机器之心 10-01 报道</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">三星研究院与上海交大提出的具身上下文学习框架（arXiv:2609.34261，9 月 28 日提交）。不改 GPT-6 Astra 一个参数，不训练机器人专用 VLA：把同任务的示范轨迹（demonstration context）和机器人自己刚执行过的动作与结果（interaction memory）组织成同一种"观察→动作→回执→观察"语法喂给冻结模型，让它直接输出下一段双臂笛卡尔动作；外围是确定性 harness，负责校验动作格式、执行逆运动学、回传控制器反馈。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 论文：https://arxiv.org/abs/2609.34261
+# 项目页（30 个任务、929 条可播放执行记录）：
+# https://mosi-ai.github.io/RoboICL-GPT6-Astra.github.io/</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">RoboDojo 30 项任务总体分 <strong style="color:#07c160;">50.64</strong>，对比论文表里最强公开策略 Simate-beta 的 33.68；真实机器人三个任务的平均 progress score 从零样本 14.45 到一示范 <strong style="color:#07c160;">63.33</strong>、三示范 <strong style="color:#07c160;">78.89</strong>。工程账也公布了：1810 次模型请求、1.2251 亿输入 token 中 1.1315 亿命中缓存，加权 KV-cache 命中率 <strong style="color:#07c160;">92.4%</strong>，靠的是稳定前缀加有界锚点记忆。另一个开发实验里，加一个 Jev 动作复用门控，把请求数从 181 降到 121、116 降到 60（约 33% 与 48%）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">机器之心的分析："少量示范的价值不只在于给出'正确答案'，更在于提供可执行的过程结构；机器人自身的在线经验必须以动作和真实后果配对的形式保留下来。"</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">论文把边界也放上台面：仿真主结果只有 seed 0、progress score 不等于完整成功率、真机每设置仅 5 次试验；换来的是 929 条执行记录全部可播放公开，这在机器人论文里不常见。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://arxiv.org/abs/2609.34261</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://zhuanlan.zhihu.com/p/2089138164308906216</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. AREX-2：把"越迭代越好"训进模型，MLE-bench Lite 81.8</p>
+
+<p style="margin:0 0 14px 0;">![AREX-2 自改进 Agent 演示](./arex2-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.6/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HF Papers 收录 + GitHub 开源可跑（10-01 提交 arXiv）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">智源（BAAI）AREX 团队的第二代自改进 agent（arXiv:2609.38288，10 月 1 日提交）。它把测试时自我改进拆成两种可训练能力：反思（每轮产出比上一轮更好的解）与长时程执行（让迭代在多轮后仍然有效），用机器学习工程（GitHub 仓库转成环境）和算法编程（在线判题）两类有可验证反馈的任务，合成数千条长时程反思轨迹，以 Qwen3.8-27B 为底座训练。多轮执行 runner 已开源。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 论文：https://arxiv.org/abs/2609.38288
+# 代码（含多轮执行 runner）：https://github.com/VectorSpaceLab/AREX-2
+# 模型权重：https://huggingface.co/BAAI/AREX-2
+# 给 agent 直接读：hf papers read 2609.38288</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">MLE-bench Lite <strong style="color:#07c160;">81.8</strong>、Frontier-CS <strong style="color:#07c160;">70.7</strong>；长时程反思能力零样本迁移到深度研究：BrowseComp 84.0、HLE 52.6、GAIA 92.2、DeepSearchQA 93.8。行为特征比分数更关键：反思预算加大时分数单调上升，没有多轮提示常见的后期退化。做 CI/CD 自动重构或自动化 Kaggle 流水线的团队，配好单元测试验证器就能直接挂上去跑。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">技术媒体 AICoder 的解读概括成工程结论："Decouples test-time self-improvement into domain-agnostic reflection and long-horizon execution"，并给出落地建议：用明确的 verifier 约束迭代目标后再放开轮数。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HF Papers 已收录，页面提供 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">hf papers read 2609.38288</code>，可以直接把论文喂给本地 agent 读。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/VectorSpaceLab/AREX-2</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://huggingface.co/papers/2609.38288</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">10. UniMate：一个模型驱动任意骨骼，SIGGRAPH Asia 2026</p>
+
+<p style="margin:0 0 14px 0;">![UniMate 骨骼动作生成演示](./unimate-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.4/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 217 stars/day，作者 X 帖 11 万浏览</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">普林斯顿、伯克利、MIT 合作（SIGGRAPH Asia 2026）的动画基础模型。输入一个已绑定的 3D 资产和一句文字，直接为任意骨骼拓扑生成驱动动作，不做 test-time 优化、不为单个骨骼重训。核心是 topology-aware diffusion transformer：用三重机制把骨架拓扑融入注意力，包括关节对关系与测地距离构成的图感知注意力偏置、把 RoPE 推广到谱域的 spectral rotary position embedding。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 论文：https://arxiv.org/abs/2609.05415
+# 代码（MIT）：https://github.com/Friedrich-M/UniMate
+# 权重与数据集：https://huggingface.co/collections/Linzhan/unimate
+# 在线交互 demo（拖入 .fbx / .glb）：https://linzhanmou.com/unimate</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">自动绑定已经在规模化产出可动画资产，卡点在动作生成。此前学到的 animator 全部受拓扑约束：要么用类别模板，要么推理时带参考动作做 per-skeleton 微调。UniMate 用一个模型覆盖人形、四足、鸟类、海洋生物、昆虫、蛇形与铰接刚性物体；同步开源 UniML3D 数据集（<strong style="color:#07c160;">13,769 条文本配对动作、7,430 具骨架</strong>）和 74.1M 参数的预览权重。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">作者发帖："A rigged asset + a text prompt → motion. No per-skeleton retraining needed!"，11 万浏览。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">数据合规的处理也被拿出来讨论：Truebones ZOO 是商业资产包、许可不允许再分发，作者在项目页明确让使用者自行购买，管线只消费其目录结构；Mixamo 与 Objaverse-XL 保持原许可。只发管线不发素材，是 3D 数据集常见的边界做法。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://arxiv.org/abs/2609.05415</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Friedrich-M/UniMate</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">GPT-Synopsys <span style="font-size:13px;font-weight:normal;color:#999999;">HN 168 分 / 101 评论</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">OpenAI 与 Synopsys 宣布把前沿模型接入芯片设计流程，覆盖 EDA 全流程的合作，讨论集中在"LLM 到底能加速芯片设计多少"。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://news.synopsys.com/2026-09-30-OpenAI-and-Synopsys-Announce-GPT-Synopsys-Frontier-Intelligence-to-Revolutionize-Chip-Design</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Grok Bot 扩编开发能力 <span style="font-size:13px;font-weight:normal;color:#999999;">10-01</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">xAI 的常驻 agent 现在可以把编码任务交给 Cursor、用 GitHub 与 Origin 插件管理 PR、给构建结果配视频演示。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://x.com/_OnlyClinton/status/2105676849766432927</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">DeepSeek 昇腾组件开源 <span style="font-size:13px;font-weight:normal;color:#999999;">9-30</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">DeepGEMM-Ascend 首次发布、TileLang 同日新增 Ascend 950 后端；中文社区讨论集中在迁移细节（包名与接口兼容，但缩放因子布局与 NVIDIA 版不同）。TileLang 今天以 163 stars/day 回到 Trending。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/tile-ai/tilelang</code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://zhuanlan.zhihu.com/p/2088876873459750632</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">ponytail 持续火爆 <span style="font-size:13px;font-weight:normal;color:#999999;">GitHub Trending 第 2，+1,194 stars/day，总 150.6K</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">"最懒资深工程师"技能，已在 6 月 26 日首次收录；README 基准为 12 个功能 ticket 上代码量 -54%、成本 -20%、时间 -27%。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/DietrichGebert/ponytail</code></p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<section style="background-color:#f5f7fa;border-radius:10px;padding:18px 20px;margin:14px 0 0 0;">
+<p style="margin:0 0 8px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">本期关键词</p>
+<p style="margin:0;font-size:15px;color:#555;line-height:2.0;text-align:left;">决策模型 · 模型路由 · Agent 审计 · 上下文沙箱 · 视频即代码 · 具身上下文学习</p>
+</section>
+
+</section>

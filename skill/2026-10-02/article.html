@@ -1,0 +1,143 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-02</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让通用 coding agent 审代码，你大概率遇到过三种情况：diff 一大它就挑着文件审，漏掉的那些你事后才发现；它报告的问题行号对不上，按图索骥找到的是一段无关代码；同一个改动换个措辞再问一遍，结论又不一样。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Open Code Review 是阿里巴巴内部用了两年的官方 AI 代码审查助手，服务两万多名内部活跃开发者、累计跑完 <strong style="color:#07c160;">300 万次</strong>真实审查任务后开源。它把审查拆成两半：确定性的部分交给工程逻辑保证，动态决策的部分交给 agent。npm 月下载 <strong style="color:#07c160;">51 万次</strong>，本周 GitHub 涨了约 1.5 万星，目前增速排第一。</p>
+
+<p style="margin:0 0 14px 0;">![open-code-review 审查结果演示](./open-code-review-demo-1.png)</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">通用 agent 做审查的毛病，README 自己列了三条：覆盖不全（大 changeset 上 agent 倾向"抄近路"，选择性审部分文件）、位置漂移（报告的问题和实际代码位置对不上）、质量不稳（自然语言驱动的技能难调试，prompt 稍变结果就飘）。根因一句话：纯语言驱动的架构，对审查过程没有硬约束。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这套工具对两种人特别值：每天 push 前要自查的开发者，以及接手陌生代码库、根本没有 diff 可看的人。后者用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ocr scan</code> 直接整文件审计。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">混合架构，两类工作分开处理。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">不能出错的环节用工程逻辑锁死：</p>
+
+<ol style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">精确文件选择</strong>：哪些文件该审、哪些过滤，由确定性逻辑判断，保证重要改动不遗漏</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">智能文件分组</strong>：相关文件绑成一个审查单元（比如 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">message_en.properties</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">message_zh.properties</code> 绑一起），每个 bundle 作为独立子 agent、隔离上下文运行。分治法让它在超大 changeset 上依然稳定，天然支持并发</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">模板引擎规则匹配</strong>：按文件特征匹配规则，内置多语言规则集覆盖 NPE、线程安全、XSS、SQL 注入这类经典缺陷。规则靠模板引擎而不是自然语言引导，稳定性和可预测性更高</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">外部定位与反思模块</strong>：独立的评论定位模块和评论反思模块，系统性地修正 AI 反馈的位置和内容准确性</li>
+</ol>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 则集中在它擅长的动态决策上：为审查场景深度调优的提示词模板，以及一套从大规模生产数据的工具调用轨迹里蒸馏出来的专用工具集（分析了调用频率分布、单工具重复率、新工具对调用链的影响）。</p>
+
+<p style="margin:0 0 14px 0;">![open-code-review 混合架构演示](./open-code-review-demo-2.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AACR-Bench 基准（50 个热门开源仓库、200 个真实 PR、10 种语言、80 多位资深工程师交叉校验出 1,505 条标注问题）上，同一个 Claude-4.6-Opus 模型：走 Open Code Review 是 F1 <strong style="color:#07c160;">25.10%</strong>、精确率 33.90%、平均 1 分 23 秒、385K token；走 Claude Code 是 F1 11.57%、精确率 7.23%、平均 13 分 6 秒、5,664K token。官方汇总 1,000 个 PR 的口径是 token 只花约 <strong style="color:#07c160;">1/9</strong>。recall 它比通用 agent 低，这是刻意的取舍：宁可漏报，不制造噪音让人去分诊。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">安装配置</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 1. 要求 Git &gt;= 2.41
+git --version
+
+# 2. 装 CLI
+npm install -g @alibaba-group/open-code-review
+
+# 3. 配模型（交互式：选 provider → 填 API key → 选模型 → 自动连通性测试）
+ocr config provider
+ocr config model
+ocr llm test</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">内置 provider 覆盖国内外主流：DashScope、Anthropic、OpenAI、DeepSeek、Kimi、MiniMax、智谱、火山引擎、腾讯、百度、小米 MiMo、Z.AI，也支持自定义端点。</p>
+
+<p style="margin:0 0 14px 0;">![open-code-review 安装配置演示](./open-code-review-demo-3.jpg)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">在 Claude Code 里运行这两行装成插件：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>/plugin marketplace add alibaba/open-code-review
+/plugin install open-code-review@open-code-review</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装完得到两个斜杠命令：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/open-code-review:review</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/open-code-review:delegate-review</code>。Codex、Cursor、Kimi Code、OpenCode、QCA 各有对应插件，仓库 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">plugins/</code> 目录里按平台分好了安装说明。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">使用指南</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:20px 0 10px 0;">场景一：提交前自查（Claude Code 插件）</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">改完代码，在 Claude Code 里敲 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/open-code-review:review</code>，它读当前 diff 出审查结果，行级评论直接定位到问题代码。想让它顺手修掉高置信度问题，可以继续用自然语言吩咐（Codex 插件里的示例写法是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">@Open Code Review review and fix high-confidence issues</code>）。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:20px 0 10px 0;">场景二：没有额外 API key 也能用（delegation 模式）</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/open-code-review:delegate-review</code> 走委托模式：Open Code Review 只做确定性的部分（选文件、解析规则），审查本身由宿主 agent 用自己的模型完成，不需要配 OCR 的 LLM。只有 Claude Code 订阅、不想再开一个 API 账单的人用这个。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:20px 0 10px 0;">场景三：接手陌生代码库（全文件扫描）</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>ocr scan                          # 没有 diff 可看时，直接扫全仓库
+ocr scan --path internal/agent    # 只扫一个目录或指定文件
+ocr scan --resume &lt;session-id&gt;    # 中断后续跑</code></pre>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:20px 0 10px 0;">场景四：分支范围审查，结果落盘给 agent 消费</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 审 feature 分支自 main 分叉以来的所有改动（merge-base 模式）
+ocr review --from main --to feature-branch
+
+# 结果存 JSON，供宿主 agent 或 CI 消费（官方推荐 AI host agent 用这个姿势）
+ocr review --format json --output result.json</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ocr review</code> 还支持 workspace 模式（审所有已暂存/未暂存/未跟踪改动）和单 commit（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ocr review --commit abc123</code>）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">会话可恢复 + 浏览器回放。</strong> 大仓库审查中断了，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ocr session list</code> 找到 session-id，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--resume</code> 接着跑。审完想逐条过评论，用 session viewer 在浏览器里回放整个会话，把已处理的标成 fixed/ignored 并隐藏，剩下的就是待办清单。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">接进 CI 当门禁。</strong> GitHub Actions、GitLab CI、GitFlic CI、Gerrit 都有现成集成，还带 OpenTelemetry。团队用法：本地 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ocr</code> 自查，push 后 CI 里再跑一遍机器审查，人工只看高置信度条目。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">常见踩坑</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">Git 版本硬要求 2.41+</strong>。它的 diff 生成、代码搜索、仓库操作都依赖较新的 git 能力，版本不够直接报错</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">默认模式必须先配 LLM</strong>，否则 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">ocr review</code> 跑不起来，不想配就走 delegation 模式</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">recall 低于通用 agent 是设计取舍</strong>，它优先保证报出来的问题都是真问题。需要"宁可错杀"的场景（比如安全红线审查），把它和别的工具叠加用，别单吊</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">项目迭代很快</strong>（当前 257 个 open issue），CLI 行为以 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">ocr --help</code> 和官方文档站为准</li>
+</ul>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">open-code-review（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm install -g @alibaba-group/open-code-review</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>混合架构：工程逻辑锁死选文件/分组/定位，agent 管动态决策；1/9 token</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>提交前自查、团队 CI 审查门禁、陌生代码库审计</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 43.2k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">addyosmani/agent-skills</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add addyosmani/agent-skills</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>25 个生命周期技能包，反合理化表格专治 agent 跳步骤</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>个人开发流程的质量纪律</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 100k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">spencermarx/open-code-review</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">git clone</code> 后手动装</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>多 agent 模拟评审团，带评审讨论串</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>想要多视角讨论式审查</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 371</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Agent-Field/pr-af</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>见仓库 README</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Code-Review-Bench 开源第一</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>benchmark 导向尝鲜</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 642</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">和 9 月 4 日推荐过的 addyosmani/agent-skills 不是一个打法。那套技能管流程纪律，在 agent 的工作流里加规则，防止它跳过测试、绕过评审；这套管审查引擎本身，怎么审得准、审得全、审得便宜，把审查做成带工程约束的独立流水线。前者的 code-reviewer 人设是让 agent 换个视角看自己的代码，后者是让机器替你做一遍真审查。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 43.2k · v1.12.11 · Apache-2.0 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/alibaba/open-code-review</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://open-codereview.ai/docs</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">天天用 Claude Code 写代码的话，装个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/open-code-review:review</code> 五分钟的事，下一个 PR 就能试。它值的地方在于同模型下把 F1 从 11.57% 提到 25.10%、token 降到 1/9：审查这件事，工程约束比提示词更能打。基准数据是官方公开的，安装免费，apt/brew/npm 都行，先拿你自己的仓库验一次。</p>
+
+</section>
