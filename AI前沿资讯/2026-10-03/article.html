@@ -1,0 +1,270 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-03</p>
+
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+<p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;">本期覆盖 2026-10-02 至 2026-10-03 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Bluesky / Lobsters / arXiv / HF Papers / 知乎 / AI 实验室博客。精选 7 条按影响力排序。</p>
+<p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;"><strong style="color:#07c160;">核心主题：</strong>Redis 作者 antirez 的 ds4 把大 MoE 推理压进 128GB Mac；Claude Code Mods 让插件进进程、改界面、拦工具调用；FLUX 3 Image 与 Sites in ChatGPT 同日引爆 HN。</p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. ds4（DwarfStar 4）：Redis 作者的纯 C 本地推理引擎，128GB Mac 跑 DeepSeek V4</p>
+
+<p style="margin:0 0 14px 0;">![ds4 本地推理引擎演示](./ds4-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.9/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 首页 156 分 / 40 评论（10-03）· 仓库 19k stars</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">dwarfstar.sh 是 Redis 作者 Salvatore Sanfilippo（antirez）的新项目，一个用 C 写的"窄口径"推理引擎（MIT 协议），面向大内存 Mac（Metal）、CUDA 与 ROCm。它刻意不做通用 GGUF runner，只支持少数精选模型：DeepSeek V4 / 4.1 Flash、GLM 5.x、Qwen3.8 Flash Next，含视觉模型。核心实现是"非对称 2-bit 量化"——压缩路由专家、保留共享路径精度，让大 MoE 装进 128GB 机器；KV cache 可写入 SSD 并按 prompt 哈希恢复，重启后不必全量重新 prefill。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/antirez/ds4 && cd ds4
+./download_model.sh ds4f-q2        # 下载量化权重
+make                               # macOS Metal；DGX Spark 用 make cuda-spark
+./ds4                              # 直接进入对话
+./ds4-server --ctx 100000          # 或起本地 API（OpenAI/Anthropic 风格端点）
+# ds4-agent 可接 OpenCode、Claude Code、Codex CLI</code></pre>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">硬件要求：Apple Silicon Mac 64GB+、NVIDIA DGX Spark、通用 CUDA Linux 或 AMD Strix Halo（ROCm）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方 benchmark：M5 Max 128GB（q2 量化）在 2,048 token 上下文下 prefill <strong style="color:#07c160;">790.2 t/s</strong>、生成 39.4 t/s；拉到 65,536 token 仍有 <strong style="color:#07c160;">398.5 / 27.6 t/s</strong>；DGX Spark 128GB prefill 达 <strong style="color:#07c160;">825.8 t/s</strong>。对比 llama.cpp 的"支持一切"路线，ds4 选择"只支持少数模型、但榨干这批硬件"，让消费级设备本地跑前沿大 MoE 成为现实选项。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">simonw</strong>：通用 runner 支持任意模型，反而容易在配置环节翻车；DwarfStar 的卖点是"支持的模型少，但支持得 really well"</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">ttoinou</strong>：从 DeepSeek V4 Flash 版就开始用，称其在自己 M5 Max 128GB 上是 "absolutely the best launcher ever"；他还提到 ds4-agent 追加写入、从不改写消息历史，KV cache 前缀因此可复用</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">反方声音同样具体：<strong style="font-weight:bold;color:#000;">pydry</strong> 认为它是 llama.cpp 的 "vibe coded knock off"；<strong style="font-weight:bold;color:#000;">vlowther</strong> 则实现了 fused TQ，让 Qwen3.8 Flash Next 在 M5 Max 128GB 上吃下 1M 上下文（PR #1115）</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://dwarfstar.sh/</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/antirez/ds4</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=49936575</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. Claude Code Mods：插件开始进进程——画界面、拦工具调用、改 spinner</p>
+
+<p style="margin:0 0 14px 0;">![Claude Code Mods 演示](./claude-mods-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.8/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Anthropic 官方 10-01 发布 · 社区 Mod 一天内成群出现（Doom 对战 / RemCTL / 漫画 spinner）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Anthropic 10 月 1 日发布的 Mods 是"跑在 Claude Code 进程内"的 JS/TS 事件处理插件。它补上了此前扩展体系的缺口：settings hooks 只能从外部跑脚本，skills 只能给模型加内容，MCP 只能加工具；而 Mod 可以绘制界面（转写区旁的 pane、输入框上方的 band）、重绘 Claude Code 自带 UI（工具行、spinner、对话框）、在工具调用真正执行前拦截或改写，还能注册不经过模型的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/command</code>。官方对照表把"能否画界面""是否进程内"列为 Mods 独有能力。部分官方功能本身就是 Mod：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/diff</code>、AGENTS.md 加载、长任务看护的 you-should-know。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>claude --version                       # 需要 v2.1.287 或更高，Mods 默认开启
+/plugin install token-chart@your-org   # 从插件市场安装（会话内）
+claude plugin validate ./some-mod      # 安装前静态审查：列出 hooks 与 calls 清单
+# 官方示例 Mod（token-weather / blast-radius / replay-theater）：
+git clone https://github.com/anthropics/claude-code-playground
+claude --plugin-dir claude-code-playground/claude-code/mods/blast-radius
+claude --safe-mode                     # 本次会话关闭所有 mod</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">扩展点从"外部挂脚本"下沉到进程内，UI 层首次可编程：官方示例 blast-radius 会拦住 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">rm -rf</code>、force push 这类危险命令，先展示"它将要改变什么"再给确认按钮；token-weather 在输入框上方画出上下文窗口的"天气预报"。文档同时把安全边界写死：Mod 以你的权限运行、不做沙箱、能读环境变量里的 API key——安装前务必用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">claude plugin validate</code> 审查。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">发布一天内社区 Mod 成批出现：Jarrod Watts 做了等待时长打 Doom 对战的 intermission；Federico Viticci 把 RemCTL 接进 Claude Code；Anshu 用 Claude 生成的漫画替换了等待 spinner；也有开发者在 10-02 提交了 whats-agent-doing（解释每一步在干什么的 UI mod）</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">官方文档原文警告："A mod is code that runs with your permissions… Install mods only from authors and marketplaces you trust"；日本开发者的实践总结给出另一个视角：Mods 的价值不在"让 Claude 更聪明"，而在"把你每次都要确认的事变成界面上的常驻信息"</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://code.claude.com/docs/en/plugins/mods/overview</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://claude.com/blog/claude-code-mods</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. FLUX 3 Image：边界框布局的生成+编辑模型，HN 277 分</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.6/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 首页 277 分 / 61 评论 · OpenRouter 端点 50% 折扣</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Black Forest Labs 发布 FLUX 3 多模态系列的图像部分（同系列还有 Video / Audio / Action）。生成与编辑合一：用 0–1000 坐标网格声明边界框（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">[y_min, x_min, y_max, x_max]</code>）做逐元素布局，对已有图可做多处定向编辑、未框选区域保持不变；支持最多 10 张参考图合成；原生 2K/4K 输出，示例图 5456×3072（16.8MP）。面向 agent 的用法是"一行提示 + 宽高比"，让 LLM 自己规划版式，而且提示上采样器不会改动你画的框。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Playground 手动画框试用（无需写代码）：
+# https://flux-tools.bfl.ai/precise-editing
+# API 走 BFL 平台（x-key 认证），端点与请求字段见官方文档索引：
+curl -s https://docs.bfl.ai/llms.txt | head -20
+# 文档入口：https://docs.bfl.ai/flux_3/flux3_image_overview</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">布局框把"让 AI 改图"从自然语言玄学变成结构化参数——框可以被程序生成、被程序校验，这是 agent 批量做设计稿的前提。HN 上的实测褒贬都很具体：@imgbenchdude 用自制基准测迷彩裤图案，认为图案保真度落后 Gemini 3 Pro Image；@skybrian 花 $10 实测后评价 "Not bad"，但指出手风琴琴键、硬币细节错误。官方在评论区确认 open weights 版本 "coming weeks"；OpenRouter 端点的 50% 促销在图像模型里少见。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">arnaudsm</strong>：UX 出色且 "very steerable"——"聊天框经常是糟糕的界面"，画框+指令更像专业工具</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">minimaxir</strong> 指出 OpenRouter 上 50% 折扣；<strong style="font-weight:bold;color:#000;">fuzzythrowaway</strong> 则对内容审核不满："You can't make a bicycle for the mind that locks if you try to ride it in the wrong direction."</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://bfl.ai/models/flux-3-image</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=49925974</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. Sites in ChatGPT：从对话里建全栈应用，HN 220 条评论吵翻</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.4/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 首页 218 分 / 220 评论</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">OpenAI 把 Sites 从 Codex 带进 ChatGPT：在对话里描述应用，生成完整全栈站点并直接部署——Cloudflare 后端、数据库、blob 存储，支持绑定自定义域名与定时内容更新，可导出并自托管。HN 用户 nathanfig 说自己已经用了几个月，给一个应用想法，"通常一小时内拿到能用的原型"（他当晚就做了一个高维迷宫游戏）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 入口（ChatGPT 内）：
+# https://chatgpt.com/features/sites/
+# 流程：对话描述应用 → 生成全栈站点 → 绑定自有域名发布 → 可导出 ZIP 自托管</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">与 Claude Artifacts 的静态 HTML 不同，HN 用户 finales 总结："Sites gives you full stack apps and deployments"——带后端、数据库和 blob 存储。它的竞争面一次覆盖 8 类产品（Lovable、v0、Squarespace、Wix、Vercel、WordPress、GoDaddy、建站 agency），HN 上因此出现分化：nathanfig 力挺"被低估"，jatins 则认为它是"最平淡的 ChatGPT 功能，慢且不如 Artifacts"。运维风险也被点名：InvisibleUp 提醒免费托管会被矿机与钓鱼站滥用。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">自称 OpenAI 员工的 <strong style="font-weight:bold;color:#000;">andrewguenther</strong> 列出三个被低估点：访客用自己的数据访问插件、一次性临时站点、站点兼做插件——"I don't see sites being abandoned any time soon :)"</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">sixtyj</strong> 给客户的建议是全部发布到自有域名，而不是留在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">*.chatgpt.site</code>——否则 "soon there will be many dead sites"</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://chatgpt.com/features/sites/</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=49927747</span></code></p>
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. OpenDots：OpenAI Dots 的开源自托管替代，两天内出货</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.2/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">发布 48 小时内多家媒体跟进，被视为对 DevDay Dots 的直接回应</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">CopilotKit 10 月 1 日发布的开源项目：一个可自托管的"常驻 AI 同事"模板，对标 OpenAI DevDay 发布的 Dots。每个 Dot 是独立角色，有自己的浏览器、文件与终端（默认关闭，用户可随时接管）；在 Slack 里 @ 它就在线程中接手工作；可以直接打电话与它实时通话、同时它继续后台干活；支持草稿审批、定时任务和 Automatic Learning。agent 通过 AG-UI 协议接入，模型可用任意 OpenAI 兼容端点。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/CopilotKit/OpenDots.git
+cd OpenDots
+npm ci
+cp .env.example .env
+npm run dev</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">OpenAI 的 Dots 闭源、只跑 OpenAI 模型、限套餐与地区；OpenDots 把同等能力（常驻电脑、跨渠道、审批流）做成可自托管模板，模型与界面都可换。ThakiCloud 的观察一针见血："always-on agent 归谁运行"正在成为平台之争的新战线——OpenAI 发布两天后，自托管版本就上线了。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">CopilotKit 的 Atai Barkai 提到，OpenDots 复用 OpenMuse / OpenBot / OpenTag 同套基础设施，"dot 界面是在 OpenAI demo 一天后 clone 出来的"</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Medium 技术分析把架构核心概括为 deny-by-default 动作网关：不给 agent 敞开权限再祈祷它守规矩，而是默认拒绝、逐项显式放行</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.copilotkit.ai/blog/introducing-opendots</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/CopilotKit/OpenDots</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. GitHub Copilot computer use：CLI 和桌面应用进入 public preview</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub 官方 changelog（10-01）· 开发者社区集中转发</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">GitHub 把 computer use 推到 Copilot CLI 与 Copilot 桌面应用（macOS / Windows）的 public preview：Copilot 可以读取应用的可访问内容与视觉上下文、点击控件、输入编辑文本、按键、滚动、拖拽，跨应用导航完整工作流。它的目标场景是没有 API、没有 CLI、没有 MCP 的 legacy / GUI-only 软件——官方演示用它在 Safari 里走完报销流程。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Copilot CLI 内：
+/computer on      # 开启 computer use
+/computer show    # 查看状态
+/computer off     # 关闭
+# Copilot 桌面应用：Settings → Computer Use → 开启 Enable Computer Use
+# macOS 首次会引导授予 Accessibility 与 Screen Recording 权限</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">computer use 第一次以"装机可用的产品开关"形态出现在主流开发工具里。控制权设计是重点：Copilot 操作任何应用前先弹审批，always-allow 列表可复查和重置，组织管理员可整体禁用该功能。对开发者的直接价值是 GUI-only 流程的自动化——E2E 测试、报销、订票这类过去只能靠录屏脚本的任务，现在可以交给 CLI。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">日本开发者 Kazuyuki Sakemi 转发 changelog 时点出官方三个示例场景："Automate expenses, book travel, or speed up E2E testing. Available in preview today"</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">与 DevDay 同周发布（OpenAI Agents API 含 computer use）叠加，主流开发工具在一周内集体把"看屏幕、操作 GUI"列进了正式功能</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.blog/changelog/2026-10-01-github-copilot-can-now-interact-with-desktop-apps</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. ldraw-nova：把乐高当"汇编语言"，agent 生成 LDraw 模型</p>
+
+<p style="margin:0 0 14px 0;">![ldraw-nova 生成的乐高模型](./ldraw-demo.jpg)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.4/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 首页 71 分 / 41 评论 · 仓库 86 stars（AGPL-3.0）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">anteloc 的生成式乐高项目：agent 把自然语言变成 LDraw 源文件，路径是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">plan.json</code> → 自动生成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">generator.py</code> → 执行得到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">model.mpd</code>，README 称它"像一台编译器"。产物包括 LDraw 文件、3D 查看器、可导入 Blender 编辑的 .glb（元信息保存在 Blender 自定义属性里），以及 Meta Quest 3 上的 VR 交互。检索由作者自己的 jev-rerank（TypeSafe Jev 语义搜索加重排序）驱动。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/anteloc/ldraw-nova
+git clone https://github.com/anteloc/ldraw-nova-docker
+cd ldraw-nova-docker
+docker compose build      # 首次约需 5GB 磁盘
+docker compose up -d
+# 打开 https://localhost:8443（含 VR）或 http://localhost:8765
+# 应用无登录设计，README 建议只在可信网络内使用</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">作者在 README 里说，这个工具是在 GPT-6 Astra 与 Claude Opus 5.5 出现后才"顺利跑通"的——把 LDraw 当成高度专业化的 3D 装配语言交给模型，考的是符号系统的生成能力，这是这一代模型的能力拐点。短板也如实写明：生成慢、贵，minifig、Spaceship 等模型族效果不佳，Agent 在 Quest 3 上的操作性能还有待改进。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">README 的 "Development" 段落自曝问题清单（成本高、速度慢、部分模型族表现差），这种坦白在热门项目里少见，意味着数据质量仍需人工把关</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">工具与 LLM 的分工被设计成"编译器式"：模型只负责产出中间表示（plan.json / generator.py），几何正确性交给确定性代码执行</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/anteloc/ldraw-nova</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/anteloc/ldraw-nova-docker</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">stillwet.art <span style="font-size:13px;font-weight:normal;color:#999999;">HN 207 分 / 65 评论</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">Alice 的项目画廊，Claude Opus 5.5、Gemini 3.8 Flash、GPT-6.1 Sol 当画家——"每个模型都通过写一段程序，在亚麻油画的模拟上作画"，可实时围观或浏览 75 幅成品。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://stillwet.art/</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">One month coding with GLM 5.3 Flash <span style="font-size:13px;font-weight:normal;color:#999999;">HN 114 分 / 87 评论</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">Wagtail CMS 核心开发者用 GLM 5.3 Flash 干了一个月真实工作的实测长文。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://wagtail.org/blog/one-month-on-glm-53-flash/</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Stratego 被 AI 攻克 <span style="font-size:13px;font-weight:normal;color:#999999;">HN 182 分 / 89 评论</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">AI 首次击败史上最强 Stratego 选手，且成本可控——信息不完全博弈的新突破。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://arstechnica.com/science/2026/10/ai-finally-beat-the-best-stratego-player-in-history-and-did-it-on-a-budget/</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">FTC 对"失控智能体"发起消费者保护调查 <span style="font-size:13px;font-weight:normal;color:#999999;">知乎 10-02</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">FTC 正式对 OpenAI、Anthropic、METR 启动调查，监管开始盯住自主 agent 的消费者风险。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://zhuanlan.zhihu.com/p/2089278320563183661</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">决策模型继续扩散 <span style="font-size:13px;font-weight:normal;color:#999999;">10-01</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">Perplexity 10 月 1 日上线 Decisions API（pplx-decider-v1-27b，$0.04/百万输入 token）；AWS Strands 同期发布 2B 决策模型 Decider 2B 供本地部署——Clef 之后，"不做对话、只出概率"的决策模型正被各家快速复制。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://aiagentstore.ai/ai-agent-news/today</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">K-Dense BYOK <span style="font-size:13px;font-weight:normal;color:#999999;">arXiv 2610.00074 · 10-02</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">本地运行、带哈希链实验记录的开源 AI 研究助手。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://arxiv.org/abs/2610.00074</code></p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<section style="background-color:#f5f7fa;border-radius:10px;padding:18px 20px;margin:14px 0 0 0;">
+<p style="margin:0 0 8px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">本期关键词</p>
+<p style="margin:0;font-size:15px;color:#555;line-height:2.0;text-align:left;">ds4 · Claude Code Mods · FLUX 3 Image · Sites in ChatGPT · OpenDots · computer use · LDraw</p>
+</section>
+</section>
