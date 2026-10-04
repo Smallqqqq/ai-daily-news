@@ -1,0 +1,276 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-04</p>
+
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+<p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;">本期覆盖 2026-10-03 至 2026-10-04 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / X / Bluesky / Lobsters / arXiv / HF Papers / 知乎 / Product Hunt / AI 实验室博客。精选 7 条按影响力排序。</p>
+<p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;"><strong style="color:#07c160;">核心主题：</strong>DeepSeek 把官方 agent 桌面端推上台面，HN 一天 406 分；欧洲“主权模型”叙事落下实质一子；Meta 用开源 SDK 试探消费级 agent 的硬件外设边界。</p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. DeepSeek Harness Desktop：官方 agent 桌面端，macOS/Windows 装包即用</p>
+
+<p style="margin:0 0 14px 0;">![DeepSeek Harness Desktop 演示](./deepseek-harness-demo.jpg)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.8/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 406 分 / 216 评论（10-03 至 10-04 在榜）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">DeepSeek 官方开源的 agent harness（MIT）推出桌面端 public preview：macOS Apple Silicon 的 .dmg 和 Windows 64 位 .exe，从官网直接下载。架构基于 Cordis 的“一切皆插件”：模型、工具、技能、会话、沙箱、存储、调度、界面全部可替换。v0.2 带图形化插件管理器（装 npm 包不用命令行）、文件预览与 diff 面板、定时任务、语音输入，以及用对话造插件的 Creator mode。开发者视图保留执行轨迹、工具调用耗时与 schema。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 桌面端（推荐）：到官网下载 .dmg / .exe
+# https://deepseek.com/en/harness/
+# 有 Node.js 的机器也可以直接起 Web 版：
+npx @deepseek-ai/dsh web
+# 源码（MIT）：
+git clone https://github.com/deepseek-ai/deepseek-harness</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">此前桌面级 agent 入口基本是闭源产品（Codex desktop、Claude Desktop、Cursor），模型和界面都绑死。dsh 走相反路线：MIT 开源、全插件化，模型层可换，已有社区成员把它自托管后从浏览器访问。HN 讨论里的实测反馈很具体：有人称它是“Web/桌面介质的 OpenCode，而且比 OpenCode 更好”，并特别点出双向子 agent 消息这个差异化能力。代价同样明确：默认遥测和插件架构的维护成本都在评论里被点名。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">wren6991</strong>：桌面版默认开遥测（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">dsh web</code> 不默认开），给出在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">$DSH_HOME/cordis.patch.yml</code> 里关掉 desktop-product-telemetry、product-analytics、session-log-deepseek 三项的做法；同时吐槽“一切皆插件”给内核改动带来的成本，“我现在有约 25 个下游 commit，0 个新插件”</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">wg0</strong>：称其为“Web/桌面介质里的 OpenCode（且更好）”，夸双向子 agent 消息，父子 agent 运行中可互发消息而主线程保持可用；缺点是“一直在变”，破坏性变更可预期</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">etatester</strong>：“我害怕的是 harness 本身，而不是它生成的应用”，凡能无沙箱跑在本机的 AI 软件，他都同等对待</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://deepseek.com/en/harness/</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/deepseek-ai/deepseek-harness</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/best</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. Kolibri：德国 Aleph Alpha 的 78B 主权开源模型，HN 522 分</p>
+
+<p style="margin:0 0 14px 0;">![Kolibri 演示](./kolibri-demo.jpeg)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.6/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 522 分 / 302 评论（10-03）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Aleph Alpha 在 10 月 3 日德国统一日发布英德双语开源权重模型，Apache 2.0，权重上 Hugging Face。稀疏 MoE：78.1B 总参数、每 token 激活 3.46B，原生 262,144 上下文（验证可到 1M），定制 128K 词表 UniBPE 分词器针对德语复合词，官方称 token 碎片比主流商用模型少 15%。训练与推理基础设施都在德国和芬兰境内（768 张 B200），面向公共部门、工业、航空航天等受监管场景，卖点是把“主权”同时落在数据管辖和可自托管权重上。为压低高风险场景的幻觉，专门训练了“证据不足时拒答”能力。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>pip install "aleph-alpha-inference&gt;=1.0"
+vllm serve Aleph-Alpha/Kolibri-1 --kv-cache-dtype fp8 \
+  --reasoning-parser kolibri1 --tool-call-parser kolibri1 --enable-auto-tool-choice
+# 超过 256K 上下文再追加：
+# --max-model-len 1048576 --hf-overrides '{"max_position_embeddings": 1048576}'
+# 推荐采样：temperature=1.0 top_p=0.97 top_k=128
+# 注意：需要 Aleph Alpha 自家 vLLM 插件，原版 vLLM 拉起会报错</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">厂商基准（最高推理档，对照 Qwen3.6-35B-A3B）：AIME 2026 得 96.0（91.0）、GPQA Diamond 84.3（83.4）、LiveCodeBench v6 85.9（82.5）。短板也直说：SWE-Bench Verified 66.4 落后 Qwen 的 73.8，BFCL v4 工具调用 61.4（67.2）。效率是它的真正卖点：官方称 78B 在两台 H100 上可撑 <strong style="color:#07c160;">18 路并发</strong> 256K 长查询（更大变体只有 3 路），拒答率从上代 15% 提到 <strong style="color:#07c160;">44%</strong>。HN 有人实测单卡 RTX Pro 6000 FP8 跑到约 <strong style="color:#07c160;">170 tok/s</strong>。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">miellaby</strong>：称技术报告“开放到这个程度是第一次见”，可以当教科书读</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">amoshebb</strong>：质疑主权成色（Aleph Alpha 将并入 Cohere），并贴出在 Kolibri 自家 harness 里的德语对比：Qwen3.8 27B 以 79.9 对 70.8 反超</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">Glitch752</strong>：用编造的歌曲和艺人测幻觉，Kolibri 编出了专辑细节，Qwen3.8-27B 正确拒答</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">petesergeant</strong>：怀疑能打的模型避不开版权数据；Aleph Alpha 研究员 befelix 回应，小模型靠 agentic 检索而不是把知识背进权重</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://aleph-alpha.com/en/blog/kolibri-has-landed-a-sovereign-open-weight-model/</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://tej.as/blog/aleph-alpha-kolibri</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=49942706</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. Muse Gadgets：Meta 开源 Gadget SDK，3 天 880 星</p>
+
+<p style="margin:0 0 14px 0;">![Muse Gadgets 演示](./muse-gadgets-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.4/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 240 分 / 108 评论（10-02 至 10-03）· 仓库 880 星</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Meta 开源（Apache 2.0）的固件与 SDK 套件 facebookincubator/muse-gadget-sdk：把 ESP32 开发板、树莓派或 Linux 小主机做成接入自家 Muse agent 的 Gadget。ESP32 配屏幕、麦克风、传感器都行，没板子可以用模拟器；树莓派侧主打跑 Home Assistant 或运维杂活。每个 gadget 需要在 gadgets.muse.ai 领 SDK token 配对，仓库自带 skills 目录和 AGENTS.md 方便编码 agent 直接上手。美国 Muse 订阅用户可申请免费的 Muse Home Link 适配器，10 月发货。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/facebookincubator/muse-gadget-sdk
+# 子目录 esp32 / linux / skills 各有 README 和 AGENTS.md
+# 1) gadgets.muse.ai/settings/sdk-tokens 领 token，同意 SDK 条款
+# 2) Muse iOS/Android App → Settings → Devices，开启 Developer mode
+# 3) 按子目录 README 构建烧录，配对 "MuseGadget-" 前缀设备</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">大厂第一次把消费级 agent 的硬件外设层开源出来：ESP32 带模拟器意味着没硬件也能先开发，Linux 侧能把已有智能家居直接接上 agent。但条款和许可证之间的落差把 HN 讨论推到了 240 分：固件是 Apache 2.0，配对条款却写明“非受支持产品、非开发者平台、可能随时变更或下线”，限 <strong style="color:#07c160;">50 台设备</strong>、禁止销售。许可证给的自由，条款收回去一部分，这个张力本身就是案例。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">DonHopkins</strong> 的质疑拿到最多认同：固件确实开源、可以指向自己的服务器，但 token 条款推翻了这个自由，“那不是平台，是带可撤销皮带的宠物动物园”，“你不是 hacker，你是佃农”</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">仓库自我介绍自带防御姿态：“built by hackers, for hackers, just for fun”，副作用清单包括砖板、保修作废、跳闸与破产</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/facebookincubator/muse-gadget-sdk</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://gadgets.muse.ai</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=49937504</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. ZooWork：Agent 交付平台，Product Hunt 10-03 日榜第一</p>
+
+<p style="margin:0 0 14px 0;">![ZooWork 演示](./zoowork-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.1/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt Launch of the Day（10-03）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">面向 FDE（前向部署工程师）和领域专家的 agent 交付平台。它瞄准的痛点很具体：agent 在作者笔记本电脑上跑得好，交付给客户或团队就散架。两条路径：在 no-code Builder 里描述需求，或留在 Claude Code、Codex 等现有编码 agent 里开发，再通过 Managed Agent API 交付；平台提供知识库（限时免费）、分享链接和 Slack 分发、计划任务。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 在 Claude Code / Codex 里接入交付 SDK：
+npx skills add SerendipityOneInc/zoowork-sdk-skills
+# 官方口号式定位：Build 在 Builder 或编码 agent 里完成，交付走 Managed Agent API</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 工具链在“造”的环节已经极度拥挤，Builder、脚手架、harness 一抓一大把；“交付、托管、分发”是明显的缺口，ZooWork 押的是后一半：把 FDE 手里的 agent 变成能交给客户跑的服务。PH 评论区里最热的设想场景很具体：创始人让 agent 用已批准的公司笔记起草投资人更新，团队审核后发出。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">PH 用户 <strong style="font-weight:bold;color:#000;">Justin Jincaid</strong>：产品概念成立，“让 agent 用已批准的笔记起草投资人更新、团队审完再发”会很实用；创始人 David Lu 回复了完整配置方法：笔记进知识库，格式与语气写进 job description，按月计划运行，草稿经分享链接或 Slack 给团队审</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">PH 用户 <strong style="font-weight:bold;color:#000;">Priya K</strong>：看到它开箱支持 Claude Code 和 Codex，直接点赞</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/products/zoowork</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/products/zoowork/awards</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. Opus 5.5 官方使用指南：HN 165 分，评论区在晒真实战绩</p>
+
+<p style="margin:0 0 14px 0;">![Opus 5.5 指南演示](./opus55-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.9/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 165 分 / 123 评论（10-04）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Anthropic 官方博客发布的 Opus 5.5 使用指南，四条主线：任务开始前先写清“完成标准”（迁移任务就写“每个 endpoint 都换用新 client”）；不要索取可见推理，改成“用三句话解释为什么选这个方案”；长审计、大迁移适合派给并行子 agent；长任务用持久计划加 compaction，而不是一个超大 prompt 一次烧完。HN 评论区里读者晒出的产出数字比正文更硬。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 官方指南（claude.dev）：
+# https://claude.dev/blog/getting-the-most-out-of-opus-5-5/
+# 配套使用 Claude Code 的 /compact、subagent、plan 模式</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它把“验收标准前置”“请求理由而不是思维链”这类工程习惯翻译成 agent 能执行的指令，比泛泛的提示词技巧更有迁移价值。评论区的数字是更硬的验证：CI 优化 9 小时产出 <strong style="color:#07c160;">12 个可合并 PR</strong>。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">rdli</strong>：给 Opus 通用 CI 指令后放着跑，9 小时后收到 12 个可合并 PR，CI 从约 10 分钟压到约 4 分钟，计费分钟省约 60%；折算等价 token 成本约 500 美元（用的是 100 美元/月套餐）</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">adastra22</strong>：反对用单一维度给模型排名，各家模型技能不同，他的分工是“Opus 干活、Fable 审计划与实现”</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 用户 <strong style="font-weight:bold;color:#000;">magicalhippo</strong>：喂扫描版维修手册（含电路图）跑了一个多小时，模型解读拓扑、对照数据手册交叉验证，拿不准时主动请人确认而不是编数值</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://claude.dev/blog/getting-the-most-out-of-opus-5-5/</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=49946567</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. answer-me-with-html：让 agent 用“一页 HTML”回答难题</p>
+
+<p style="margin:0 0 14px 0;">![answer-me-with-html 演示](./answer-html-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">3 天 375 星 / 33 fork（MIT）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">QingYunA 做的 agent skill：模型只写一份短 Markdown 草稿，附带的 CLI 负责排版、主题和示意图，最终产出一页可读性好的 HTML，可选 3Blue1Brown 风格的讲解视频。核心省法在于让模型别碰 HTML：同一问题手写 HTML 的输出 token 是这套流程的约 <strong style="color:#07c160;">7.4 倍</strong>。支持 Claude Code、Codex、Cursor、OpenCode，生成结果默认落在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.answer-me-with-html/pages/</code>。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 推荐安装（需 Node.js 20+）：
+npx -y skills add QingYunA/answer-me-with-html -g -y -a claude-code
+# Claude Code 插件方式：
+/plugin marketplace add QingYunA/answer-me-with-html
+/plugin install answer-me-with-html@answer-me-with-html
+# 用法：正常提问即可，例如 "解释 TCP 三次握手"；CLI 手动渲染：
+node $AM render examples/tcp.en.md</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它给“输出形式”做了分工：模型管内容，确定性代码管呈现。这个分工直接落在 token 账本上，模型直写长 HTML 又贵又容易崩版式。同期 GitHub 上还有 diagram-design、archify 等一批“让 agent 输出更好看”的技能在跑，这条路线正在成形：agent 产物从 Markdown 扩展到文档、图表、幻灯片和交互页面。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">项目实测对比（README 配图）：同一问题，模型手写 HTML 与 skill 流程的 token 消耗相差约 7.4 倍</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">仓库 3 天内冲到 <strong style="font-weight:bold;color:#000;">375 星</strong>、33 个 fork，是今天 "agent skills" 趋势股里冷启动最快的新仓库之一</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/QingYunA/answer-me-with-html</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. Beyond Memory（PoS）：给长时程 agent 装“显式信念状态”，阿里论文开源代码</p>
+
+<p style="margin:0 0 14px 0;">![PoS 演示](./pos-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.6/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HF Papers 当日 78 赞 · 代码已开源</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">阿里团队的论文（HF 页面组织标签为 Alibaba）：给长时程 agent 维护显式信念状态 PoS（Progression of States），把“当前世界状态估计”和“未完成任务项”一起作为决策上下文，并对信念的一致性与证据支撑做验证。它能识别一类失败模式 Belief Trapping：agent 还在动作，但没有实质推进。检测到之后按停滞、循环、漂移三种模式做针对性恢复。推理期方法，不改模型权重。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 代码：https://github.com/luoyu100/PoS
+# 论文：https://arxiv.org/abs/2610.01415
+# 在 4 个 benchmark × 3 个 LLM backbone 的 12 个组合上均取得最高综合表现（作者报告）</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">相对同 backbone 最强基线，ALFWorld 提升 <strong style="color:#07c160;">22.68%</strong>，RCA-100 联合准确率提升 <strong style="color:#07c160;">37.89%</strong>；消融实验显示一致性验证和恢复机制各自都有贡献，上下文继续拉长时表现依然稳定。它针对的失败形态是：记忆已经有了，却不会用来推进任务。今天 HF 论文榜前十里，agent 记忆与状态主题占了三席：GraphForge、Beyond Memory、World Observer。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HF Papers 当日榜单：本文以 78 赞排第 7，同主题 GraphForge 以 139 赞排第 3，World Observer 以 71 赞排第 9，三个都在解决“长时程 agent 的状态与记忆怎么组织”</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">作者强调恢复策略按 trapping 模式定制，而不是一把通用的重试逻辑</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://arxiv.org/abs/2610.01415</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/luoyu100/PoS</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">replica-skill <span style="font-size:13px;font-weight:normal;color:#999999;">3 天 129 星</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">11 个按序执行的 Claude skills，从侦察、架构、设计、构建、后端、测试、对比到品牌、发布、部署，走完“克隆一个 App”的全流程；MIT，<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">/plugin marketplace add Jakeschincariol/replica-skill</code> 安装。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/Jakeschincariol/replica-skill</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">whirl <span style="font-size:13px;font-weight:normal;color:#999999;">3 天 285 星</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">定位“把细节抠到位”的 AI 聊天应用，接各家头部模型、真记忆、living documents、自带工具。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/whirlchat/whirl</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">claude-image-view <span style="font-size:13px;font-weight:normal;color:#999999;">3 天 110 星</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">在 Claude Code 输入框上方显示粘贴图片的缩略图，替代裸的 [Image #1] 标签；作者 Jarrod Watts。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/jarrodwatts/claude-image-view</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">GraphForge <span style="font-size:13px;font-weight:normal;color:#999999;">HF 当日第 3，139 赞；9-30 提交 arXiv</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">用真实文件搭工作区、以证据图生成任务与评审标准再筛轨迹，微调 Qwen3.6-27B 后 GDPVal 涨 65.7。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://arxiv.org/abs/2609.38923</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Simon Willison：给 agent 加默认硬预算上限 <span style="font-size:13px;font-weight:normal;color:#999999;">HN 183 分 / 94 评论（10-03）</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">由 Claude Code 单月 500 美元账单引出的讨论，主张所有烧钱的调用默认带预算帽子。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Anthropic 官方插件目录冲榜 <span style="font-size:13px;font-weight:normal;color:#999999;">单日 83 星，总 37.4k 星</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">anthropics/claude-plugins-official 出现在今日 GitHub Trending；官方市场已有 2,000+ 插件与连接器，<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">/plugin install {name}@claude-plugins-official</code> 直装。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/anthropics/claude-plugins-official</code></p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<section style="background-color:#f5f7fa;border-radius:10px;padding:18px 20px;margin:14px 0 0 0;">
+<p style="margin:0 0 8px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">本期关键词</p>
+<p style="margin:0;font-size:15px;color:#555;line-height:2.0;text-align:left;">DeepSeek Harness · Kolibri · Muse Gadgets · ZooWork · Opus 5.5 指南 · 显式信念状态 · agent skills</p>
+</section>
+</section>

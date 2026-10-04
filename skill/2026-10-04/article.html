@@ -1,0 +1,139 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-04</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">把一篇文章、一个知识点做成带解说的视频，流程大家都熟：写稿、配音、找画面、对时间轴、调字幕、出封面。整套做完两三个小时，其中一大半花在对时间轴上。html-explainer 把这套流程收进一个 Agent Skill：你说一句“把 X 做成一条 1 分钟的讲解视频”，它带着 agent 走完调研、解说词、配音、画面、渲染、封面，产出一条真 MP4。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">作者 Moh，<strong style="color:#07c160;">138 stars</strong>，MIT 许可，v2.0.0 昨天刚发布。核心流程全本地跑，零 API key、零按次计费：画面、配音、字幕、封面全部由流水线产出。</p>
+
+<p style="margin:0 0 14px 0;">![html-explainer 成片封面演示](./html-explainer-demo-1.png)</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">上面这条是作者用它做的成片封面，没有手工后期。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">“HTML 转视频”此前的主流做法是启动浏览器、播放动画、录屏。这条路会生出一整类间歇性 bug：</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">动画在录制开始前就播了，录到的只剩结尾</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">网络字体加载晚半秒，半段视频用了回退字体</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">前几帧拍到的还是动画前的状态</li>
+</ul>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这些 bug 的共同点是难复现：每次录制结果都不一样，出了问题只能重录碰运气。另一边，AI 视频生成按次计费，产物不可控，第 10 条和第 1 条风格漂移，想改一句字幕得整个重新生成。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">html-explainer 的定位是第三种：画面用 HTML/CSS/GSAP 写成代码，渲染是确定性的，同一份工程渲染两次，第 1204 帧逐像素一致。输出可复现、可定点抽查、可单场景重渲。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">不录屏，seek。它把 GSAP 时间轴定位到目标时刻（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">tl.pause(t, false)</code>），同步所有 CSS 动画（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">document.getAnimations().currentTime</code>），等两个动画帧后截图。帧的产物与播放速度、机器负载无关。QC 可以定点抽查任意一帧，单个场景可以独立重渲。代价是每个动画都必须可 seek：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">setInterval</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">requestAnimationFrame</code> 计数、CSS <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">transition</code> 入场这类墙钟动画，会被 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">lint_frames.py</code> 在渲染前直接拒绝。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">B() 节拍锚定。画面动画不锚帧号，锚字幕文本：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>tl.fromTo('.card',    { y: 60, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.7 }, B('右边卡片'));
+tl.fromTo('.verdict', { scale: 0.8 },          { scale: 1, duration: 0.6 },        B('结论句') + 0.2);</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">B('块文本')</code> 是这几个字开始被念出的时刻，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">Be()</code> 是念完的时刻。改一句解说词，重跑三条命令，所有场景自动重排对时。兜底写法 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">B('x') || 3.2</code> 被明令禁止：查不到节拍就让构建失败，一条对错时间的视频比一次构建失败糟糕得多。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">词边界字幕。字幕时序来自 TTS 的字级时间戳（edge-tts 取 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">WordBoundary</code>，火山引擎取 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">sentence.words[]</code>），不按字数插值——中文里两个同字数短语的时长可以差 3 倍。配合两级时钟：帧长用 MP3 容器时长保音画同步，末块字幕按语音真实结束收尾。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">流水线：调研（每个数字带出处）→ 解说词 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">narration.json</code>（竖线切字幕块）→ TTS 合成 MP3 + 词边界 → 全局时间轴 → 字幕与 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">beats.js</code> → <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">frames/*.html</code> 一句一场景 → lint 八条契约 → 逐帧渲染 PNG → ffmpeg 合成 H.264 + AAC → QC → 多画幅封面。产物落在项目目录 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">out/</code>：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">slug.mp4</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">cover_169.png</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">cover_34.png</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">slug.srt</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">slug.vtt</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">qc_report.md</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">qc_sheet.jpg</code>。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">安装配置</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一句话让 agent 自己装：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>给当前本地环境安装该 Skill：https://github.com/OneMoh/html-explainer.git
+安装到你的技能目录，并检测安装必要的运行环境（Python 3.9+ / Node 18+ / Chrome 或 Edge / ffmpeg）</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">手动安装（仓库根目录就是技能目录，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">SKILL.md</code> 在根，不用再拷子目录）：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/OneMoh/html-explainer.git ~/.claude/skills/html-explainer
+bash ~/.claude/skills/html-explainer/setup_env.sh --install</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">目录约定：Claude Code 认 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.claude/skills/</code>，Codex 认 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.codex/skills/</code> 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.agents/skills/</code>，通用约定是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.agents/skills/</code>（多数工具都认，Claude Code 是例外）。装完新开一个会话，让 agent 重新扫描技能目录。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">环境要求：Python 3.9+（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">edge-tts==7.2.8</code> 刻意钉死版本）、Node 18+、本机 Chrome 或 Edge（都没有才下载 playwright chromium，约 115MB）、ffmpeg（没装则回退 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">imageio-ffmpeg</code> 静态二进制）。每条成片的中间帧约占 2GB 磁盘，出片后可清。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">使用指南</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:20px 0 10px 0;">场景一：一个主题进，一条成片出</p>
+
+<blockquote style="background-color: #f0f9eb; border-left: 4px solid #07c160; margin: 0 0 12px 0; padding: 14px 18px; border-radius: 0 6px 6px 0; color: #555555; line-height: 2.0;">
+<p style="margin: 0; font-size: 15px;">把「为什么天空是蓝色的」做成一条 1 分钟的讲解视频。</p>
+</blockquote>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 走完整条流水线，中间有确认点需要你拍板（风格选择、渲染通道等，由 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">gate_check.py</code> 把关）。项目目录本身是可持续修改的工程：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">project.json</code> 定 fps、尺寸、音色、语速；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">narration.json</code> 是解说词；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">theme.css</code> 以 CSS 变量管全部颜色；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">frames/</code> 一个场景一个 HTML。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:20px 0 10px 0;">场景二：改解说词重出，画面代码零改动</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这是 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">B()</code> 节拍系统真正省时间的地方。你在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">narration.json</code> 里把一句话改长了两秒，重跑时间轴、字幕、渲染三条命令，所有场景自行重排对时，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">frames/</code> 里的画面代码一行不动。对比帧号硬编码的方案：改一句话就是整片手工重新对位。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:20px 0 10px 0;">场景三：多平台封面与竖版投放</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">每条成片默认出 16:9 + 3:4 两张封面，3:4 是独立重排而不是裁切——1920 居中裁 3:4 只剩 810px，丢掉 57.8% 的画面宽度，横跨全宽的标题会被切掉一半。竖版投放再加一张 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">frames/cover_916.html</code>，渲染器缺哪张跳哪张。出图后跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">check_cover.mjs</code> 做终态几何实测：边距、钩子字号、行宽、孤字。9:16 的上下边距是不可裁区：顶部是账号与时长层、底部是标题栏与互动按钮，压上去等于自杀。</p>
+
+<p style="margin:0 0 14px 0;">![html-explainer 竖版封面演示](./html-explainer-demo-2.png)</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;">另一条成片的封面。竖版投放时会按 9:16 独立重排，不是把这张裁掉两边。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:20px 0 10px 0;">场景四：换火山引擎配音</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">默认的 edge-tts 免费免密钥、开箱可用。想要更自然的语气与声音复刻，切火山引擎语音合成 2.0：技能第一次跑会生成一个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">tts.env</code> 并停下来。你把 API Key 填进去（这一步刻意不经过对话窗口），回来说一声它继续。两个引擎产出的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">audio-manifest.json</code> 结构完全一致，下游时间轴、字幕、渲染全都不用改。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">密钥纪律：Key 只有接口包读得到，agent 拿不到也不需要知道。不进对话（问状态给脱敏摘要）、不进仓库（gitignore 加仓库自检的密钥防线）、不进日志、不进分发。作者也没回避：「智能体绝对读不到」做不到，合成进程里密钥对那段脚本可见。这几条保证的是把泄露半径收敛成一次可撤销的事故——他建议在火山控制台用子账号只授语音合成权限、设用量告警与限额、密钥可随时轮换。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">进阶技巧</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">v2.0 动效库</strong>：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">assets/motion.js</code> 把镜头语言做成时间的纯函数，40+ 动作词汇分 5 组（enter 到场 / carry 承接 / contact 接触 / camera 运镜 / ambience 环境），所有随机走 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">seededRng</code>，渲染路径上不出现 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">Math.random()</code>，逐帧渲染与实时预览一致，配 148 条断言的自测。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">主题驱动风格编排</strong>：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">style_director.py</code> 读解说词给每场挑主风格、按能量预算搭次风格做局部替换、动态开头由主题哈希轮换、转场由相邻两场能量差决定。23 种风格分 8 类：rich 12 个（纯 CSS <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">@keyframes</code>，零改动即可驱动），gsap 11 个（只取视觉 DNA 用 keyframes 重写，不搬代码）。一个项目建议轮换 2–4 种风格，8 个场景共用一张脸会显得单调。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">渲染提速</strong>：v2.0 支持 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--profile / --quality / --fps</code>，4K60 加快门运动模糊；多浏览器进程级并行、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--png-fast</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--jpeg</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--resume</code> 断点续渲。渲染前必须先选中间帧通道（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">png</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">png-fast</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">jpeg q95</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">jpeg q82</code>），没拍板会被 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">gate_check.py --phase render</code> 挡下。</li>
+</ul>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">我的建议：第一支片子先做 30 秒、单风格、edge-tts，把环境跑通，再上 4K、动效库和多风格混排。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">常见踩坑</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">每一帧都是静止首帧，且不报错</strong>：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">page.evaluate</code> 传了字符串而不是函数字面量，Playwright 只求值一次，函数体根本没执行。传真正的函数字面量。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">Windows 上 ffmpeg 报 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">No such file or directory</code></strong>：非 ASCII 路径，Windows 的 ffmpeg 把 UTF-8 当 ANSI 读。项目路径保持 ASCII。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">字幕整体飘</strong>：TTS 没返回字级时间戳，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">subs.py</code> 退回按字数插值，只有一行 stderr 警告（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">⚠ 未返回字级时间戳</code>），容易漏。看到这行警告就换受支持的音色。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">先读 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">lessons.md</code> 再 debug</strong>：作者整理了 56 条编号记录，每条都是一个“成片看着挺正常、其实是错的”的 bug 及其误导过程。作者自己说这是仓库里最值钱的文件。</li>
+</ul>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">html-explainer（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>一句话让 agent 安装 / clone 进技能目录</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>HTML/CSS/GSAP 写画面，确定性 seek 逐帧渲染，全本地零 API 费用，23 种风格库</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>把文章、主题批量做成讲解视频，要可复现、要离线</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 138</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">video-use</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx</code> 安装</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>把素材压成文本让 LLM 推理，产出 EDL 交 ffmpeg 渲染</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>把拍好的实拍素材剪成片</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 28k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">nexu-io/html-video</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>从其仓库安装</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>先渲染 HTML 再实时录制，23 个模板风格的来源项目</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>想要模板 + 实时录制、Studio 可视化</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 4.6k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">09-25 推荐过 browser-use 的 video-use，那是剪辑已有素材的思路：素材进、EDL 出、ffmpeg 渲染，面向实拍视频。html-explainer 是同一个媒介下的另一个子问题：从零生成画面，画面是代码，帧可复现，不需要素材、不需要视频模型、不按次计费。html-video 的渲染靠实时录制（html-explainer 方法论致谢里写明的来源之一），seek 逐帧正是对录制时序 bug 一类的解法。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 138 · v2.0.0 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/OneMoh/html-explainer</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/OneMoh/html-explainer-demos</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">如果你需要把文章、资料、知识点批量做成讲解视频，html-explainer 是开源里少见的整条流水线都可复现的方案。一句话给主题，agent 走完调研到封面，产物是真 MP4 加多画幅封面，全程在你本机跑。配置代价是装齐 Python、Node、Chrome、ffmpeg 四个环境（有 setup 脚本，十来分钟），换来改稿不用重新对时间轴、换风格不用重新起工程。适合已经在用 AI 编程智能体、又不想学动效软件的人；要做实拍剪辑或真人口播，去看 video-use。</p>
+</section>

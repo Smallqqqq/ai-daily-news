@@ -1,0 +1,177 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-04</p>
+
+<p style="margin:0 0 14px 0;">![今日三个工具速览](./summary.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三个，主题都是 agent 多起来之后怎么管：一个给 agent 团队配组织架构和预算，一个把多个专家助手装进你自己的服务器，一个把散在八个 AI 助手里的 MCP 配置收进一个控制台。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Paperclip — 96.8K stars 的 agent 团队管理层：管目标、管预算、管审批</p>
+
+<p style="margin:0 0 14px 0;">![Paperclip 演示](./paperclip-demo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个人同时开三个 Claude Code、两个 Codex 会话已经不算稀奇，麻烦出在会话之外：谁在为哪个目标干活，预算烧到哪了，卡死的会话该不该杀。Paperclip 就是冲着这一层来的，官方一句话说清定位：如果 OpenClaw 是一个员工，Paperclip 就是那家公司。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它不生产 agent，只把现有的雇进来：Claude Code、Codex、Cursor、Gemini CLI、OpenCode、OpenClaw、Pi、Kimi Code 都能通过适配器接入，官方给出的录用标准是「能接收心跳的都能入职」。进来之后按公司的那套运转：工单式任务带原子签出和执行锁，两个 agent 抢不了同一个任务；心跳队列负责唤醒空闲工人；组织架构图定义角色和权限；审批门带回滚；预算阈值到了直接硬停；密钥加密存储；周期性例程和活动日志全部落库。四个支柱拆开就是任务管理、组织架构、训练评估、运行时层。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">典型用法：你定义目标，比如「这个月把 API 延迟压到 200ms 以下」，给团队配好角色和预算，剩下的在这块看板上看。每个 ticket 下面挂着对话线程、产出物和评论，产品截图里的工作流是 CEO agent 领目标、拆子任务、派给工程师 agent，任务属性里有 Approvers、Reviewers、Monitor、Blocked by 这些字段。官方对这个设计的表述很直接：管理业务目标，不管理 pull request。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">热度本周无人能敌：GitHub 周榜第一，一周涨 <strong style="color:#07c160;">10,722 星</strong>，总量 <strong style="color:#07c160;">96,766</strong>，16.4k forks，4,773 次提交，npm 周下载 59,872 次，MIT 协议，Paperclip Labs 出品。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 前提：Node.js 24.11+
+npx paperclipai@latest onboard --yes
+
+# 不想装服务先试跑，自带 key 即可
+ANTHROPIC_API_KEY=... npx paperclipai test-drive</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Paperclip（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx paperclipai@latest onboard --yes</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>目标/任务/预算/审批的组织管理层，自带 agent 接入</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（MIT）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 96,766</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">OpenClaw</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>见官方文档</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>生态里最能打的单体 agent，员工级</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 391,246</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Orca</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">brew install --cask stablyai/orca/orca</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>桌面应用跑并行 agent，每个独立 worktree</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（MIT）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 73.7k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">vibe-kanban</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>自托管</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>看板式管理 agent 任务</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 28.1k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Orca 和 vibe-kanban 管的是怎么把 agent 跑起来，Paperclip 管的是跑起来之后怎么对目标负责。预算硬闸、审批回滚、心跳唤醒、多组织隔离这些功能，只有放到多人多 agent 的生产环境里才会显出必要性。OpenClaw 的星数是它四倍，两者并不冲突：一个当员工，一个当公司，原生就有适配器连通。我的判断是，团队里出现两个人以上同时跑 agent 之后，口头约定就管不住预算和优先级了，那时候才轮到它上场。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 96,766 · MIT · npm 周下载 59,872 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/paperclipai/paperclip</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://docs.paperclip.ing</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Octop — 腾讯开源的 6.6K stars 自托管助手：七个 IM 渠道，专家随叫随到</p>
+
+<p style="margin:0 0 14px 0;">![Octop 演示](./octop-demo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">自己部署 AI 助手的动机一般有两个：数据不出门，以及希望它真的能干活，跑命令、查库、发消息，而不只是换个地方聊天。多数自托管方案停在第一层：一个前端加几个模型配置。Octop 的官方定位是自托管的多用户、多 agent 助手，一个进程里同时装下 Dashboard、CLI、IM 渠道和定时任务，面向个人、家庭和小团队。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">架构不复杂：所有状态收进 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.octop/</code> 的一个控制面数据库，默认 SQLite WAL 模式，也可以换 PostgreSQL，重启时从库里重建，没有外部消息队列。多 agent 靠专家体系实现，每个用户配自己的专家（各自的系统提示词、技能、子 agent），官方还内置了 16 套 MBTI 人格模板和配套测试，让每个 agent 有自己的性格。工作区后端可选本地磁盘、Docker 沙箱、PostgreSQL 或 COS/S3。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">两个落地的场景。第一，装完在飞书、钉钉、QQ、微信、Telegram、Discord、企业微信里任选一个渠道对话，手机上派活，聊天里可以让它委派 OpenCode 或 Claude Code 改代码，这条链路走的是 ACP 双向协议：它既能在 Zed、OpenCode 里当一个 ACP server 被调用，也能反向驱动 Claude Code、Codex 干活，中间有权限门。第二，用内置的浏览器自动化、终端 AI+ 和远程桌面直接操作环境，配合自然语言定时任务做周期活。安全侧有多用户 JWT 加管理员角色、工具审批、shell 护栏、PII 脱敏。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据上：<strong style="color:#07c160;">6,604 stars</strong>，813 forks，636 次提交，版本 1.0.2b5，MIT，本周 trending 上涨 1,476 星，PyPI 上月下载 6,481 次，Windows 有原生安装脚本和桌面应用，界面和文档都有中文版本。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Windows 一键安装
+irm https://finnie-1258344699.cos.ap-guangzhou.myqcloud.com/octop/install.ps1 | iex
+
+# 或者走 pip
+pip install octop
+
+octop init   # 首次初始化
+octop run    # 启动，Dashboard 在 :8088</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Octop（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">irm .../install.ps1 | iex</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>多用户多 agent、专家库、7 个 IM 渠道、双向 ACP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（MIT）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 6,604</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Open WebUI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">docker run</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>成熟的 LLM 聊天前端，插件生态大</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 153,891</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">LobeChat</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">docker run</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>现代界面的聊天框架，插件市场活跃</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 82,969</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">LibreChat</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">docker compose up</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>多模型聚合，企业特性齐全</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 45,234</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">三个竞品的星数都比 Octop 大一个量级，它们做的是聊天的界面，Octop 做的是助手的运行时：专家体系、子 agent、IM 网关、ACP 桥都在聊天框之外。想部署一个能用微信派活、能调 coding agent 干活的底座，我选 Octop；只要一个漂亮的 ChatGPT 替代界面，Open WebUI 更成熟。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 6,604 · v1.0.2b5 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/TencentCloud/Octop</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/TencentCloud/Octop/tree/main/docs</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">MCP Servers for AI Assistants — 把 8 个 AI 助手的 MCP 配置收进一个 JetBrains 控制台</p>
+
+<p style="margin:0 0 14px 0;">![MCP Servers 插件演示](./mcp-servers-jb-demo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">用 MCP 的人迟早要还一笔配置债：Claude Code 一份配置，Cursor 一份，JetBrains AI Assistant 一份，Junie 一份，Continue 一份。同一个 API key 改五遍，同一个服务器装五次，出问题分不清是配置错了还是服务器挂了。这个插件的思路是把这笔债收进一个控制台，在 IDE 里统一发现、安装、管理和检查 MCP 服务器，一次覆盖 8 个以上助手。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">功能分四块。目录聚合了四个来源：MCP Get、官方 MCP Registry、Docker MCP Catalog、GitHub MCP Registry，筛完之后可以先看服务器参数再决定装不装。检查器用 STDIO、SSE、Streamable HTTP 三种传输接上服务器，列出全部工具、预览 JSON Schema、自动补全请求参数。工具运行器把选中的工具拉进独立编辑器试跑，最近 100 次调用有执行历史，耗时、原始 JSON 都在，还能一键复制 Python 或 TypeScript 的参数模板。配置管理层支持按 IDE、按项目分别设置，团队可以共用一份 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.mcp/team.json</code> 提交进仓库，换机器用 JSON 批量导入导出。三种传输都带自动重连，跟进到 MCP spec 2025-11-05。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个典型流程：在 Junie 里干活发现缺数据库 MCP，从官方 Registry 找到 PostgreSQL 服务器，先在内置检查器里连上验证 schema 是否符合预期，再把同一份配置分发到 Claude Code 和 AI Assistant。排查工具调用问题时翻执行历史，比之前靠猜快得多。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">上架数据：JetBrains Marketplace <strong style="color:#07c160;">14,069 次下载</strong>，4.4 分，11.0.0 版本 9 月 14 日发布，兼容 IntelliJ IDEA、Android Studio 等 15 款 IDE。基础功能免费，高级功能需要订阅，有 7 天试用。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">安装：IDE 内 Settings → Plugins → Marketplace 搜索 "MCP Servers for AI Assistants"，安装重启后在工具窗口打开。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">MCP Servers for AI Assistants（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>IDE 插件市场一键装</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>8+ 助手的 MCP 配置控制台 + 检查器 + 工具试跑</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>基础免费（高级订阅，7 天试用）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⬇ 14,069 · 4.4 分</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">手改配置文件</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>编辑 mcp.json / config.toml</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>零依赖，但每个助手各配一遍</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Docker MCP Gateway</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">docker mcp</code> CLI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>把 MCP 服务器放进容器跑，带官方目录</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费（需 Docker Desktop）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 1,589</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">MCP Get / 官方 Registry</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>网站 / CLI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>服务器发现和安装指引，不管理助手配置</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Docker MCP Gateway 管服务器怎么跑，这个插件管助手怎么连，可以叠加使用。难被替代的是检查器和团队配置：先验证再接入，配置进仓库全组共享，目前没找到更顺手的做法。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 JetBrains Marketplace · ⬇ 14,069 次下载 · v11.0.0（2026-09-14） · 4.4 分 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://plugins.jetbrains.com/plugin/28071-mcp-servers-for-ai-assistants</span></code></p>
+</section>
