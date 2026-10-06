@@ -1,0 +1,137 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-06</p>
+
+<p style="margin:0 0 14px 0;">![今日两个工具速览](./summary.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天两个：一个按住 AI 写代码的手，一个把数据库交给 agent 直接查。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">ponytail — 让 AI 像最懒的资深工程师那样写代码</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让 agent 加个缓存，它给你一个 48 行的 CacheManager 类；让它加个日期选择，它顺手装上三个新依赖。代码是写出来了，但 review 要人看，依赖要人升级，多出来的每一行都在后面收利息。agent 的默认倾向是“多做”，因为做多不需要解释。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ponytail 是一套约束规则，核心是七级阶梯。动手写之前，agent 必须停在第一个能站住的台阶上：不需要的功能直接跳过（YAGNI，投机需求不做）；代码库里已有现成的就复用；标准库能做就用标准库；平台原生够用就用原生；已装的依赖能解决，绝不加新依赖；一行能搞定就写一行；全部排除完，才写最小可行版本。顺序有讲究：先读懂改动涉及的代码、追清真实流程，再选台阶，对方案偷懒，对阅读不偷懒。削减也有边界，输入校验、错误处理、安全和无障碍不在偷懒范围内。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">三个强度档：lite 按需求实现但顺口提一句更省事的路子；full 默认强制走阶梯；ultra 自称 YAGNI 极端分子，直接甩一行方案并质疑需求本身。除了写代码时的约束，还有三个审查命令，/ponytail-review 扫当前 diff 里的过度设计并给出删除清单，/ponytail-audit 扫全仓臃肿，/ponytail-debt 把主动推迟的捷径记成台账，避免“以后再说”变成失踪人口。官方给的例子是一个 48 行的 CacheManager 被换成一行 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">lru_cache</code>，行为不变，少 48 行。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方在 FastAPI + React 仓库上跑了 12 个真实功能任务：代码量平均少写 54%（最高 94%），token 少 22%，成本低 20%，速度快 27%，安全性验证 100% 保留。作者修正过早期口径，那个“少 80–94%”是被基线话术放大的假象，已按 agentic 实测数据改掉。仓库 156,024 stars，8,383 forks，MIT。官方标注支持 20 种 agent，npm 周下载 23,348。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code（两条命令）
+/plugin marketplace add DietrichGebert/ponytail
+/plugin install ponytail@ponytail
+
+# Codex
+codex plugin marketplace add DietrichGebert/ponytail
+codex plugin add ponytail@ponytail</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">ponytail（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Claude Code 插件市场两条命令</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>七级阶梯强制 YAGNI，20 种 agent 适配，自带审查子命令和公开基准</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（MIT）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 156K · npm 2.3 万/周</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Caveman</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add JuliusBrussee/caveman</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>压输出和输入的 token，管“说多少”不管“写多少”</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>Skill 免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 103K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">手写 CLAUDE.md 规则</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>手动维护</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>完全自定义，但没有阶梯结构、没有审查命令、没有基准数据</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">同类工具的着力点多半在“少说”：Caveman 压的是 token，管的是一句话说多长。ponytail 管的是产出物本身，代码进了仓库要被人读、被人维护，那才是大头。我的建议是装完先跑一次 /ponytail-review 扫最近的 diff，比读 README 直观。它也是这一档里唯一自带审查子命令和公开基准的。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 Claude Code 插件市场 · ⭐ 156,024 · npm 周下载 23,348 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/DietrichGebert/ponytail</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://ponytail.dev</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">MCP Toolbox — Google 官方的数据库 MCP，20 多种库一套工具</p>
+
+<p style="margin:0 0 14px 0;">![MCP Toolbox 演示](./mcp-toolbox-demo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让 agent 查数据库，每接一种库就要重写一遍 MCP server：连接池、认证、SQL 注入面、工具描述，全是重复劳动，还各写各的风格。agent 缺的是一条安全、参数化、说得清的查询通道。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">MCP Toolbox 是 Google 开源的数据库 MCP 服务器，两种用法。预置模式一条命令：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--prebuilt=postgres</code> 直接得到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">list_tables</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">execute_sql</code> 这类通用工具，连上就能查，嫌工具多还能按子集加载（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--prebuilt=postgres/data</code> 只加载 SQL 工具）。自定义模式是它的另一半：tools.yaml 里声明数据源、参数化 SQL、工具集，还可以定义 prompt 和 resource，把“生产环境允许 agent 做什么”写成一份能进代码评审的配置文件。连接池、IAM 认证、OpenTelemetry 观测都是内置的。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">典型场景有两个。轻的是在 IDE 里随口问“上周注册的用户里有多少复购”，agent 调 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">execute_sql</code> 当场算给你看；重的是把业务查询封装成具名工具，比如 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">search-hotels-by-name</code>，SQL 固定、参数化、只读，agent 只能按你划定的范围查。数据库覆盖 20 多种，PostgreSQL、MySQL、MariaDB、SQL Server、Oracle、MongoDB、Redis、Elasticsearch、ClickHouse、Snowflake、Neo4j 到 Google Cloud 的 BigQuery、Spanner、AlloyDB、Firestore 都在列。最近还加了一条反向路径：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">skills-generate</code> 可以从 tools.yaml 直接生成 Agent Skill 安装包。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据方面，16,596 stars、1,749 forks，Apache-2.0，最新 v1.13.1（9 月 25 日），本周仍在活跃提交。npm 包周下载 85,099。Python / JS / Go / Java 四种语言 SDK 齐备，还有一个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">./toolbox --ui</code> 交互式界面，可以先把工具手测一遍再交给 agent。项目原名 genai-toolbox，近期改名 mcp-toolbox。老用户一条 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">git remote set-url</code> 就完成迁移。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 最快：往 mcp.json / claude_desktop_config.json 里加这段，npx 直接拉起带预置工具的服务器
+npx -y @toolbox-sdk/server --prebuilt=postgres --stdio
+
+# 按自己的 SQL 和工具集来，就配一份 tools.yaml
+npx @toolbox-sdk/server --config tools.yaml
+
+# 也有 Homebrew 和源码安装
+brew install mcp-toolbox
+go install github.com/googleapis/mcp-toolbox@v1.13.1</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">MCP Toolbox（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @toolbox-sdk/server</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Google 官方，预置+自定义双模式，20+ 数据库，四语言 SDK</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 16.6K · npm 8.5 万/周</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">pgbot</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @pgbot/cli</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>只读、结论确定性、本地基线</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 1.2K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">DBHub</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @bytebase/dbhub</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>一个 MCP 接五种数据库，schema 搜索省 token</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3.5K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">MCP Alchemy</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">uvx mcp-alchemy</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>SQLAlchemy 后端，覆盖八种以上数据库</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 419</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">同类工具的思路大多是“一个 server 打通几种库”，Toolbox 多给了一层配置文件：想省事有预置工具，想管控有 tools.yaml。加上 Google 官方维护、四种语言 SDK 和 8.5 万/周的下载量，它是这一档里唯一有大厂长期维护预期的选项，数据库这个位置的信任成本不低。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 npm 官方包 · 周下载 85,099 · ⭐ 16,596 · v1.13.1 · Apache-2.0 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/googleapis/mcp-toolbox</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://mcp-toolbox.dev</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">T3 Code <span style="font-size:13px;font-weight:normal;color:#999999;">⭐ 25,635</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">Theo 团队出的 agent 控制面板，手机、网页、桌面三端统一接管你本机已装好的 Claude Code、Codex、Cursor、Grok Build、OpenCode 订阅，MIT。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">npx t3@latest</code> 免安装先试，项目自标 very very early。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/pingdotgg/t3code</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Mastra 1.0 <span style="font-size:13px;font-weight:normal;color:#999999;">⭐ 28,576 · npm 93.7 万/周</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">Gatsby 团队做的 TypeScript agent 框架，本周发布 1.0：多 agent 工作流、eval、本地 Studio、可观测性一套齐全，Replit、PayPal、Sanity 已在生产使用。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/mastra-ai/mastra</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">openrig <span style="font-size:13px;font-weight:normal;color:#999999;">⭐ 5,266，本周 +3,776</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">把 Claude Code、Codex、Pi 编成有角色、有共享上下文的常驻 agent 团队，Apache-2.0。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/mvschwarz/openrig</code></p>
+</section>
+</section>

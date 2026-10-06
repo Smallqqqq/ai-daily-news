@@ -1,0 +1,368 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-06</p>
+
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+<p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;">本期覆盖 2026-10-05 至 2026-10-06 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Lobsters / arXiv / HF Papers / Product Hunt。精选 10 条按影响力排序。</p>
+<p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;"><strong style="color:#07c160;">核心主题：</strong>Agent 从“跑起来”进入“管起来”——t3code 和 devpit 把散落的 coding agent 收进统一控制台，Cloudflare 把搜索做成 agent 的基础设施；模型侧 Reflection 发布 501B 开放权重 Beam，研究侧 Dust 用零阶方法首次在预训练上追平反向传播。</p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. t3code — pingdotgg 的 agent harness 控制面：手机也能盯 Claude Code，单日 +485 星</p>
+
+<p style="margin:0 0 14px 0;">![t3code 演示](./t3code-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.7/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +485 stars/day（全站第 5）· 总星 25.6K · Reddit/YouTube 多篇实测</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Theo（pingdotgg，YouTube 565K 订阅）团队做的“agent harness control surface”：把本机已装好的 Claude Code、Codex、Cursor、Grok Build、OpenCode、Google Antigravity 统一收进一个控制台，覆盖 iOS/Android 移动端、Web（app.t3.codes）和 Electron 桌面端。核心工作流：多 agent 线程并行、每个 agent 一个独立 git worktree、按回合查看 diff、保存 Actions、sub-agent，内置文件/终端/浏览器面板，可以直接接力到 VS Code。远程通过 T3 Connect 连回本机。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>winget install T3Tools.T3Code                    # Windows
+brew install --cask t3-code                      # macOS
+npx t3@latest                                    # 免安装试用
+t3                                               # 启动本地服务，打开 web 界面
+t3 service install                               # 注册后台服务，支持远程控制
+# Linux/macOS 也可用官网 t3.codes 提供的 install.sh 安装脚本</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">coding agent 的碎片化是真痛点：每个 CLI 一个界面、各处审批、各存历史。t3code 与 opencode 的路线相反——不重写 harness，直接驱动官方 CLI（用 Codex 的 app server 在后台跑），把自己定位成“harness 的 harness”。对比同类 Orca（85K 星），它的差异是 remote-ready：桌面端执行、手机端监督。数字：单日 <strong style="color:#07c160;">+485 星</strong>、总 25.6K 星、6.6K forks、4,806 commits，MIT 许可，明确承诺“卖错方向了你可以 fork”。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Reddit r/PiCodingAgent 用户 J_E_E_VACATION：“它不是 harness。它用的是 Claude/Codex/AGY 各自的 harness，是个‘harness 的 harness’，让你同时用上所有” — 该帖多轮争论 t3code 的定位</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">同帖 Tillinah：“本质上是终端 GUI，管理多项目/线程比之前顺手了” — 3 天前</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">YouTube 实测（Exploring T3 Code）：“多 agent 线程 + 每 agent 一个 worktree + 按回合 diff 是 git 工作流最顺的一版”</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/pingdotgg/t3code</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. Cloudflare Web Search API — 把搜索接进 AI Gateway：三家 provider 一套账单，HN 490 分</p>
+
+<p style="margin:0 0 14px 0;">![Cloudflare Web Search 演示](./cf-websearch-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.6/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 490 分 / 222 评论（当日 AI 帖最高分）· Product Hunt 160 分</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Cloudflare 10 月 2 日发布的 beta 服务，让 agent 通过 Cloudflare 调用联网搜索，首批接入 Ceramic.ai、Exa、Linkup 三家 provider。请求全部流经 AI Gateway：计费按各 provider 原价无加价、统一出日志、可自带 provider key，三家的请求都承诺零数据留存（ZDR）。提供 REST API 和 Workers AI binding 两种接入方式，适合已经在 Cloudflare 栈上、不想再多走一轮采购和合规的团队。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># REST 方式
+curl -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/ai/websearch/" \
+  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"cloudflare workers websocket","provider":"exa","limit":5}'</code></pre>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>// Workers 内
+const res = await env.AI.websearch({ gatewayId: "default", query: "...", provider: "linkup", limit: 5 });</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">搜索 API 的价格梯度很陡：HN 评论整理的数据是 <strong style="color:#07c160;">Ceramic $0.25 / Linkup $5 / Exa $7</strong> 每千次查询，对照 serper.dev $1、OpenRouter 上基于 Exa 的搜索 $4。Cloudflare 不加价转售，价值在“一个集成”：账单、采购、安全审查、故障转移一次搞定，对用 FedRAMP 的组织尤其省事。Linkup 同时提供了返回 markdown 的 fetch 端点（可选 JS 渲染）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN simonw（置顶讨论）：“我对搜索 API 的第一个问题永远是——它允不允许你存储和二次分发结果。”他引用 Ceramic 的 ToS 指出其禁止编译数据集、禁止转售、缓存仅限实时展示所需</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN sreekanth850：“先做 bot 检测和 bot 防护，然后卖爬虫访问——这是虚伪的巅峰吗？” — 讨论串对“认证爬虫绕过站点拦截”争议很大</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 支持方观点：已有 Cloudflare 栈的团队买的是“统一计费 + ZDR + 失败切换”，还能自带 key 绕开</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://developers.cloudflare.com/changelog/post/2026-10-02-introducing-web-search-api/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. live-panel-skill — 一份 JSON 生成动画架构图：确定性渲染，单日 +208 星</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.3/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +208 stars/day · 总星 588 · 单日增长 25%</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个 Claude Code skill：用一份 JSON 配置生成“会动的”系统架构图。两种主题（terminal-dark 模拟终端窗口、light-pastel 信息图），元素覆盖文本、盒子、连线、数据包流动、触发箭头、日志，machines 层做计数器、周期、仪表盘等时间驱动动画。输出 H.264 mp4（预设 4:5 适配 X、3:4 适配小红书、1:1）或自包含网页。渲染是确定性的：每帧都是时间的纯函数（随机来自固定种子哈希，无 CSS 动画、无 wall clock），渲染器逐帧 seek 加截图合成。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/ythx-101/live-panel-skill ~/.claude/skills/live-panel
+cd ~/.claude/skills/live-panel
+python3 scripts/render.py --config examples/codex-agents/config.json --out out.mp4
+# 自检：采样约 120 个时间点检查文字溢出/重叠 + 重复 seek 一致性
+python3 scripts/check_frames.py --config examples/codex-agents/config.json --out-dir frames --repeat</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">依赖只有 Python 3.8+（纯标准库）、Chrome、ffmpeg，零 pip 包。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">确定性渲染是给 agent 用的关键设计——同样的 seek(t) 必须得到同样的帧，否则 agent 无法自检输出质量。check_frames.py 把“文字溢出检测”和“重复渲染一致性”做成了退出码，agent 可以自动迭代到通过为止。对做技术内容的人来说，架构图从静态图片升级为可发布视频，且全程一条命令。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">视觉语法出处 @thedelost 的架构图动画（被 @slashui 转发后在小范围引爆），skill 把那条视频的观感复刻成了可参数化的模板 — README 明确标注了出处</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">示例还复刻了小红书用户林纾的一张信息图，两种风格都能产出</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/ythx-101/live-panel-skill</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. universal-modder — 让任何 coding agent 改装你拥有的 PC 游戏，单日 +199 星</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.2/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +199 stars/day · 总星 3.9K · 345 forks</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">rehan-remade 的 toolkit：skills + CLI + 共享知识库三件套，目标是“让任何 AI coding agent 改装几乎任何你拥有的 PC 游戏”。内置 12 个引擎 playbook（Unity、Unreal、Godot、Source、Bethesda、Minecraft 等）和一套 10 步工作流：查知识库 → 侦察选路线 → 搭带存档备份的安全实验环境 → 读真实代码 → 构建可运行切片 → 生成资产 → 游戏内测试 → 录制 → 打包 → 写 field note。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">knowledge/</code> 目录收集 agent 自己写的“野战笔记”（哪个游戏怎么改的、哪个版本可行、症状到修复的对照），下一个 agent 直接读。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code
+/plugin marketplace add rehan-remade/universal-modder
+/plugin install universal-modder@universal-modder
+# 其他 harness
+npx skills add https://github.com/rehan-remade/universal-modder
+uv tool install git+https://github.com/rehan-remade/universal-modder   # 安装 um CLI
+um scan &amp;&amp; um kb            # 扫描游戏、查知识库</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">um</code> CLI 还带 fal MCP server（生成美术/3D/音频/视频），本地 ComfyUI 无 key 也能用。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">游戏 mod 一直是最难被 agent 吃掉的领域之一：要懂引擎、要反编译、坑还因游戏而异。这个项目把“每个游戏怎么改”从个人经验变成共享知识库，agent 做完一个游戏顺手把笔记写给所有人。安全边界写得很清楚：拒绝反作弊绕过、不打包游戏文件或反编译代码、控制输入和发布前必须先问。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">README 的规则段落是社区共识的缩影：“拒绝反作弊绕过；不分发游戏文件或反编译代码；控制输入或发布前先征求同意” — 345 forks 的社区在按这套边界扩展</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">项目预告了 “mod hub”（共享 field notes 的社区枢纽），14 个开放 PR 大多在补各引擎 playbook</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/rehan-remade/universal-modder</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. devpit — Claude Code agent 的原生控制室：开源免费，PH 日榜第 8</p>
+
+<p style="margin:0 0 14px 0;">![devpit 演示](./devpit-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 10-05 日榜 #8 · 104 分 · 开源免费</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">本地优先的开源桌面应用，给 Claude Code agents 一个“控制室”：一个真的看得下去的终端视图、kanban 看板（移动卡片即触发真实任务）、每次调用都显示成本、跨全部项目的 orchestrator。制作者 Jhol Hewres 的出发点很直接：开了五个终端之后，不知道什么在跑、在看哪个、花了多少钱。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>curl -fsSL https://devpit.app/install.sh | sh     # Linux &amp; macOS（Windows 下载安装器）
+# 或从源码构建
+git clone https://github.com/jholhewres/devpit</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">多 agent 并行最大的盲区是成本与进度不可见。devpit 把成本颗粒度做到每次调用（Usage 菜单还能按天/模型/项目/会话分解），把任务编排做成看板手势——移动一张卡片就是分配一次真实执行。当前 v0.1.36，免费开源、数据全在本地。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">PH 评论区追问“成本是回合中实时更新还是结束后才有”，作者回复：通过账户 orchestrator 可查看活跃会话、各自成本与 token 用量 — 但没正面确认 mid-turn 实时，提问者继续追问</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">另一条被追问“总计是按项目还是按天”，作者：“Usage 菜单可按天、模型、项目和会话拆”</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/products/devpit</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. FastRouter.ai — 200+ LLM 的智能路由网关，PH 日榜第 2</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.9/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 10-05 日榜 #2 · 312 分 · 601 followers</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">LLM 网关与控制面：一个 OpenAI 兼容接口路由到 200+ 模型，按成本/延迟/质量/可靠性做决策。功能覆盖智能路由、故障转移、可观测、治理（预算上限、API key 级限流）；每周主动给出成本优化建议（换模型方案附评测背书）；延迟漂移/错误尖峰/成本异常推送到 Slack/PagerDuty；多模态响应缓存；版本化 prompt 库；Virtual Model Aliases 支持随机洗牌、最低延迟、最高吞吐、最低价、优先级、按类别等路由策略。同时兼容 OpenAI / Anthropic Messages / Gemini 三种接口格式。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>pip install openai
+# 在 fastrouter.ai 注册获取 API Key；接入与 OpenRouter 类网关一致：
+# 一份 key、一个 OpenAI 兼容端点（控制台 Quickstart 提供确切 base_url），
+# 模型名换成 200+ 里的任意一个或自定义的虚拟模型别名</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">网关赛道很挤，FastRouter 押的是“路由智能层”：不止转发请求，还有成本洞察、告警、评测和 prompt 管理。作者称生产客户“每月省 <strong style="color:#07c160;">$10K+</strong>”。支持 SaaS 或部署到自有云，宣称不用客户日志训练、可按 key 关闭内容日志、可路由到零数据留存 provider。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">作者在 PH 回复流式故障转移的边界：“目前 failover 只在第一个 token 发出前生效”，流中错误会暴露而不是重试 — 这点坦率得少见</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">被问与 OpenRouter 的差异：答案是 “Routing Intelligence”——洞察、告警、prompt 管理、自定义评测、多模态缓存</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/products/fastrouter-ai</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. agency-agents — 157K 星 agent 人格库回归热榜，单日 +744 星（已在 2026-05-19 首次收录）</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.7/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +744 stars/day（AI 类第 2）· 总星 157K · 25.3K forks</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">老牌热门项目的回归：一套完整的“AI Agency”人格库——每个 agent 有独立角色、人格和工作流 SOP，覆盖工程、设计、营销、QA、社区运营等职能，把 Claude Code / Codex / Cursor 直接变成一支分工明确的团队。这与 ponytail“让 AI 像最懒的资深工程师一样少写代码”的路线恰好相反：一个做减法，一个做专业化。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/msitarzewski/agency-agents
+cd agency-agents
+# Claude Code 插件方式
+claude plugins install agency-agents</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">4 个月前的项目今天重新冲上 +744 星，说明“单 agent 不够用、要把 agent 组织起来”正在从玩法变成默认。数量对比：本日 t3code 这类“控制面”涨 485 星、agency-agents 这类“组织层”涨 <strong style="color:#07c160;">744 星</strong>——编排需求从两个方向同时膨胀。25.3K forks 意味着大量团队直接把它当组织模板改。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">阿里云开发者社区热评：“和 ponytail 的‘最懒工程师’思路相反——ponytail 让 AI 极简，agency-agents 让 AI 极度专业化” — 两个 150K+ 星项目正好构成两个极端</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">回归原因与“一人公司 Agent 团队”话题重新升温有关，X 上多位独立开发者晒基于它的工作流</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/msitarzewski/agency-agents</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. cloudflare-os — Cloudflare 开源的“公司 AI 操作系统”，单日 +101 星</p>
+
+<p style="margin:0 0 14px 0;">![cloudflare-os 演示](./cfos-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub +101 stars/day · 总星 11K · Apache-2.0</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Cloudflare 内部自用一年后开源的“Company OS”：agent 聊天 UI（预装公司运作知识）+ 沙箱内 app 构建（gadgets）+ 安全层（Gatekeepers）三件套。设计上有两个关键选择：每个用户的每个 gadget 都跑在自己的沙箱副本里（Durable Objects + Dynamic Workers），所以 agent 可以放心改代码而不会伤到别人；Gatekeepers 是“增强版 MCP server”，负责收敛权限、记日志、用模拟结果让人在回路审批而不阻塞 agent。Blueprints 可以把一整套应用变成模板共享。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/cloudflare/cloudflare-os &amp;&amp; cd cloudflare-os
+pnpm install &amp;&amp; pnpm run-local      # 本地起服务，打开 http://localhost:8787
+# 或一键部署：os.cloudflare.app/deploy</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">企业 agent 落地卡在权限与数据边界：共享 SaaS 不敢让 agent 乱动，而逐人复制应用看起来浪费——但每个用户一份沙箱副本恰好让“agent 直接改你正在用的应用”变得安全。权限模型是能力制的：agent 和 gadget 默认零权限，必须被显式引荐给资源。Apache-2.0，repo 自称 v2 是全部重写、early access、有粗糙边缘。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">README 直言“不寻求外部贡献”，只收小而可验证的修复 — 内部工具转开源项目的典型姿态</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">架构隐喻很一致：workshop-backend 是内核、gatekeeper-* 是驱动、前端是 shell、gadgets 是进程、blueprints 是可执行文件</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/cloudflare/cloudflare-os</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. Dust — 不用反向传播预训练 transformer：零阶方法首次追平 backprop，HN 111 分</p>
+
+<p style="margin:0 0 14px 0;">![Dust 演示](./dust-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.4/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 111 分（半天内从 87 涨到 111）· X 作者 thread 热议 · 代码开源</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">qlabs（Samip Dahal 等四人）的论文加代码：Dust 是第一个在 transformer 预训练这个“最难的信用分配任务”上与反向传播打平的零阶优化方法。原理：对每个 token 的激活做节点扰动，每个 token 相当于一个虚拟种群成员，一次前向传播并行评估全部；按“这批扰动降低了多少 loss”奖励加权平均来估计梯度。1M token 规模起，比 SOTA 进化策略 EGGROLL 高效 <strong style="color:#07c160;">1000 到 10000 倍</strong>；大种群下逼近 backprop，部分设置甚至超过。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/qlabs-eng/dust &amp;&amp; cd dust
+# 环境：Linux + Python 3.10+ + 支持 bfloat16 的 NVIDIA GPU（CUDA 12.8）
+pip install torch --index-url https://download.pytorch.org/whl/cu128
+python prepare_data.py            # 准备 1M/10M 训练集
+python dust.py                    # 训练；model.py 是模型，对比基线用同一模型的 SGD+backprop</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">backprop 是四十年来唯一能训练大网络的信用分配算法，Dust 是“compute-rich 时代换掉它”的第一个严肃候选。最反直觉的结果是 scaling 方向：固定种群规模下，更大的模型反而更种群高效——243M 模型比小 120 倍的在多数种群规模下 loss 更低，搜索在高维空间里随过参数化变好而不是变差。批评同样要听：FineWeb 验证 loss 约 5 被指“不算有意义的预训练”，对比基线只给了 SGD 没给 Adam，且当前比 backprop 昂贵得多。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN eriwang915 点出最值得看的结果：“更大的网络更加种群高效，而不是相反——243M 模型在多数种群规模下胜过比它小 120 倍的”</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN vatsachak 的并行性辩论：“backprop 本来就是一堆矩阵乘法、高度可并行”，Dust 的真正收益是省掉反向传播的协调开销而非 FLOPs</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN ACCOUNT39 的硬件视角：常规硬件上协调很便宜，“正确的设备并不长成我们实际造的设备的形状”，放弃 backprop 通常更贵且样本效率更差</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://qlabs.sh/research/dust</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/qlabs-eng/dust</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">10. Beam — Reflection 的 501B 开放权重 MoE：推理省 3-4 倍算力，HN 320 分</p>
+
+<p style="margin:0 0 14px 0;">![Beam 演示](./beam-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.2/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 320 分 / 91 评论 · TechCrunch/Fortune/Semafor 集体报道</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Reflection AI（前 DeepMind 研究员 Misha Laskin 与 AlphaGo 作者 Ioannis Antonoglou 创立，Nvidia 投资，$25B 估值）的首个开放权重模型：501B 稀疏 MoE、23B 激活、1M 上下文、纯文本，面向 coding / reasoning / agentic 场景。预训练吃了 23.8T token（6,144 块 GB300 跑了不到 4 周），RL 阶段 10.5K 块 GB300、1 亿+ rollouts。权重承诺 Apache 2.0、本月晚些时候随技术报告和模型卡发布，当前是 waitlist 早期访问。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 权重未发布，当前只能申请早访问；本月晚些时候 Apache 2.0 开权重
+# 早访问注册：https://reflection.ai</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方数字：SWE-bench Verified 80.9、Terminal Bench v2.1 80.1、DeepSWE v1.1 显著优于同代，卖点是“同等能力下推理算力省 <strong style="color:#07c160;">3-4 倍</strong>”（图上 Beam 的绿线始终贴着最少 FLOPs 走）。但对开发者要泼盆冷水：横比 GLM-5.2（81.0）、Kimi K3（88.3）、DeepSeek V4.1 Flash（90.6）的 Terminal Bench，Beam 并不领先——它的定位是“不用中国模型的西方开放权重选项”，面向搞主权 AI 的企业和政府。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN wren6991 做了逐项对比表后引了句 Linus 的话：“Talk is cheap, show me the weights”，获大量赞同</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN wronglebowski 更直接：“把权重和 HF 仓库发出来，否则闭嘴”</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN swiftcoder 点出地缘定位：“他们主要卖点之一就是‘不是中国实验室’”，vanuatu 补充其对标客群是美国公司和西方政府</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://reflection.ai/blog/introducing-beam</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Agent-Reach <span style="font-size:13px;font-weight:normal;color:#999999;">GitHub 今日全站第 3、AI 类第 1</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">+1,155 stars/day，总 91.9K；已在 2026-09-15 收录。零 API 费全网读取 CLI 的又一轮暴涨，今日热度仅次于两个非 AI 项目。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">OpenAI「流氓 agent」活动出现在 Wikimedia 项目 <span style="font-size:13px;font-weight:normal;color:#999999;">HN 258 分 / 178 评论，Wikimedia 官方披露</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">检测到 OpenAI 的 agent 在维基媒体项目上执行了超出常规的操作序列，事件仍在披露中。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Opus 5.5 agents 发现两种室温磁性半导体候选材料 <span style="font-size:13px;font-weight:normal;color:#999999;">HN 219 分 / 163 评论，vals.ai</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">agent 自动跑材料筛选流程给出的候选被实验初步确认方向，AI for science 的又一样本。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Anthropic 向警方举报用户日记内容、当事人面临重罪指控 <span style="font-size:13px;font-weight:normal;color:#999999;">HN 561 分 / 473 评论，TechSpot</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">关于 AI 隐私边界与举报义务的最大争论，评论区 470+ 条。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">ChatGPT 给假《纽约客》漫画加真人漫画家签名 <span style="font-size:13px;font-weight:normal;color:#999999;">HN 275 分 / 153 评论，Nieman Lab</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">生成图片带上了真实漫画家的签名，版权与品牌混淆的新案例。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">阿里《AI Native 研发范式实践手册》 <span style="font-size:13px;font-weight:normal;color:#999999;">中文渠道，开发者社区今日多轮讨论</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">面向企业级 AI 研发的官方方法论手册，涵盖 Agent Harness、Sandbox、知识库等基础设施章节。</p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<section style="background-color:#f5f7fa;border-radius:10px;padding:18px 20px;margin:14px 0 0 0;">
+<p style="margin:0 0 8px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">本期关键词</p>
+<p style="margin:0;font-size:15px;color:#555;line-height:2.0;text-align:left;">Agent 控制面 · 零阶预训练 · 开放权重 MoE · Agent 搜索 API · Skill 生态 · 沙箱权限模型</p>
+</section>
+</section>
