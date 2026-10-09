@@ -1,0 +1,361 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-09</p>
+
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+<p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;">本期覆盖 2026-10-08 ~ 10-09 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Bluesky / Lobsters / arXiv / HF Papers / 知乎 / Product Hunt / AI 实验室博客。精选 10 条按影响力排序。</p>
+<p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;"><strong style="color:#07c160;">核心主题：</strong>Agent 工具在垂直场景开花——单日 7,738 星的逆向工程工具 rea、16.9MB 音频模型 Whistle、开源版 Semrush、电话评测平台各占一坑；模型侧由 Claude Haiku 5.5 的 90% 降价和 Step 5 的性价比路线主导。</p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. morluto/rea — 单日暴涨 7,738 星：给 Agent 装逆向工程能力</p>
+
+<p style="margin:0 0 14px 0;">![rea 工具链演示](./rea-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 单日 +7,738 stars（总 27.5k，本周全站最高单日增量）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">REA（Reverse Engineer Anything）是给 coding agent 用的逆向工程工具链，把 Hopper、Ghidra、IDA 三大反汇编器统一成 27 个可调用工具（MCP server 形态）。覆盖原生二进制（Mach-O / Windows PE / ELF）、Electron/JS 应用（ASAR 解包）、Android APK、EVM 字节码等目标，运行中的进程、浏览器页面和固件也能抓。工作流强制三步走：decompile 恢复可读代码与符号，understand 沿调用链解释实现，verify 核对证据。这套约束防的是 agent 编造分析结果。TypeScript 实现，MIT 协议，作者 morluto。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npm install --global rea-agents &amp;&amp; rea setup
+# 或装进 Claude Code skills 目录
+git clone https://github.com/morluto/rea ~/.claude/skills/rea
+# 原生二进制分析需要本机有 Hopper / Ghidra / IDA 之一</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">单日 <strong style="color:#07c160;">+7,738 星</strong>是当天 GitHub 全站最高（对比同期 diagram-design 1,160 星、mattpocock/skills 1,774 星）。它把逆向工程从“人肉在 IDA 里读汇编”变成“描述你想理解的功能，agent 自己跑工具链并交出证据链”。典型场景是项目作者自己写的：“看到一个你喜欢的功能？把 app 交给你的 agent——即使没有源码，它也能调查这个功能、解释原理，再按你的技术栈重建一版。”</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">GitHub Daily Trend 播客（10-07）实测后总结：“运行 rea 后它会自动识别目标类型：静态 JS/Electron 应用走文件分析引擎，原生二进制则对接 Hopper、Ghidra 或 IDA，还能抓运行中的进程、浏览器页面和固件。”</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">社区把它归类为“agent skills 从写作、安全审计延伸进逆向工程”的第一梯队项目。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/morluto/rea</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. Whistle — 16.9MB 的语音识别模型，纯 CPU 跑，HN 567 分</p>
+
+<p style="margin:0 0 14px 0;">![Whistle 模型演示](./whistle-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 567 分 / 126 评论（昨日上首页后持续攀升）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Cactus Compute 开源的语音识别模型，整个模型是单个 16.9MB 文件，在纯 CPU 上运行，不需要 GPU、不需要网络、无依赖。架构是 log-mel 前端加卷积 stem，编码器 8 层 Simple Attention（Monarch Hadamard MLP）。解码器沿用 Needle 的形状，靠 gated cross attention 逐层读取。支持 7 种语言（英德法西意荷波），单次处理 30 秒 16kHz 单声道音频。输出包括词级时间戳、关键词偏置和 80ms 粒度语音嵌入。权重 2-4 bit 量化，与 Cactus 的 Needle 共用同一个 C++ 引擎和 .cact 容器。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>pip install cactus-needle
+python -c "import needle; print(needle.transcribe('clip.wav')['text'])"
+# 终端麦克风实时转录
+needle whistle playground
+# Whistle vs Whisper vs Moonshine 同片段对比
+needle whistle compare</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">LibriSpeech test-clean WER 4.31，Whisper base 是 4.9——后者体积 145.3MB，是 Whistle 的 <strong style="color:#07c160;">8.6 倍</strong>。首个 token 延迟 11.1ms 对 73.2ms（Apple M4 Pro CPU），解码速度 1,319 tok/s 对 266 tok/s。FLEURS 七语言平均 21.4 对 24.5。覆盖 17 个平台，包括 RISC-V、MIPS32、watchOS 和浏览器 WASI。可穿戴、机器人、微控制器、智能家居都能塞进去，音频全程不出设备。配合 Needle 还能把语音片段直接转成工具调用（“关掉厨房的灯”→ 直接调 API，无需中间转写步骤）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN skolos：把 Echo Show 整个本地化（Home Assistant，零 Amazon 调用）。RTX 5080 上 Qwen ASR 1.7B 得分 168/170，Whistle 原始只有 70/170；但用 10,000 条生成语料训出一个小模板网络后，Whistle 到 164/170，重口音也扛住了。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN lab14 泼冷水：“如果模型实际不太能用，再小的体积也没意义”，指出西/法/英语质量平平；e12e 报告日语输入被转成乱码西班牙语。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN islewis 的总结有代表性：小模型在隐私和延迟场景有价值，但分布外会退化，通常没有说话人分离和实时流式输出。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://cactuscompute.com/blog/whistle</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. Claude Haiku 5.5 — 90% 降价 + 1M 上下文，最便宜的 Claude</p>
+
+<p style="margin:0 0 14px 0;">![Claude Haiku 5.5 封面](./haiku55-cover.jpg)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 10-08 日榜 #3（284 分）+ 多家独立评测</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Anthropic 10 月 7 日发布的小模型（北京时间 10 月 8 日），补齐 Claude 5.5 家族（Opus 5.5 → Sonnet 5.5 → Haiku 5.5）。1M 上下文窗口、128K 标准输出、支持 low/medium/high 三档 effort、文本加图像输入。定价 $0.10 / $0.50 per 1M tokens（100K 提示以内），比 Haiku 4.5 便宜 90%，与 OpenAI GPT-6 Luna 完全同价——Anthropic 自己说，Haiku 4.5 约 90% 的请求都落在 100K 以下这个档位。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>curl https://api.anthropic.com/v1/messages \
+  -H "x-api-key: $ANTHROPIC_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -d '{"model": "claude-haiku-5-5", "max_tokens": 1024,
+       "messages": [{"role": "user", "content": "hi"}]}'
+# 同步上线 Amazon Bedrock / Google Cloud / Microsoft Foundry
+# API model ID: claude-haiku-5-5</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="color:#07c160;">OSWorld 2.1 从 Haiku 4.5 的 15.7% 直接跳到 72.4%</strong>，GDPval-AA 从 735 到 1620，Terminal-Bench 4.0 从 0.0% 到 39.2%（均为 max effort）。Artificial Analysis 智能指数 29，同价位推理模型中位数是 13。定位是那些“你以前绝不会按 Sonnet 价格付钱的活”：摘要、上下文压缩、分类、数据库查询、子 agent 任务。有个隐藏的坑：tokenizer 换了，同样文本多出约 30% token。真实成本节省约 75%，不是账面的 90%。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN jjcm 做了实测：“我跑了图片转 HTML 的测试，好奇这个小模型能不能扛复杂 UI——不能。”</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN Tiberium 指出定价对比的水分：“现代 Claude 的 100K token 约等于 GPT 的 60-65K token，实际上 Luna 的价格分界线比 Haiku 的远得多。”</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.anthropic.com/claude-haiku-5-5</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. OpenSwarm — Product Hunt 日榜第一：本地跑的 Agent 蜂群</p>
+
+<p style="margin:0 0 14px 0;">![OpenSwarm 封面](./openswarm-cover.jpg)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">PH 10-08 日榜 #1（320 分 / 52 评论，当日最高）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个 AI-first 桌面操作系统，把一群 agent 放进一张无限画布：每个 agent 有自己的浏览器、应用和工具，各自独立干活，同时共享记忆、技能和工作流。跑在本地，用你自己的 Claude/ChatGPT 订阅或自有模型额度，切换模型不用重建上下文。把你的 Gmail、Calendar、Drive、Slack、Notion、GitHub 和本地文件接进来，让 agent 跨工具干一个完整的活。所有对外动作（发邮件、发帖）等你批准才执行。免费，开源版本在 GitHub，目前官方版走 waitlist。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 官网申请 waitlist（免费）
+open https://www.openswarm.com
+# 开源版
+git clone https://github.com/openswarm-ai/openswarm</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它想替代的工作方式是“一次一个对话窗口”：改成平行编排几十个任务。让蜂群用网页和你的项目文件研究一组公司，产出对比表格加追踪仪表盘。需要不存在的工具时直接描述，agent 在你能看到的文件夹里造一个能跑的 app。和 Anthropic 的 Claude Cowork 路线对照：开源的、可定制的、不绑单一模型生态。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">PH 评论区 maker 团队自述：“我们的信念很简单——让模型更聪明只解决一半问题，另一半是改变它们工作的环境。”</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">当日榜单里粉丝数（522）和评论数（52）双第一。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/products/openswarm-3</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. OpenSEO — 开源版 Semrush：22.4K 星，自带 MCP Server</p>
+
+<p style="margin:0 0 14px 0;">![OpenSEO 演示](./openseo-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">PH 10-08 日榜 #2（295 分）+ GitHub 22.4k stars</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">MIT 协议的开源 SEO 平台，把关键词研究、排名追踪、竞品分析、外链、站点审计、AI 可见度六个工作流收进一个界面。数据来自 DataForSEO API（自带 key、按量付费，OpenSEO 不加价），支持 Docker 和 Cloudflare 两种自托管路径，托管版 $10/月。区别于其他开源 SEO 工具的一点：内置 MCP server 和 Agent Skills，Claude Code、OpenClaw、Hermes 等 agent 直接查你的 SEO 数据，而不是凭记忆编关键词。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/every-app/open-seo
+cd open-seo &amp;&amp; docker compose up -d
+# 配置 DataForSEO API key；托管版：https://openseo.so</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Semrush 最低档 $139.95/月；Ahrefs 3 月改按座位收费后，5 人团队 Standard 从 $249 跳到 $447。OpenSEO 自托管加自带 key 通常只要 <strong style="color:#07c160;">$5-20/月</strong>，直连 DataForSEO 还比托管版便宜 28%。对 agent 工作流的意义更直接：写内容策略时用的外链和搜索量数据是真的，不是让 Claude 凭空规划。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">PH 用户 Saied Alimoradi 问到了关键点：“很多小团队在写第一篇内容前就放弃 SEO 了，因为工具每月 $100 起。但外链和关键词数据通常是最贵的部分——你们的数据源是什么？”</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Maker bensenescu 回复：“用 DataForSEO，Ahrefs/Semrush 之外公认最好的外链和关键词数据源。相比直接问 Claude ‘我该怎么做’，这是有数据和没数据的区别。”</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/every-app/open-seo</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. Claude for Google Workspace — Claude 进 Docs/Sheets/Slides，X 上 594 万浏览</p>
+
+<p style="margin:0 0 14px 0;">![Claude for Google Workspace 演示](./claude-workspace-demo.jpg)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">PH 10-08 榜单（110 分）+ X 发布 14 小时 594 万浏览</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Anthropic 的 Google Workspace 插件（10-06 发布，所有付费 Claude 计划公测）。Claude 出现在 Docs/Sheets/Slides 侧边栏，读你当前打开的文件并原地编辑。Docs 里改错、改写、换样式，不破坏原有格式；Sheets 里写公式、建透视表和原生图表，还能把数据拉进 Python 处理再写回；Slides 里按现有模板生成新页，并自检重叠、越界和难读文字。反向也通：在 Claude 聊天里直接创建和编辑 Google 文件（connectors，beta）。带“编辑前先问”模式。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<ol style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">从 Google Workspace Marketplace 安装 Claude 插件</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">打开任意 Docs/Sheets/Slides → Extensions &gt; Claude &gt; Open Claude</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">管理员可在 Google Admin console 批量部署到域名或指定用户组</li>
+</ol>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">对已经为 Claude 订阅付费的团队是零增量成本的选择——Google Workspace 账单里已经在为 Gemini 付一份钱了，现在可以在同一个文件里换用 Claude。Sheets 的“读范围 → Python 处理 → 写回”链路把数据清洗接进了表格原生工作流，这是 Gemini 侧没有完全覆盖的场景。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">TestingCatalog 记录：发布推文 14 小时累积 594 万浏览，当天 X 上最大的 AI 新闻。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">调查视角的质疑也有代表性（justinmckelvey）：“每个标题都在说 Claude 来到 Google Docs，但你的 Workspace 账单里已经有一个 AI 了，没人算过再付第二份的钱。”</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://claude.com/resources/articles/claude-now-works-in-google-docs-sheets-and-slides</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. Step 5 Preview 上架 OpenRouter — 600B MoE、1M 上下文、$2.70 输出</p>
+
+<p style="margin:0 0 14px 0;">![Step 5 Preview 演示](./step5-demo.jpg)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 100 分 / 23 评论（10-09 上首页）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">阶跃星辰（StepFun）的旗舰模型 Step 5 Preview 出现在 OpenRouter。600B 总参、27B 激活的稀疏 MoE（每 token 只用 4.5% 权重），1M 上下文，文本+图像+视频输入，64K 输出，三档 reasoning effort。定价 $1.00 输入（cache miss）/$2.70 输出 per 1M。权重承诺 10 月 15 日开源（600B 参数意味着 BF16 下约 1.2TB，需要多 GPU 服务器）。Artificial Analysis 独立测出智能指数 44，同价位推理模型的中位数是 24。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>curl https://openrouter.ai/api/v1/chat/completions \
+  -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+  -d '{"model": "stepfun/step-5-preview",
+       "messages": [{"role": "user", "content": "hi"}]}'</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">两个 24 小时自主 agent 实验值得看：其一，模型把 H100 kernel 优化到 508 TFLOPS（同任务 Claude Opus 5 是 493）；其二，自动后训练把 Qwen3-30B-A3B 在 AIME24 上从 53.3% 提到 60%。价格定位是“帕累托前沿”：同智能水平上，输出价格约为 Kimi K3 的 <strong style="color:#07c160;">1/5（$2.70 vs $15）</strong>。不过 HN 评论并不买账，认为它“哪个维度都没有明显优势”。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN esafak 一句话点评：“看起来哪个维度都不够能打。”</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN hosel 的吐槽成了 top comment：“没有鹈鹕，我不知道该想什么。”（lobste.rs/HN 圈用“数鹈鹕”考察模型能力的梗）</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://openrouter.ai/stepfun/step-5-preview</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. OpenAI 撤回 3 篇 AI 数学论文：一个正负号引发的连锁撤稿</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN / Reddit / 媒体多方报道（10-07 ~ 10-08）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">OpenAI 10-06 发布了内部未公开模型生成的 722 篇数学手稿（涉及黎曼假设、Hodge 猜想等难题的进展），10-07 就在自家 openai/math 仓库发出首份 changelog：撤回 3 篇、修订 14 篇、更新 13 篇引用，总数从 722 降到 719。撤稿原因是一个符号错误：某几何运算按论文自己的约定应为 -1，写成了 +1，导致本应抵消为零的计数变成非零，依赖该条件的经典定理失效，后续构造整体坍塌。三篇撤稿都关联 Hodge 猜想。目前 Lean 形式化覆盖约 42%（300/719）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 手稿与 changelog
+open https://github.com/openai/math</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这是 AI 生成研究第一次被“自家仓库而非同行评审”标注撤稿。符号错误恰好是最容易被 Lean 形式化校验抓出来的类型——问题出在未形式化的 58% 里。MIT 的 Andrew Sutherland 的建议是：“除非他们放出模型、结果可复现，否则任何‘单 agent 一次解决难题’的说法都应视为未验证。”OpenAI 研究员自己的判断是这样：“模型很擅长组合不同想法，但还没有产生真正新的想法。”</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">多伦多大学 Daniel Litt：“如果我们想知道这些数学问题的答案，我看不出凭什么该让公司替我们保密。”（指 OpenAI 不公开内部模型）</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">数学社区的反问最扎心：“372 个结果族、719 篇手稿，全世界有足够多的人力和时间来验证它们吗？”</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/openai/math</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. 一条 Prompt、1 小时 25 分、$74：Opus 5.5 一次性做出 55 座城市的 three.js 可视化</p>
+
+<p style="margin:0 0 14px 0;">![看不见的城市可视化](./invisible-cities-demo.jpg)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 360 分 / 186 评论</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Quesma 的 Piotr Migdał 给 Opus 5.5 下了一条 prompt：“用 three.js 把卡尔维诺《看不见的城市》全部 55 座城市做成可视化。别问问题，这是一次性任务。你有 6 小时，做到它成为杰作。”结果是可交互的 3D 城市场景，全部代码开源。对比参照是作者 2019 年用 GPT-2 做过的同类项目。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 在线体验 + 源码（three.js + pnpm）
+open https://quesma.com/blog/invisible-cities-one-shot</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">模型实际只用 1 小时 25 分，6 个子 agent 并行，折算约 7 agent-hours，API token 成本约 <strong style="color:#07c160;">$74</strong>。作者原本想骂它提前收工，看了一眼结果后改口：“我原本想训斥 Opus 5.5，直到看了一眼结果。”这是“one-shot 精品化”工作流的实测样本：一条 prompt、长时程预算、多 agent 并行。2019 年 GPT-2 时代做同样的事，能力差距是断崖式的。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">HN 讨论集中在“agentic time dilation”现象：墙钟 1h25m、实际 7 agent-hours，以及 $74 成本的可复制性。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Reddit r/ClaudeAI 的热评：“这正是我对未来最兴奋的那类东西。”</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://quesma.com/blog/invisible-cities-one-shot</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">10. diagram-design — 42 种编辑级图表模板，单日再涨 1,160 星（已在 2026-09-05 首次收录）</p>
+
+<!-- WebP 图片已跳过（上传接口不支持 WebP）：diagram-design-demo.webp -->
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 6.8/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 单日 +1,160 stars（总 46.5k）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Cathryn Lavery 做的图表设计 skill，给 Claude Code、Codex、GitHub Copilot、Factory Droid、Pi 提供 42 种编辑级图表类型，产物是自包含的 HTML + SVG（无外部依赖、无 build 步骤）。设计上用语义模式把行为描述和布局分离——队列、策略轨迹、信任边界这类逻辑可以复用最近的图表类型，不用为每种新场景加类型。还能把 draw.io、Mermaid、Excalidraw 的存量源文件按指定格式、尺寸和细节级别重绘。作者的原话是“不要 Figma，不要通用圆角矩形，不要 30 分钟的配色纠结”。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code 插件
+/plugin marketplace add cathrynlavery/diagram-design
+/plugin install diagram-design@diagram-design
+# 建议启用自动更新：/plugin → Marketplaces → Enable auto-update</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">从 9 月初的 <strong style="color:#07c160;">39 种类型涨到 42 种</strong>，项目页在 diagramdesign.dev。和 Mermaid 的路线差异值得注意：Mermaid 是文本 DSL 渲染，diagram-design 让 agent 直接产出可交付的设计稿级 HTML/SVG，静态是默认，有序讲解可开运动效果。9 月 5 日首次收录后热度没有回落，昨天再度冲上趋势榜。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">Threads 上被转发时的高频评论：“架构图、流程图、系统设计，全部来自文字描述。”</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">它和 live-panel-skill（10-06 收录）构成了一个趋势：agent 开始接管技术图表的“设计质量”，而不只是“画出来”。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/cathrynlavery/diagram-design</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">DeepSeek 4.1 Flash 的 HN 大讨论 <span style="font-size:13px;font-weight:normal;color:#999999;">HN 432 分 / 363 评论，模型本身已在 2026-09-11 首次收录</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">核心争论是“为什么业界不慌”——高赞答案是订阅补贴掩盖了真实成本，实测者晒出 99.5% 缓存命中率、$0.003/1M cached input 的价格结构，以及本地部署要 300GB+ 显存的硬件门槛。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Cekura Bench <span style="font-size:13px;font-weight:normal;color:#999999;">Product Hunt 10-08 日榜 #4，146 分</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">在真实电话通话上评测语音到语音模型的基准平台，把丢包、打断、口音、噪声都算进去。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">KloudMate 2.0 <span style="font-size:13px;font-weight:normal;color:#999999;">PH 113 分</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">AI 可观测性 + Agentic SRE-Ops，让 agent 参与线上事故的排查链路。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Polylane for Vercel <span style="font-size:13px;font-weight:normal;color:#999999;">PH 107 分</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">给你的 Vercel 应用配一个 AI on-call 工程师。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">NOVA CLI v1.0 <span style="font-size:13px;font-weight:normal;color:#999999;">PH 104 分</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">终端里的 AI 开发者，v1.0 正式版。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">微软新一代 AI PC + Windows 11 agentic 改造 <span style="font-size:13px;font-weight:normal;color:#999999;">TechCrunch / Fortune</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">Windows 开始把 agent 能力做进系统层，“AI PC”从营销词变成系统功能。</p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<section style="background-color:#f5f7fa;border-radius:10px;padding:18px 20px;margin:14px 0 0 0;">
+<p style="margin:0 0 8px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">本期关键词</p>
+<p style="margin:0;font-size:15px;color:#555;line-height:2.0;text-align:left;">逆向工程 Agent · 16.9MB 语音模型 · Haiku 降价 · Agent 蜂群 · 开源 SEO · 数学撤稿 · one-shot 可视化</p>
+</section>
+</section>
