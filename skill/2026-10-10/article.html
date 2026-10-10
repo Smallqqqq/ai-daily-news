@@ -1,0 +1,149 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-10</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你问“讲讲 TCP 三次握手”，Agent 回你一堵八百字的文字墙：信息都在，但时序、状态、标志位散在段落里，读完还得自己在脑子里拼图。这个 skill 换了个交付方式——模型只写一份约 600 token 的 Markdown 稿件，排版、配色、画图全部交给自带 CLI，渲染一页的耗时约 50 毫秒。项目 10 月 2 日开源，<strong style="color:#07c160;">8 天涨到 2542 星</strong>。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="margin:0 0 14px 0;">![文字墙 vs 页面](./amwh-text-vs-page.png)</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;text-align:left;">左边是没有 skill 时的终端回答，右边是同一个问题的页面版。同一个模型，同一份事实。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">复杂问题的答案天然是图状的：概念之间有关系、流程有先后、选项要多维对比。纯文本把结构压成一条线，读者得自己还原。作者在 README 里引了 Karpathy 的观察：LLM 干的活越来越多，人跟上它的输出越来越吃力，看一页图比读一大段字轻松得多。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">直接让模型手写 HTML 也是一条路，作者试过，两个坑。一是慢：一页要等一两分钟，大部分 token 花在每次都要重抄的 CSS 上。二是画图不可靠：模型得自己心算 SVG 坐标，箭头经常指到空白处。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">把“内容”和“呈现”拆开。模型只写扩展 Markdown 稿件，用围栏代码块描述图的结构，不碰一行 HTML/CSS/SVG：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>---
+title: TCP 三次握手与四次挥手
+---
+## A 三次握手 {span=2}
+```sequence num
+客户端 -&gt; 服务器: SYN, seq=x
+服务器 -&gt; 客户端: SYN+ACK, seq=y, ack=x+1
+客户端 -&gt; 服务器: ACK, ack=y+1
+note 客户端, 服务器: ESTABLISHED
+```
+
+## C 状态迁移 {span=2}
+```flow LR
+(CLOSED) -&gt; LISTEN: 被动打开
+LISTEN -&gt; SYN_RCVD: 收 SYN / 发 SYN+ACK
+SYN_RCVD -&gt; *ESTABLISHED: 收 ACK
+```</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">稿子交给打包在 skill 里的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">am</code> CLI。它用 dagre 算流程图节点坐标，按标签宽度拉开时序图间距，按内容自动选模板和主题，输出一个自包含的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.html</code> 文件——不引用 CDN、不加载外部字体，断网能开，发给别人也能看。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">省下的 token 有官方基准：9 页“模型直接手写 HTML”，平均 4,893 个输出 token；同样的问题写成稿件平均 612 个，<strong style="color:#07c160;">约 1/8</strong>。耗时中位数 31 秒降到 12 秒。基准数据在仓库 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">bench/</code> 目录，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">node bench/corpus.mjs</code> 可复现。稿件写错也能自愈：CLI 报错会带行号、组件名和一段正确示例，Agent 照着改一次就好。</p>
+
+<p style="margin:0 0 14px 0;">![token 对比](./amwh-plain-vs-skill.png)</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;text-align:left;">两张页面的对比：左侧直接手写 HTML 用掉 9,351 个输出 token，右侧经 skill 只用 899 个，两页都能读。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">安装配置</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">前提只有一条：Node.js 20 或更高。CLI 已打包在 skill 里，不需要 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npm install</code>，装完零配置。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Claude Code 插件（带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/answer-me-with-html:config</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/clean</code> 两个命令）：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>/plugin marketplace add QingYunA/answer-me-with-html
+/plugin install answer-me-with-html@answer-me-with-html</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">其他 Agent（Codex、Cursor、OpenCode 等 70 多种）：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx skills add QingYunA/answer-me-with-html</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">更省事的方式是让 Agent 自己装，把这句话贴给它：</p>
+
+<blockquote style="background-color: #f0f9eb; border-left: 4px solid #07c160; margin: 0 0 12px 0; padding: 14px 18px; border-radius: 0 6px 6px 0; color: #555555; line-height: 2.0;">
+<p style="margin: 0; font-size: 15px;">帮我安装 Answer me with HTML：读 https://raw.githubusercontent.com/QingYunA/answer-me-with-html/main/INSTALL.md ，照着做。</p>
+</blockquote>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">https://github.com/QingYunA/answer-me-with-html/blob/main/INSTALL.md</code> 是写给 Agent 看的安装说明书：全自动执行、不向你提问、装完渲染一页“TCP 三次握手”验证，最后按固定格式汇报。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">使用指南</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装好之后照常提问，Agent 按 SKILL.md 的标准决定要不要出页面：概念 ≥3 个且需要看关系、有流程或状态迁移、多维对比、有层级或时间线，命中就出页面；一句话能说清的问题照常文字回答，也可直接说“用 HTML 讲一下……”强制出页。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:20px 0 10px 0;">场景一：讲原理——“讲讲 TCP 三次握手和四次挥手”</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 写三个面板：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">sequence</code> 时序图画出 SYN / SYN-ACK / ACK 的来回，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">flow</code> 画状态机 CLOSED → LISTEN → SYN_RCVD → ESTABLISHED，一张表列标志位含义。你不需要读完整段文字再自己拼图，打开就是能对照的图。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:20px 0 10px 0;">场景二：技术选型——“Redis 和 Memcached 该怎么选”</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">多维对比表横向摆开数据结构、持久化、集群、内存管理，差异单元格写 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ok</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">no</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">warn</code> 渲染成 ✓ / ✗ / ! 徽章，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">callout</code> 收一个结论。进阶用法是“给缓存改造做个方案”：代码块用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">src=</code> <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">lines=</code> 直接引用你项目里的真实代码（页面上的代码就是文件里的代码，不靠手抄），待定的问题做成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ask</code> 选项，建议项默认选中。你在页面上点选、对任意面板写评论，点“回复”合成一段文字贴回 Agent，它照你确认的方向继续干。</p>
+
+<p style="font-size:17px;font-weight:bold;color:#222222;margin:20px 0 10px 0;">场景三：解释视频——“给 TCP 握手做个 3b1b 风格的视频”</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">稿件每行拍子配一句旁白，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">am video</code> 生成 3Blue1Brown 风格的播放页：图随旁白一步步画出来，镜头跟着方括号里标注的节点走，配音内嵌在页面里离线可播，带章节栏和倍速按钮。这一档省得更多，官方小测输出 token 少约 <strong style="color:#07c160;">18 倍</strong>。只有你明确要视频它才做，不会自作主张。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">打开高频模式。</strong>默认只在问题“需要图”时出页面；高频模式（always-on）把门槛降到底：这一轮只要有结论、总结、方案、对比，就顺手渲染一页 2～4 面板的小页面附在回复末尾，固定 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--no-open</code>，不弹浏览器、不打断你。做法是往全局规则文件（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.claude/CLAUDE.md</code> 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">AGENTS.md</code>）加一条规则，README 里有现成的规则文案可粘贴。Claude Code 的 plan 模式下不会出页面。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">patch 单面板，不重渲染整页。</strong>每页 HTML 内嵌了生成它的 Markdown 原稿，页面上有“复制源稿”按钮。只改一个面板时，让 Agent 用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">am patch</code> 替换对应 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">##</code> 段落，原页面的主题、亮暗模式、写作检查风格全部保留。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">主题与写作检查。</strong>三套主题按内容自动选：blueprint 图纸风配图表，shadcn 卡片风，paper 适合长文，都带亮暗双色，页面上可随时切换。</p>
+
+<p style="margin:0 0 14px 0;">![架构图](./amwh-architecture.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">渲染时按 ASD-STE100 受控写作的思路检查稿件：句长超限、被动语态、“进行优化”这类轻动词、错别字（登陆→登录）都会提醒，默认只提醒不拦截，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">style: strict</code> 可让不合格的稿件直接不生成。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">常见踩坑</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">Node 版本不够。</strong>CLI 要求 Node 20+，低于 20 直接不工作。装之前先 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">node --version</code> 确认。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">页面会堆积。</strong>页面存在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">~/.answer-me-with-html/</code>，高频模式下一天能出十几页。说“清理一下页面”走 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">am clean</code>，CLI 每 7 天才提示一次清理，不会天天烦你。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">该出页面却没出。</strong>它的判断标准是“需要图才能理解”，简单问题照常文字回答。想强制出页面就说“用 HTML 讲一下……”，或者补一句“画个图”。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">高频模式下浏览器不弹窗是设计如此。</strong>always-on 固定用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">--no-open</code>，页面路径附在回复末尾，点开才看，不是渲染失败。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">分享前检查代码。</strong>页面会内嵌 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">src=</code> 引用的真实项目代码，渲染时 CLI 会列出嵌了哪些文件，含敏感代码的页面别直接外发。</li>
+</ul>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">answer-me-with-html（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/plugin</code> 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>模型只写稿件，CLI 排版画图；单文件离线；token 省约 8 倍</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>原理讲解、选型对比、方案评审、解释视频</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 2542</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Archify</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Claude Code / Codex skill</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>按 JSON 规格画一张可交互的图，老牌大项目</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>把想法、代码库变一张交互图</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 81.2k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">dsh-genui</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>dsh 宿主插件</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>在聊天回复里内联渲染 UI 组件，绑定 DeepSeek Harness</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>DeepSeek 用户要内联图表、表单</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 537</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">html-explainer</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>一句话把主题做成讲解视频，出真 MP4</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>主题讲解视频</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 156</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Archify 交付的是“一张图”，本技能答的是“一整页”：正文、表格、代码、图都在同一页里，且不绑定某个聊天宿主，任何能跑 shell 命令的 Agent 都能用。和 html-explainer 的区别在产物：那边直接出 MP4，这边默认出一页可以慢慢读的 HTML，视频只是可选模式。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 2542 · v0.5.0 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/QingYunA/answer-me-with-html</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://answer-me-with-html.com/zh/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">如果你每天用 Claude Code 这类 Agent 问原理、做选型、审方案，这个 skill 值得花五分钟装上：前提只有 <strong style="color:#07c160;">Node 20+</strong>，一条命令或两行插件命令，换来的是每个答案从“读一堵墙”变成“看一眼页”。它把最容易被浪费的 token（重复的 CSS、手算的 SVG 坐标）从模型手里拿走，省下的这部分时间比页面本身更值钱。</p>
+</section>

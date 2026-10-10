@@ -1,0 +1,176 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-10</p>
+
+<p style="margin:0 0 14px 0;">![今日三个工具速览](./summary.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三个：一个把 agent 写进端到端测试、通过的步骤缓存起来不再调模型，一个给编码 agent 装上跨会话的记忆，还有一个专治 agent 把答案埋在第三段。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">e2e — agent 写的测试步骤通过一次就缓存，之后重放不花 token</p>
+
+<p style="margin:0 0 14px 0;">![e2e 演示](./e2e-demo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">E2E 测试一直卡在两难里。用 Playwright 或 Cypress 自己写，选择器脆、UI 一改就要人来修；把整条用例交给 AI，每次 CI 都要模型现场决策，慢、贵，而且每次走的路径可能都不一样。TesterArmy 开源的 e2e 想同时解决这两头。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">做法是在同一个测试文件里混写两种步骤。确定性的部分照旧：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">screen.getByRole</code> 定位、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">expect</code> 断言；自然语言的部分用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent.act('upgrade the workspace to the Pro plan')</code> 表达目标，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent.assert</code> 判断屏幕。关键机制在缓存：一个被后续断言证实通过的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent.act</code> 步骤会被记录进 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.e2e/cache/</code>，下一次运行直接重放，不再调用模型；应用变了，才从当前界面交回给 agent 接着做。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent.assert</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent.waitFor</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent.extract</code> 始终实时判断，不缓存。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">引擎分两套：Web 用 Playwright 驱动 Chromium/Firefox/WebKit，移动端驱动 iOS 模拟器和 Android 模拟器。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx e2e init</code> 的向导会写好配置、示例测试、agent 技能和 MCP 配置（Claude Code 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.mcp.json</code> 与 Cursor 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.cursor/mcp.json</code>）；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">e2e mcp</code> 让编码 agent 能自己开浏览器，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">locate</code> 工具会验证 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">screen.*</code> 选择器并把可用的测试代码还给你。CI 模式自动开启，重试一次、缓存只读；v0.17 起 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--strict-cache</code> 会让过期的录像以 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">REPLAY_STALE</code> 直接失败，而不是悄悄放行。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据：<strong style="color:#07c160;">8,447 stars</strong>，403 forks，Apache-2.0，7 月 22 日建仓。npm 上 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">e2e</code> 周下载 60,933，历史累计 147,934。它 10-05 冲上 GitHub 日趋势榜首，单日涨星 1,400 以上；v0.16 把安装依赖从 117 个包砍到 29 个，体积约 36MB 降到 31MB。两件要注意的：CLI 默认开启匿名遥测，不采集测试内容与凭据，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">E2E_TELEMETRY_DISABLED=1</code> 可关。官方建议 Node 24.8+，Windows 上走 WSL。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 在应用目录里初始化：向导选择 Web 或 Mobile，以及模型来源
+npx e2e init
+
+# 跑测试。通过验证的 agent 步骤会写进 .e2e/cache/，下次重放不再调模型
+npx e2e run</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">e2e（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx e2e init</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>确定性断言与自然语言步骤混写；已验证步骤缓存重放，零模型调用</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 8.4K · npm 6.1 万/周</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">@playwright/mcp</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @playwright/mcp@latest</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>给 agent 一个真浏览器，25 个工具；每次运行都由模型现场决策，路径不固定</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>官方维护</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Checksum AI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>商业 SaaS（PR / API / MCP 触发）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>每个 PR 自动生成并自愈 Playwright 用例，先把失败分成真 bug 和过期测试</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>商业订阅</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>Product Hunt 上架 2 个月</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Playwright / Cypress</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm install -D</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>完全确定性、跑得最快，但选择器要人来维护</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 70K+（Playwright）</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Playwright MCP 给的是「agent 现场操作浏览器」，产出是这一次的通过；e2e 给的是测试资产，产出会固化进仓库，之后每次 CI 都便宜。Checksum 的思路和 e2e 接近，失败先分真 bug 还是过期测试，但生成与自愈跑在它的云平台上；e2e 是开源框架，用例和缓存都在你自己的仓库、你自己的 CI 里。我建议的迁移路径是先挑最脆的那几条流程，把多步向导、易变文案换成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">agent.act</code> 加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">expect</code>，其余保持确定性写法，一条条搬。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 npm e2e 周下载 60,933 · ⭐ 8,447 · v0.18.0 · Apache-2.0 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/tester-army/e2e</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://e2e.tester.army/docs</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">claude-mem — 5 个钩子自动记住一切，新会话自动接上</p>
+
+<p style="margin:0 0 14px 0;">![claude-mem 演示](./claude-mem-demo.gif)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">新开一个会话，第一句话往往是重新解释项目背景；上个会话查到的结论、试错过的路径，全没了。CLAUDE.md 只装得下你亲手写下来的结论，装不下「上次做到哪了」。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">claude-mem 以 Claude Code 插件的形式运行，挂了 5 个生命周期钩子：SessionStart、UserPromptSubmit、PostToolUse、Stop、SessionEnd。会话里的工具调用被自动捕获成 observation，用 Claude Agent SDK 压缩成语义摘要，写进本地的 SQLite（FTS5 全文检索）加 Chroma 向量库；新会话开始时，SessionStart 钩子把相关时间线注入上下文。查询通过 4 个 MCP 工具分三层走：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">search</code> 先拿一个带 ID 的轻索引，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">timeline</code> 看上下文，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">get_observations</code> 才取详情，先筛后取，官方给的说法是比整篇塞进上下文<strong style="color:#07c160;">省约 10 倍 token</strong>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">安装两条命令，重启后生效。数据都在本机 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.claude-mem/</code>，支持 28 种语言生成摘要，项目目录里会自动长出带活动时间线的 CLAUDE.md。除 Claude Code 外也支持 Codex、Gemini、Copilot、OpenCode、OpenClaw 等。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据：<strong style="color:#07c160;">98,998 stars</strong>，8,673 forks，Apache-2.0，2025 年 8 月建仓，最近提交在 10-09。有一个商业模式要提前知道：安装后向导会引导浏览器登录，登录后送 30 天不占订阅额度的 observer，到期自动回落到你的 Anthropic 订阅，或改用自己填的 OpenRouter / Gemini key；不想登录的话加 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--provider</code> 参数，或设 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">CLAUDE_MEM_ONLINE_OPTIN=false</code>，安装照样完成。另外它默认每次工具调用都触发一次压缩，成本敏感的人可以看看下表的 lite 版。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx claude-mem install</code></pre>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 或在 Claude Code 会话里走插件市场
+/plugin marketplace add thedotmack/claude-mem
+/plugin install claude-mem</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">claude-mem（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx claude-mem install</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>钩子全自动记录与注入；三层检索先筛后取；SQLite + FTS5 + 向量</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 99.0K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">mem0</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>MCP 接入（官方插件）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>云端记忆层，9 个记忆工具；插件可自动存取，记忆托管在 Mem0 云上</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费额度 + 商业订阅</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Basic Memory</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>MCP 接入</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>记忆存成本地 Markdown，能直接在 Obsidian 里读、进 Git</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（AGPL-3.0）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">claude-mem-lite</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>MCP + 钩子</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>省钱路线：episode 批处理，作者估的 LLM 调用量比原版低 7 到 10 倍</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（MIT）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 52</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Basic Memory 更像知识库，需要你主动告诉它「记这个」「搜这个」；mem0 的插件也挂了钩子做自动存取，但记忆托管在它的云上。claude-mem 的自动这条链走得最远，记录、压缩、注入都不需要你开口，代价是每次工具调用多一次压缩开销，社区里因此长出了 lite 版做取舍。如果你更在意记忆可读、可 diff，Basic Memory 的 Markdown 路线更合适。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 Claude Code 插件市场 · ⭐ 98,998 · 8,673 forks · Apache-2.0 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/thedotmack/claude-mem</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://claude-mem.ai</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">i-have-adhd — 10 条规则，让 agent 把答案放在第一行</p>
+
+<p style="margin:0 0 14px 0;">![i-have-adhd 图标](./i-have-adhd-logo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">和编码 agent 对话有个固定槽点：先复述问题，再铺垫背景，最后才说结论。你问「改哪个文件」，得先读三段解释。以前只能靠「先说结论」这种口头提醒，i-have-adhd 把它做成了一套可安装、可开关的规则。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">规则一共 10 条，核心理念是按能直接执行的形状输出：答案或下一步动作放第一行，命令、路径、代码片段优先；多步工作编号，每步只放一个有界动作；结尾给一个两分钟内能做完的下一步；当前问题没结束不抛新问题；每轮复述进度（「5 步里第 3 步完成」）；时间估计给具体单位，不许说「一会儿」；改完代码说清现在什么能用了；报错按位置、原因、修法三段给；列表最多 5 条；不写开场白、不复述、不写结尾客套。另有 4 条例外：被要求解释时正常展开；破坏性操作先确认；连续三次修不好就停下来点名那个没验证过的假设；需求有歧义时只问一个短问题。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">安装是 Claude Code 插件的两条命令，敲 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/i-have-adhd</code> 才生效，默认装着不生效是刻意设计的，SKILL.md 里标了 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">disable-model-invocation</code>。想每会话常开，创建一个哨兵文件 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">touch ~/.claude/.i-have-adhd-always</code>，SessionStart 钩子就会自动加载整份规则，说一句 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">stop adhd mode</code> 可以在当前会话关掉。规则文件本身可以 fork 改；除 Claude Code 外，Codex、Cursor、GitHub Copilot、Gemini/Antigravity、Grok、Pi 等 <strong style="color:#07c160;">13 个平台</strong>都给了对应的安装方式。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据：<strong style="color:#07c160;">56,139 stars</strong>，3,199 forks，MIT，2026 年 5 月建仓，最近提交在 10-06；今天（10-10）还在 GitHub 趋势榜上，榜单快照显示单日新增 318 stars。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>claude plugin marketplace add ayghri/i-have-adhd
+claude plugin install i-have-adhd@i-have-adhd
+# 然后在会话里输入 /i-have-adhd 开启</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">i-have-adhd（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>两条插件命令</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>10 条输出规则 + 4 条例外；13 个 agent 平台；可常开、可临时关</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（MIT）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 56.1K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">ponytail</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Claude Code 插件市场</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>从写代码这端管住 agent：七级阶梯强制 YAGNI，自带审查子命令和公开基准</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（MIT）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 156.0K · npm 2.3 万/周</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Caveman</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add JuliusBrussee/caveman</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>压字数：输出压 65%、输入压 33%，代码和报错原样保留</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>Skill 免费（引擎 BSL-1.1）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 103.1K</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">手写 AGENTS.md / CLAUDE.md 规则</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>手写</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>零依赖，想怎么写怎么写；但规则不会在每次会话被强制执行</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">ponytail 管「少写代码」，Caveman 管「少说话」，i-have-adhd 管「答案落在哪一行」。三者治的都是 agent 的沟通病，i-have-adhd 的差别在于把约束写成了带例外条款的可执行清单，破坏性操作要确认、连错三次要停下来点名假设，这些是同类规则里少见的。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 Claude Code 插件市场 · ⭐ 56,139 · 3,199 forks · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/ayghri/i-have-adhd</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/ayghri/i-have-adhd/blob/main/INSTALL.md</span></code></p>
+</section>

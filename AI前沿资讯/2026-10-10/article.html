@@ -1,0 +1,337 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-10</p>
+
+<section style="background-color: #f0f9eb; border-radius: 10px; padding: 18px 20px; margin: 0 0 28px 0; border: 1px solid #c8e6c9;">
+<p style="margin: 0 0 10px 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;">本期覆盖 2026-10-09 ~ 10-10 的 AI 技术动态，数据来源涵盖 GitHub Trending / HN / Reddit / X / Bluesky / Lobsters / arXiv / HF Papers / Product Hunt / AI 实验室博客。精选 10 条按影响力排序。</p>
+<p style="margin: 0; font-size: 15px; color: #2e7d32; line-height: 2.0; text-align:left;"><strong style="color:#07c160;">核心主题：</strong>Agent 开始补“手脚”——屏幕指路、真机操作、成本归因各有工具落地；模型侧则是决策模型的集中爆发（微软、Cloudflare、Amazon、Liquid 一周内都发了）。</p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">1. big-arrow-on-the-screen — 让 Agent 在你屏幕上画大箭头，HN 382 分</p>
+
+<p style="margin:0 0 14px 0;">![big-arrow 演示](./bigarrow-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.3/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 382 分 / 168 评论（10-09 上线，10-10 仍在首页）；GitHub 470 星</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个 macOS 命令行工具加 Agent 技能包，让 coding agent 在屏幕上画箭头、圆环、方框和文字，指到具体某个按钮上。作者 franzenzenhofer 的定位很窄：只指，不点。不点击、不输入、不截屏，箭头是 click-through 的（穿过箭头能点到下面的窗口），不抢键盘焦点，到期自动消失。用一个 Swift 二进制实现，没有常驻进程、没有菜单栏图标、不需要账号，也不上报遥测。用坐标或窗口定位时连 macOS 权限都不需要，只有按控件标签定位才要辅助功能权限。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>brew install franzenzenhofer/tap/bigarrow
+bigarrow install-skill          # 装进 Claude Code (~/.claude/skills) 和 Codex (~/.agents/skills)
+
+# 按控件标签指
+bigarrow point --element "Allow" --app "System Settings" --text "点这个"
+# 按坐标指
+bigarrow point --at 760,500 --text "这里" --duration 10
+# 跟着窗口走，点到为止
+bigarrow start --app "Google Chrome:Sourdough" --element "Sourdough - Wikipedia" \
+  --role radiobutton --text "是这个标签页" --from top --shape zigzag --color "#5856D6"
+bigarrow stop --all
+
+# 文字里带 {{值}} 会渲染成复制按钮
+bigarrow point --element "PIN code" --role textfield --text "复制 {{482913}} 粘到这里"</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它补的是 Agent 的“最后一厘米”——权限确认、两步验证、付款这些只有人能做的动作。在此之前 agent 只能吐一句“请点击系统设置里的允许按钮”，现在直接在屏幕上画出位置。工程上做了 <strong style="color:#07c160;">104 个自动化测试加 18 项行为检查</strong>（穿透点击、焦点稳定、Spaces、台前调度、多显示器、拔屏中途）。脉冲箭头在 CI runner 上约 1.4% CPU。技能本体常驻约 182 tokens，完整指令 1,398 tokens，对上下文预算几乎无感。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">sicktriple 的高赞嘲讽：“now I need a robot to tell me what button to press. What a time to be alive.”（现在我需要一个机器人告诉我该按哪个键，这真是个好时代）</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">alanbernstein 反驳：“this sounds extremely useful for learning complicated GUI applications like 3d modeling or media editing apps”（学 Blender、FreeCAD 这类复杂界面时非常有用）</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">tilemarch 点出边界：“An arrow on the screen solves 'where do I click'; it doesn't solve 'should this happen'”（箭头解决了“点哪儿”，没解决“该不该点”）</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">lbreakjai 提到真实场景：“That would be a godsent for those of us with aging parents.”（对有年迈父母的人来说是救星）</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/franzenzenhofer/big-arrow-on-the-screen</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=50018817</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">2. storytold/artcraft — 用 Rust 写的艺术家 IDE，单日 3,752 星</p>
+
+<p style="margin:0 0 14px 0;">![artcraft 演示](./artcraft-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.8/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 单日 +3,752 星（10-10 全站第 3）；总计 11.7k 星 / 1.8k fork</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个面向艺术家、设计师和制片人的桌面创作工具，Rust 写的，作者自述是“艺术家的 IDE”。它把生成模型的调用包进编辑流程：2D/3D 合成、角色摆姿、图生 3D 网格、背景移除、文生图、局部重绘、图生视频。内置 <strong style="color:#07c160;">62 个模型的目录</strong>——图像 16 个、视频 25 个、音乐音效 5 个、3D 网格 11 个、世界与高斯泼溅 5 个，已经接了 Midjourney、Grok、Sora、World Labs。仓库很新，只有 21 次提交。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 官方提供 Windows / macOS 稳定版安装包
+# https://getartcraft.com  或 GitHub Releases
+# 从源码构建（Linux 走这条路）
+git clone https://github.com/storytold/artcraft &amp;&amp; cd artcraft
+cargo build --release</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">生成模型用在影视/游戏美术上，卡点在别处：同一角色、同一场景要在几十个镜头之间保持一致，靠重新抽卡解决不了。artcraft 把摆姿、3D 合成、参考图这些约束手段放进一个界面，让创作者能反复调整。62 个模型的统一调用层是另一半价值：不用为每一类模型开一个网页标签。同一天，同一个作者在 trendshift 当日榜上另有 <strong style="color:#07c160;">6 个仓库同时上榜</strong>——photocraft（+544）、pdfcraft（+112）、lightcraft（+104）、filmcraft（+103）、vectorcraft（+81）、wordcraft（+73），其中 wordcraft 号称用纯 Rust 净室重写了 Microsoft Word。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">trendshift 当日榜同时排进 6 个 storytold 仓库，“craft”系列一次性铺开，社区在讨论这是不是一个工作室在批量出货。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">项目 21 次提交冲到 11.7k 星，评论区对这组数字的关注度超过了对功能本身的讨论。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/storytold/artcraft</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://getartcraft.com</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">3. 微软 Microsoft-Decision-1 — 把 Qwen3.5-9B 后训练成“3 毫秒出决策”</p>
+
+<p style="margin:0 0 14px 0;">![Decision-1 演示](./decision1-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 9.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">HN 148 分 / 54 评论；Satya Nadella 本人在 X 上发布</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个不生成文本的模型。给它一批固定选项，它返回每个选项的校准概率分数——决策自己带置信度，应用可以据此决定是直接执行、交给人工复核，还是打回。基座是 Qwen3.5-9B，微软做了后训练，改成单次前向打分。支持是/否、多选、打分三种形态，也支持按 rubric 给 AI 回复和 agent 动作打分。33K 上下文，官方说后续会换绑到 MAI 和 OpenAI 的基座。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># OpenRouter 已上线（模型页显示 2026-10-09 发布）
+curl https://openrouter.ai/api/v1/chat/completions \
+  -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "microsoft/microsoft-decision-1",
+    "messages": [{"role":"user","content":"这条客服工单是否应该升级到人工？"}]
+  }'
+
+# 或走 Microsoft Foundry
+# https://ai.azure.com/catalog/models/Microsoft-Decision-1</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">价格是 $0.042/百万输入 token、输出免费（OpenRouter 实际售价），微软自述比 Quyet-1.0-Large 快 4.5 倍、比 GPT-6 Sol 快 35 倍。更硬的一组数字是稳定性：在近 15 万次盲测里，改写提示或重排选项顺序之后，只有 <strong style="color:#07c160;">1.3% 的决策会翻转</strong>。内部用例有两个具体数字——Xbox Research 用它把 10,000 多条玩家评论分类，比原方案快 14 倍；Copilot 团队用它做 agent 回复质检，快 100 倍。一周之内 Cloudflare 发了 Clef、Amazon 发了 Strands Decider 2B、Liquid AI 发了 D1，全是同一类东西。决策模型正在从论文概念变成基础设施。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">simonw 关注的是基座选择：“I guess the fear of Chinese models is finally subsiding.”（看来对中国模型的恐惧终于消退了）</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">manmal 给出量化直觉：“a BF16 (unquantized) Qwen beats a Q8 of double its size for decisions”（做决策时，BF16 的 Qwen 打得过两倍参数量的 Q8 量化版）——量化对决策精度伤害大于对写代码</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">批评集中在对比缺失：微软没有把 Jev（Typesafe AI 的决策模型）放进对照表，有回复指出 $0.042/M 的定价正好和 Jev 持平</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">bflesch 的负面评价代表了另一派：“the Microsoft brand is so badly tarnished I don't even feel negative emotions any more - just pity.”</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://commandline.microsoft.com/microsoft-decision-1-model-foundry</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://openrouter.ai/microsoft/microsoft-decision-1</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://news.ycombinator.com/item?id=50024913</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">4. morluto/rea — 单日 14,927 星，连续第二天坐稳全站第一（已在 10-09 首次收录）</p>
+
+<p style="margin:0 0 14px 0;">![REA 演示](./rea-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 单日 +14,927 星（10-10 仍在第 1）；trendshift 单日 +2.1k</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">本期唯一一条“持续火爆”重复条目。REA（Reverse Engineer Anything）把 Hopper、Ghidra、IDA 三个反汇编器统一成 27 个 MCP 工具，让 coding agent 能逆向原生二进制（Mach-O / PE / ELF）、Electron 应用（ASAR 解包）、Android APK 和 EVM 字节码。工作流强制 decompile → understand → verify 三步，用证据链防止 agent 编造分析结果。详见 10-09 期中第 1 条。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么要再收一次</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它的单日增量从 10-09 的 7,738 星涨到今天的 <strong style="color:#07c160;">14,927 星</strong>，翻了一倍，trendshift 上也仍是第 1（+2.1k）。HN 上今天另有一条独立帖 “REA Reverse – Engineer Anything” 在同步上涨。同一位置连续两天翻倍，说明需求是真实的：把逆向工程从“人肉在 IDA 里读汇编”变成“描述你要理解的功能，agent 自己跑工具链”。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npm install --global rea-agents &amp;&amp; rea setup
+# 或作为 Claude Code skill
+git clone https://github.com/morluto/rea ~/.claude/skills/rea</code></pre>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/morluto/rea</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">5. Busabase — Agent 的“通用记录系统”，Product Hunt 日榜第 2</p>
+
+<p style="margin:0 0 14px 0;">![Busabase 演示](./busabase-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.2/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 10-09 日榜第 2，281 分 / 70 评论（当日评论数最高）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个开源的数据库加协作工作空间，定位是“AI agent 的通用 system of record”——让人和 agent 在同一个地方读写同一份结构化数据。提供云端、桌面端和自托管三种部署方式，是当天 PH 榜单上讨论最热的开发者向产品（<strong style="color:#07c160;">70 条评论，超过日榜第一的 51 条</strong>）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 自托管与桌面版入口见官网
+# https://busabase.com
+# 论坛讨论：https://www.producthunt.com/leaderboard/daily/2026/10/9</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 长期任务失败的一大原因是状态没地方放：上下文窗口会滚掉，本地文件 agent 之间不共享，各家 harness 的记忆又互不兼容。Busabase 想做的是把“记录”这一层抽出来独立成产品，agent 和人共用同一套表和视图。它和本期第 6、7 条是同一个方向的三个切面——本期榜单里“给 agent 配套基础设施”占了近一半位置。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">PH 评论区关注点集中在“自托管版什么时候能追上云版功能”以及多 agent 并发写入的冲突处理。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/leaderboard/daily/2026/10/9</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://busabase.com</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">6. zhongerxin/iPhone-use — 让 Codex 通过 USB 操作真实 iPhone</p>
+
+<p style="margin:0 0 14px 0;">![iPhone-use 演示](./iphone-use-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 8.3/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">trendshift 当日榜在榜（+111）；GitHub 1.9k 星 / 175 fork</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">把一台插着 USB 的真 iPhone 接进 Codex 的工具箱。底层走 WebDriverAgent（WDA），仓库提供一个本地 MCP 服务和 <strong style="color:#07c160;">17 个暴露给模型的工具</strong>——安装 App、启动 WDA、点击、批量操作、实时读屏、截图回退。作者是中文开发者，README 里直接给了一段中文安装提示词，粘进 Codex 就能走完引导流程。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/zhongerxin/iPhone-use.git
+cd iPhone-use
+sh scripts/install.sh
+# 然后在 Codex 新会话里启用 iPhone Use：
+# "用 iphone-use-setup 配置这台 USB 连接的 iPhone，装好并启动 WDA，确认 READY 后显示屏幕"
+
+# 关掉匿名遥测
+export IPHONE_USE_ANALYTICS=0   # 或 DO_NOT_TRACK=1</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">模拟器测不出真机行为——推送、生物识别、真实性能、运营商网络、系统弹窗时机。把真机接进 coding agent，等于让 agent 能自己跑完真实用户路径再回来改代码。代价是门槛不低：需要 macOS、完整 Xcode、Apple 开发者账号、USB 连接的 iPhone、Python 3.9+ 和 Node 20.19+，而且 WDA 必须先用你自己的证书签名装到设备上。<strong style="color:#07c160;">1.9k 星</strong>配上这个门槛，说明愿意配环境的人不少。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">讨论现场</p>
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;">trendshift 当日榜把它和几个 iPhone 自动化项目排在一起，社区讨论集中在“签名与证书维护成本”——WDA 证书过期后需要重新签，是这类方案最常见的运维坑。</li>
+</ul>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/zhongerxin/iPhone-use</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">7. Together Link — 把开源模型接进你现有的 harness</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.8/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 10-09 日榜第 4，164 分</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个把 coding agent 接到 Together AI 上开源模型的连接层。核心卖点是“不换 harness，只换引擎”——你继续用 Claude Code、Codex 或 Cursor，把背后的模型换成 Together 上托管的开源权重，从而把单次任务成本压下来。PH 上打的是 “Use open models in your harness”。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 通过 Product Hunt 发布页获取接入方式
+# https://www.producthunt.com/leaderboard/daily/2026/10/9</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这半年 open-weight 模型的能力追得很快，但多数团队卡在“换模型等于换工作流”上。路由器类的产品（本期之外还有 FastRouter、Weave Router）解决的是选哪个模型；Together Link 这类解决的是怎么在不重构 harness 的前提下切过去。判断标准也很清楚：拿你自己的十个任务在两个模型上跑一遍，比的是每完成一个任务花多少钱，不是每百万 token 多少钱。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/leaderboard/daily/2026/10/9</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">8. Playground by Google Labs — 用 Google AI 做游戏并分享</p>
+
+<p style="margin:0 0 14px 0;">![Playground 演示](./playground-demo.png)</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.5/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Product Hunt 10-09 日榜第 3，197 分</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Google Labs 的实验性产品，让用户用 Google 的 AI 创建、试玩并分享自己做的游戏。属于 Labs 那条“早期 AI 产品的公开试验场”路线，和 Gemini Agent for Google Cloud（同日 PH 第 6，136 分）一起构成 Google 当天在 PH 上的双发。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># https://labs.google</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">大厂把生成式产品的试错放在 Labs 而不是主产品线上，是这一年的常态。对开发者来说，Playground 的参考价值在交互模式多过在它能做什么游戏：把“生成—试玩—分享”三步压缩进同一个页面；这套模式正在被抄进各类 agent 产品的前端。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.producthunt.com/leaderboard/daily/2026/10/9</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">9. Robbyant/lingbot-map — 流式 3D 重建的几何上下文 Transformer</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.2/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">GitHub Trending 单日 +110 星；被标注为 ECCV 2026 最佳论文候选</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个面向流式 3D 重建的几何上下文 Transformer，Python 实现。论文对应的会议是 ECCV 2026，仓库被标注为最佳论文候选。属于“模型架构研究直接开源代码”这一类，不是能当天上线生产的工具。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/Robbyant/lingbot-map
+cd lingbot-map &amp;&amp; pip install -r requirements.txt
+# 具体推理与评测脚本见仓库 README</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">3D 重建从“离线跑一组照片”转向“边拍边建”，卡点在长序列下的几何一致性——每帧都要和之前看到的所有视角吻合，显存和误差都会累积。把几何先验显式编进 Transformer 的上下文，是这一轮的几个主要思路之一。做机器人、AR 和空间扫描的团队可以跟一下。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/Robbyant/lingbot-map</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">10. AgentGarten — 给会自我进化的 Agent 建“代码世界”</p>
+
+<section style="display:flex;justify-content:flex-start;align-items:center;gap:16px;margin:0 0 14px 0;">
+<span style="background-color:#07c160;color:#fff;padding:4px 12px;border-radius:4px;font-size:14px;font-weight:bold;">影响力 7.0/10</span>
+<span style="background-color:#f5f5f5;color:#666;padding:4px 12px;border-radius:4px;font-size:13px;">Hugging Face Daily Papers 10-09 榜 132 赞（当日第 1）</span>
+</section>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">是什么</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">论文，提出的是一套基于代码的环境（code worlds），让 agent 在其中持续自我进化。着墨点在环境构造：把 agent 能力的增长和环境的可扩展性绑定，绕开“环境难度封顶、agent 停止进步”这个常见瓶颈。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">怎么用</p>
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 论文与代码：https://arxiv.org/abs/2610.12374
+# HF 论文页：https://huggingface.co/papers/2610.12374</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">为什么重要</p>
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">自我进化类研究的公开难点是评测：能力提升往往只在自建环境里可见，换环境就归零。这一篇登上 HF 当日榜第一，说明社区对“环境设计”这一层的关注度在上升——同期还有 Learn2Play Bench（103 赞）专门测“agent 在陌生环境里能不能从经验中学”，两篇放一起看，方向是一致。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>来源：</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://arxiv.org/abs/2610.12374</span></code></p>
+
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Cloudflare 收购 Deno <span style="font-size:13px;font-weight:normal;color:#999999;">HN 1,079 分 / 563 评论，当日全站最高</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">Cloudflare 把 Deno 运行时和团队收进旗下。对 agent 生态的直接影响是执行环境——工件和边缘函数跑在哪一层。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Typesafe AI 融资 $8.7 亿，估值 $75 亿 <span style="font-size:13px;font-weight:normal;color:#999999;">HN 280 分 / 214 评论</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">就是 Jev 决策模型的东家。本期第 3 条微软发布 Decision-1 时没把 Jev 放进对照表，PH 和 HN 两边都在讨论这件事。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">NVIDIA 计划推出开源 AI Agent 平台 <span style="font-size:13px;font-weight:normal;color:#999999;">Wired，10-09</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">硬件厂往 agent 平台层走的最新一例。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">Zernio <span style="font-size:13px;font-weight:normal;color:#999999;">Product Hunt 10-09 日榜第 1，299 分</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">一套 API 覆盖社交、广告、消息与通话，附托管 MCP server。营销基础设施属性强于开发者工具属性，故未进 Top 10。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">OpenAI Decisions API <span style="font-size:13px;font-weight:normal;color:#999999;">预览，waitlist</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">和本期第 3 条同类，跑在 Luna 上，接受多模态输入，从固定选项里选一个答案。截至发稿仍在排队。</p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">storytold 全家桶同日上榜</p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">photocraft（+544）、pdfcraft（+112）、lightcraft（+104）、filmcraft（+103）、vectorcraft（+81）、wordcraft（+73），详见本期第 2 条。</p>
+</section>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<section style="background-color:#f5f7fa;border-radius:10px;padding:18px 20px;margin:14px 0 0 0;">
+<p style="margin:0 0 8px 0;font-size:17px;font-weight:bold;color:#333;text-align:left;">本期关键词</p>
+<p style="margin:0;font-size:15px;color:#555;line-height:2.0;text-align:left;">Agent 视觉指路 · 决策模型 · 艺术创作 IDE · 真机自动化 · open-weight 接入层</p>
+</section>
+</section>
