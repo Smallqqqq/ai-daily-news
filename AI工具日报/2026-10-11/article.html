@@ -1,0 +1,121 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-11</p>
+
+<p style="margin:0 0 14px 0;">![今日两个工具速览](./summary.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天两个：一个把代码审查挪到 push 之前，而且写代码的 agent 不许审自己的代码；一个把「先出方案再动手」的编码工作流做成了 VS Code 原生扩展。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">OpenQodex — push 之前，让另一个 agent 先审一遍</p>
+
+<p style="margin:0 0 14px 0;">![OpenQodex 演示](./openqodex-demo-1.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">10 月 5 日 GitHub 开源了 ReviewBench：219 个真实 PR、2,623 个已知缺陷，七款主流审查工具同台跑。头名 Copilot Code Review 精度 87.8%，召回率 26.0%，报出来的基本都是真问题，但已知缺陷里它只找到四分之一。托管审查的定位一直是「宁可少报，不报错」，可这个召回率配不上「把审查交给它」。另一头，agent 写代码越来越快，人在 push 前那一眼越来越潦草。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">OpenQodex 把审查挪到你本机、push 之前。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">openqodex review</code> 先圈定改动范围：还没 push 的 commit 加上所有未提交内容。然后按改动文件类型挑扫描器跑静态检查。13 个内置：semgrep、gitleaks、bandit、ruff、oxlint、osv-scanner、actionlint、hadolint、shellcheck、golangci-lint、brakeman、rubocop、sqllint。只保留落在改动行上的发现，全库扫描的历史噪音直接过滤。接着开一个全新的 Claude Code（或 Codex）进程当 reviewer，读的是冻结的改动副本，没有写代码那个会话的设置、插件、hook 和记忆。写代码的 agent 不审自己的代码，是产品写死的规则。reviewer 必须对每条扫描器发现给出保留或驳回的理由，脚本再校验它是否真看过每一行改动；任何环节没跑完，直接打印「Review incomplete」并说明缺什么，不假装审完了。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">安装一条命令，自动发现机器上的 Claude Code、Cursor、Codex、Cline 并写入适配文件。push gate 挂在 Claude Code / Codex 的 PreToolUse hook 上，只在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">git push</code> 时触发，默认只警告；仓库里配了 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">review.block_on_severity</code> 才真的拦。另有 git pre-push hook 兜底，任何工具发起的 push（包括手敲的）都先过一遍扫描，还有 GitHub Action 在 PR 上跑全量审查。一次审查 1 到 3 分钟。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数据：<strong style="color:#07c160;">568 stars</strong>、38 forks、Apache-2.0，10 月 10 日深夜还在推 commit。它不需要额外的 API key，跑的是你已有的 Claude Code / Codex 订阅额度，跟托管产品按 PR 计费的模型完全不同，边际成本约等于零。报告落成一份单文件 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">report.html</code>，每条发现挂在对应对的代码行下面，还附上改动的调用面（谁调了、谁 import 了）。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 初始化：发现机器上的 Claude Code / Cursor / Codex / Cline，写适配文件
+npx openqodex init
+
+# push 前审查改动；--all 审整库，review '#42' 审指定 PR
+npx openqodex review
+
+# 给 Claude Code 装 skill，之后直接说"review my change with openqodex"
+npx skills add openqodex/openqodex</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">OpenQodex（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">运行位置：</strong>本机，push 前</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">审查方式：</strong>13 个扫描器按改动挑选 + 独立 reviewer 逐条核验</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（Apache-2.0）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">需要额外 Key：</strong>不需要，复用 Claude Code / Codex 登录</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">CodeRabbit</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">运行位置：</strong>云端 GitHub App</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">审查方式：</strong>托管 LLM 审查，接入最省事</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>商业订阅</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">需要额外 Key：</strong>不需要（自带模型）</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">GitHub Copilot Code Review</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">运行位置：</strong>GitHub 内置</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">审查方式：</strong>REST/GraphQL 可触发；ReviewBench 召回率 26.0%</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>需 Copilot 订阅</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">需要额外 Key：</strong>不需要</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">阿里 open-code-review</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">运行位置：</strong>CLI / CI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">审查方式：</strong>确定性规则管线 + LLM 双轨</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">需要额外 Key：</strong>需要模型 Key</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">托管方案的审查发生在 push 之后、按 PR 计费；OpenQodex 在 push 之前、复用已有订阅。更关键的差别是独立 reviewer：同一个 agent 既写又审，天然报喜不报忧；换一个新进程、清掉会话记忆、逐条给理由、脚本校验覆盖，四道约束叠在一起，独立性才算成立。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 568 · Apache-2.0 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/openqodex/openqodex</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://qodex.ai/docs/openqodex</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Verdent — VS Code Marketplace 上 SWE-bench 成绩最硬的编码 agent 扩展</p>
+
+<p style="margin:0 0 14px 0;">![Verdent 方案阶段演示](./verdent-demo-1.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">大多数 VS Code 里的 AI 编码扩展是「聊天框加补全」：一句模糊需求丢进去就直接开工，边写边猜，写完你才发现方向不对。Verdent 把 Plan 拆成了独立阶段：只读模式，先分析代码、问澄清问题，产出一份带可视化逻辑图的结构化实现方案；你可以逐条让它改方案，满意了再点 Start Building 切执行。方案可编辑、可评审，这一步比事后读 diff 便宜得多。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Verify 是另一处差异。它有一个专门的 verifier subagent 加浏览器工具，自动跑测试、点页面、抓问题，写代码的 agent 不参与自证。官方演示里，verifier 会输出一份逐项验证清单：构建通过、功能覆盖、代码质量、安全性，再附上确认可用的功能列表。执行阶段支持贴截图作多模态输入，实现要贴着图比对；改动走 Code Diff 审查。另有 subagent 机制、项目 rules 和 MCP 支持。</p>
+
+<p style="margin:0 0 14px 0;">![Verdent 验证清单演示](./verdent-demo-2.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">数字：官方技术报告称 SWE-bench Verified <strong style="color:#07c160;">pass@1 76.1%</strong>、pass@3 81.2%，并强调没有榜单调优、没有 test-time scaling，跑分的就是用户能装到的生产版本。Marketplace 描述里他们直接写「生产级 agent（含 Claude Code 与 Codex）中最高的 SWE-bench Verified 成绩」，这是官方口径，但 76.1% 的 pass@1 放在编码 agent 里确实是第一梯队。分发数据也扎实：<strong style="color:#07c160;">38,945 次安装</strong>、4.5 星、45 个评价，v1.6.13，仍在迭代。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># VS Code Marketplace 安装（发布者 Verdent AI）
+code --install-extension verdentai.verdent</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Verdent（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">形态：</strong>VS Code 原生扩展</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Plan-Code-Verify 三段工作流；官方 SWE-bench Verified 76.1% pass@1</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>$19/月起</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">分发数据：</strong>🏪 38,945 安装 · 4.5★</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Cursor</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">形态：</strong>独立 IDE</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>全家桶体验，但要换编辑器</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>$20/月起</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">分发数据：</strong>商业发行</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Claude Code</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">形态：</strong>终端 CLI + IDE 插件</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>终端 agent，灵活度最高</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>$17–200/月</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">分发数据：</strong>商业发行</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">GitHub Copilot</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">形态：</strong>VS Code 扩展</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>生态最广、价格最低</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>$10–39/月</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">分发数据：</strong>商业发行</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">留在 VS Code 里是 Verdent 最直接的卖点：Cursor 要换编辑器，Claude Code 偏终端习惯，Copilot 强在生态但 agent 能力更浅。把「验证」拆成独立角色的，这几个里只有 Verdent，代价是 $19/月起步的订阅。VS Code 系编辑器（含 Cursor、VSCodium）都能装，JetBrains 不支持。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 VS Code Marketplace · ⬇ 38,945 次安装 · v1.6.13 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://marketplace.visualstudio.com/items?itemName=VerdentAI.verdent</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.verdent.ai/docs</span></code></p>
+</section>

@@ -1,0 +1,147 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-11</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">AI 写 UI 的速度早就超过人点页面的速度。PR 里改了表单、改了弹窗、改了响应式布局，CI 全绿，但"用户点一遍到底行不行"这件事，还是只能靠人肉，人还经常漏。Browserbase 开源的 ui-test 把这一棒接了过去：读 git diff 或自己逛应用，打开真浏览器，专门找茬，每个失败都附上截图和复现步骤。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">skill 自己把定位说得很直接——<strong style="color:#07c160;">你的工作是试图搞坏界面，不是确认它能工作</strong>（"Your job is to try to break things, not confirm they work"）。README 里还有一句："传统测试验证的是意图，这个技能找的是盲区。"（"Traditional tests verify intentions. This skill finds blind spots."）</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="margin:0 0 14px 0;">![ui-test 报告模板](./uitest-report-demo.png)</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;text-align:left;">（上图为 ui-test 官方 HTML 报告模板的渲染示意：20 项测试、4 项失败、3 个子 agent，失败卡片默认展开并附修复建议）</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Playwright 测试测的是你已经想到的路径。真正出事的地方在想不到的那一侧：提交按钮连点两次会不会重复下单、375px 视口下订单表格会不会把页面撑出横向滚动条、Tab 键按到第八下会不会从弹窗里逃逸到背景页面、购物车清空后内容区是不是直接白屏。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这些场景没写进测试用例，就没有任何东西在测它。ui-test 不生成测试文件、不写 YAML、不维护测试套件。agent 直接读完 diff（或自由探索应用），打开浏览器，把这些空白地带挨个试一遍。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">整个技能是两层结构：<strong style="font-weight:bold;color:#000;">主 agent 负责规划与合并，子 agent 负责实际点击</strong>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">规划阶段强制三轮，且必须在主 agent 自己的回复里完成、输出，不允许委托出去：</p>
+
+<ol style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">功能轮</strong>：核心用户流程是什么，写成"动作 → 预期结果"</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">对抗轮</strong>：回头看第一轮漏了什么——不同角色、错误路径、空状态、竞态、极端输入（空、超长、特殊字符、快速连点）</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">盲区轮</strong>：再看前两轮——可访问性（axe-core、纯键盘）、移动视口、console 报错、与全站视觉的一致性</li>
+</ol>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">三轮去重合并成一张编号测试清单，按组切分，每个子 agent 拿走自己那份清单<strong style="font-weight:bold;color:#000;">加一个明确步数预算</strong>（技能给的参考值：几个定点检查约 25 步、整页功能+对抗+a11y 约 40 步、多页面约 75 步）。子 agent 不做探索、不做规划，执行完就打住。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">断言必须结构化。每一步只能产出两种标记之一：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>STEP_PASS|&lt;step-id&gt;|&lt;evidence&gt;
+STEP_FAIL|&lt;step-id&gt;|&lt;expected&gt; → &lt;actual&gt;|&lt;screenshot-path&gt;</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">PASS 必须有证据（元素 ref、文本内容、eval 结果），FAIL 必须带截图。验证手段按严格度排序：确定性检查（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">browse eval</code> 拿结构化数据）&gt; 快照元素匹配 &gt; 前后快照对比 &gt; 截图目测。每个交互都走"快照 → 动作 → 快照 → 对比断言"的循环，不允许"看起来不错"这种自由发挥。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">浏览器操作用官方的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">browse</code> CLI：本地跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--local</code>（干净的隔离浏览器，不需要 API key），要复用本地登录态用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--auto-connect</code>，测部署站点走 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--remote</code> 接 Browserbase 云。三个工作流（diff 驱动、探索式、并行）共用同一套断言协议。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">安装配置</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 1. 安装 browse CLI（所有浏览器操作通过它执行）
+npm install -g browse
+
+# 2. 装技能 —— Claude Code 插件方式
+/plugin marketplace add browserbase/skills
+/plugin install browse@browserbase
+
+# 或跨 agent 的 skills CLI
+npx skills add browserbase/skills</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装完建议把 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">browse</code> 加进白名单，否则一次测试要你确认几十次：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>{
+  "permissions": {
+    "allow": [
+      "Bash(browse:*)",
+      "Bash(BROWSE_SESSION=*)"
+    ]
+  }
+}</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">使用指南</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景一：PR 里的 UI 改动，交给它验</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发词："Test the UI changes in my PR"。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它会先 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">git diff --name-only</code> 看改了哪些文件，按类型归类：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">*.tsx</code> 归组件（测渲染、交互、状态、边界）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pages/**</code> 归路由（测导航、加载、404）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">*form*</code> 归表单（测校验、提交、空输入、超长输入、特殊字符）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">*modal*</code> 归交互组件（测开关、Escape、焦点陷阱、取消与确认）。然后按框架把文件映射到 URL——Next.js App Router 下 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">app/dashboard/page.tsx</code> 对应 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/dashboard</code>——最后生成测试计划。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">以"给注册表单加了邮箱校验"为例，它生成的计划包含正反两面：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>1. [happy] 合法邮箱提交成功，出现成功提示
+2. [对抗] "not-an-email" 提交后出现错误提示
+3. [对抗] 空表单直接提交，有报错、不崩溃
+4. [对抗] 邮箱框填入 &lt;script&gt;alert(1)&lt;/script&gt;，验证是否被转义
+5. [对抗] 快速双击提交，验证无重复提交
+6. [对抗] 纯键盘走完流程：Tab 到输入框 → 输入 → Tab 到按钮 → 回车</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">跑完输出结构化结果，失败项带截图路径和修复建议，比如"双击提交出现两个成功 toast，建议首次点击后禁用按钮或加防抖"。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景二：没有 diff 的时候，让它自己逛</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发词："Explore my app and find bugs"。不给改动范围，agent 自己走页面、自由探索，找的是"你压根没想到要测的东西"。技能自带一份 18KB 的 UX 评估参考：Laws of UX 的八条（Fitts 定律、Hick 定律、Miller 定律……）、Nielsen 十项可用性启发式、空状态与错误边界清单，agent 拿这些当检查表来挑毛病。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景三：部署站点并行 QA</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">测 staging 或线上环境时切远程模式，先用配套的 cookie-sync 把本地 Chrome 登录态同步到 Browserbase：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>node .claude/skills/cookie-sync/scripts/cookie-sync.mjs --domains your-app.com
+browse open https://staging.your-app.com --cdp "$CONNECT_URL"</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">多组测试用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">BROWSE_SESSION=&lt;name&gt;</code> 开独立会话并行跑，主 agent 最后把各路结果合并成一张总分表（Tests / Passed / Failed / Agents / Pass rate）。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">报告是给非工程角色看的。跑完除了文字报告，技能还会用仓库里的模板生成单文件 HTML：截图 base64 内嵌，双击放大，失败卡片默认展开、通过卡片默认收起，失败区排在最前面。PM、设计师、产品直接打开就能看，不用装环境。技能说明里写得很明白："只在某台机器的临时目录里存着证据的审查报告，不算交付物"。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">步数预算是硬约束。主 agent 给每个子 agent 的 prompt 里必须写死预算，技能原话是"子 agent 不会自我限制，除非被告知，否则会一直跑到做完"。预算耗尽时子 agent 立刻停止并上报 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">STEP_SKIP</code>，主 agent 接受部分结果、不再重跑，最终报告里把没覆盖到的测试标成 SKIPPED——宁可留着空档让你知道，也不偷偷假装全测了。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">常见踩坑</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">HTTP 200 不等于页面是好的。</strong>Next.js 开发服务器可以在返回 200 的同时显示一个全屏构建错误浮层。技能的检查方式是打开后看快照：如果可访问性树是空的、或者被错误对话框占满，说明服务器本身就是坏的，先修 build 再测。另外别忘了确认当前 checkout 的分支就是要测的那个——dev server 还在跑旧分支的代码是最常见的"测了个寂寞"。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">远程模式才需要 API key。</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">localhost</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">127.0.0.1</code> 走 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--local</code>，干净隔离浏览器、零配置；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--remote</code> 接 Browserbase 云才要 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">BROWSERBASE_API_KEY</code>。测本机开发服务器时别去配多余的东西。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">找不到 dev server 它会自己扫。</strong>3000 / 3001 / 5173 / 4200 / 8080 / 8000 / 5000 挨个探测，全没有才会停下来让你手动启动。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">ui-test（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add browserbase/skills</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>对抗式测试三工作流、三轮规划、子 agent 并行、结构化断言协议</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>PR 的 UI 改动验证、探索式 QA、部署站点并行测试</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3.7k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">playwright-skill</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/plugin marketplace add lackeyjb/playwright-skill</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>通用 Playwright 自动化，agent 现写脚本现执行</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>定制化浏览器任务（爬取、批量操作）</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3.2k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Playwright MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">claude mcp add playwright</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>提供底层浏览器工具调用</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>需要逐步精确操控页面的场景</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 官方</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">区别在定位：playwright-skill 是"让 agent 会用浏览器"，ui-test 是"让 agent 当 QA"。playwright-skill 解决动手能力，ui-test 解决"谁来挑毛病"——它没有测试文件可维护，跑一次是一次，产出的是带证据的发现清单，不是回归套件。要长期回归，用 Playwright；要一个不会倦怠、不会漏项、每次都出图的找茬工，用 ui-test。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 3,731 · v0.4.0 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/browserbase/skills</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://browserbase.com</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">适合手上正在迭代 Web 应用、PR 里 UI 改动频繁、又没人专职做 QA 的团队。装它花两条命令加一个权限配置，大约三分钟。之后每个 UI 改动的 PR，多喊一句"test the UI changes"，换回一份带截图和修复建议的测试报告，比"看着没问题"踏实，也比人工点一遍快。</p>
+</section>
