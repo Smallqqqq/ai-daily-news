@@ -1,0 +1,296 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-12</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">给 Claude Code 装 skill 这件事，现在随意得像当年装 VS Code 插件：看到个顺眼的仓库，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx skills add</code> 或者 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/plugin install</code> 就装上了。但 skill 和插件有一个本质区别：插件在你的进程沙箱里跑，skill 是把一段指令直接喂给你的 agent，agent 用你给的完整权限照做。NVIDIA 给这份信任算了笔账：在 31,132 个真实 skill 的抽样里，<strong style="color:#07c160;">26.1% 至少含一个漏洞，5.2% 表现出可能的恶意意图</strong>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">SkillSpector 就是干"装之前先安检"的这台 X 光机。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="margin:0 0 14px 0;">![SkillSpector 项目截图](./skillspector-demo-github.png)</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Skill 生态正在复刻 npm 早期的剧本：数量爆发、审核缺位、安装即信任。一个 skill 可以往 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">SKILL.md</code> 里塞隐藏指令操纵你的 agent，可以在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">scripts/</code> 里放一段读环境变量再 POST 出去的代码，可以声明只读却要求写权限，也可以在 MCP 配置里做 tool poisoning，把你的工具描述劫持成攻击载荷。这些风险有一个共同点：装之前你根本看不见，装之后它们和你的 API key 住在一起。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">NVIDIA 在 2026 年的实证研究《Agent Skills in the Wild》里扫了 42,447 个 skill，其中 31,132 个能完整分析，结论有两个数字值得记住：</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#07c160;">26.1%</strong> 的 skill 至少含一个安全漏洞；</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="color:#07c160;">5.2%</strong> 表现出明显的恶意意图；</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;">还有个规律：<strong style="color:#07c160;">带可执行脚本的 skill 出漏洞的概率是不带的 2.12 倍</strong>。</li>
+</ul>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">SkillSpector 把论文变成了工具。它回答一个问题：<strong style="font-weight:bold;color:#000;">"这个 skill 装了安全吗？"</strong> 顺手把它变成了 NVIDIA Verified Skills 流水线里的一道工序：通过扫描的 skill 才会被签名发布到 NVIDIA 官方 skill catalog。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">整个工具是一套两阶段的静态分析流水线，加一个可选的大模型语义层。关键在于：<strong style="font-weight:bold;color:#000;">它从不执行被扫描的 skill</strong>。所有检查都基于读文件，代码一行都不会跑。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">第一阶段：确定性静态扫描。</strong> 覆盖 71 个漏洞模式、17 个类别，包括：</p>
+
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #e8e8e8;">
+<thead>
+<tr>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">类别</th>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">抓什么</th>
+</tr>
+</thead>
+<tbody>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Prompt Injection</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">SKILL.md</code> 里的隐藏指令、指令覆盖</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Data Exfiltration</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">读环境变量/密钥后向外发送</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Privilege Escalation</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">声明与实际权限不符的提权行为</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Supply Chain</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">未固定版本的安装、下载后执行远程脚本</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Excessive Agency</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">超出声明用途的自主行为</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Memory Poisoning</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">污染 agent 长期记忆的写入</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Tool Misuse / Rogue Agent</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">滥用工具链、构造自主升级路径</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">MCP Least Privilege / Tool Poisoning</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">MCP 配置的超权和工具描述劫持</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Behavioral AST / Taint Tracking</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">Python AST 结构审查 + 污点传播追踪</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">YARA Signatures</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">已知恶意样本的特征匹配</td>
+</tr>
+</tbody>
+</table>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">依赖漏洞走 SC4 模块实时查 OSV.dev 拿 CVE 数据，断网时回退到内置列表。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">第二阶段：LLM 语义分析（可选）。</strong> 静态规则抓不住"代码和描述不符"这类意图层面的问题，这一步把文件内容交给大模型做语义判断，比如"描述说是格式化工具，实际在读 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.ssh</code>"。用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--no-llm</code> 可以关掉，保持全部本地。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">风险评分。</strong> CRITICAL +50、HIGH +25、MEDIUM +10、LOW +5，含可执行脚本整体 1.3 倍加权：</p>
+
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #e8e8e8;">
+<thead>
+<tr>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">分数</th>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">等级</th>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">建议</th>
+</tr>
+</thead>
+<tbody>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">0-20</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">LOW</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">SAFE</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">21-50</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">MEDIUM</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">CAUTION</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">51-80</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">HIGH</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">DO NOT INSTALL</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">81-100</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">CRITICAL</td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">DO NOT INSTALL</td>
+</tr>
+</tbody>
+</table>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">安装配置</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">推荐用 uv 一行装（Python 3.12+）：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># CLI 本体
+uv tool install git+https://github.com/NVIDIA/skillspector.git
+# 以后更新：uv tool update skillspector
+
+# 如果要用 MCP server，装的时候带上 mcp extra
+uv tool install 'skillspector[mcp] @ git+https://github.com/NVIDIA/skillspector.git'</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">不想装 Python 就用 Docker：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>git clone https://github.com/NVIDIA/skillspector.git
+cd skillspector
+make docker-build   # 或 docker build -t skillspector .
+
+# 把当前目录挂进容器扫
+docker run --rm -v "$PWD:/scan" skillspector scan ./my-skill/ --no-llm</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">从源码装的话，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">make install</code> 一类的常规流程 README 里都有。装好之后 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">skillspector scan &lt;目标&gt;</code> 直接可用——目标可以是本地目录、单个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">SKILL.md</code>、Git 仓库 URL、甚至一个 zip 包。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">使用指南</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景一：装一个新 skill 前的安检</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">在 GitHub 上看到一个想装的 skill，先克隆到临时目录扫一遍，再决定装不装：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>skillspector scan https://github.com/someone/cool-skill</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">输出直接给你一份可读报告。比如 README 里的示范输出：一个带 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">scripts/sync.py</code> 的 skill 被打到 78/100（HIGH，DO NOT INSTALL），两条 finding 拼出了完整攻击链：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>HIGH: Env Variable Harvesting (E2)
+  Location: scripts/sync.py:23
+  Explanation: This code collects environment variables containing
+  API keys and secrets, then sends them to an external server.
+
+HIGH: External Transmission (E1)
+  Location: scripts/sync.py:45
+  Explanation: Data is being sent to an external server. Combined
+  with env harvesting above, this indicates credential exfiltration.</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">读报告的顺序：先看 Score 和 Recommendation 定位风险档位，再逐条读 HIGH/CRITICAL 的 location 和 finding，并打开对应文件自己过一遍那几行。扫描器给的是线索，最终结论要你自己读完代码再下。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景二：挂成 Claude Code 的 MCP 工具</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这个用法最顺手：把扫描变成 agent 的运行时护栏，不用再拿它当事后的离线审查：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 注册 MCP（stdio 传输）
+claude mcp add skillspector -- skillspector mcp</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">注册后 Claude Code 直接获得一个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">scan_skill</code> 工具，参数支持 Git URL、zip、目录，返回结构化的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">risk_score</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">severity</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">recommendation</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">safe_to_install</code> 和逐条 findings。之后你就可以在对话里直接说：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>帮我把 https://github.com/xxx/yyy 这个 skill 扫一遍，看能不能装</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Claude 会调 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">scan_skill</code> 拿到静态证据，然后结合仓库自带的 <strong style="font-weight:bold;color:#000;">skill-inspector</strong> 技能做第二层语义审查——它的 SKILL.md 定义了一条完整的裁决工作流：先跑扫描，再人工核对每个 HIGH 对应源码的真实意图，最后输出三档结论之一：</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">APPROVE</code>：无 HIGH/CRITICAL，无无法解释的敏感行为，代码与描述相符；</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">CAUTION</code>：存在敏感行为，但有文档、有必要、有边界、用户可控；</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">REJECT</code>：恶意或欺骗行为、隐藏 prompt injection、凭据窃取、不明外传、混淆执行、持久化。</li>
+</ul>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">skill-inspector 里有一条原则写得很好：<strong style="font-weight:bold;color:#000;">不要把评分当裁决</strong>。低分可能漏掉语义风险，高分在敏感行为"被明确记录、确有必要且有边界"时也可能合理。分数只是风险姿态。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景三：给团队自己的 skill 仓库做 CI 门禁</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">SkillSpector 的退出码是一份稳定契约，天然适合当门禁：</p>
+
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;border:1px solid #e8e8e8;">
+<thead>
+<tr>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">退出码</th>
+<th style="padding:12px 16px;text-align:left;font-weight:bold;color:#333;border-bottom:2px solid #e8e8e8;background-color:#f5f7fa;">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">0</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">扫描完成，risk_score ≤ 50 且没有严格门禁触发</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">1</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">超线：risk_score &gt; 50，或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">--fail-on-findings</code> 命中，或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">--fail-on-incomplete</code> 发现分析不完整</td>
+</tr>
+<tr style="background-color:#fafafa;">
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;">2</code></td>
+<td style="padding:12px 16px;color:#333;border-bottom:1px solid #f0f0f0;line-height:1.7;">错误（输入有问题、源码读不了、内部失败）</td>
+</tr>
+</tbody>
+</table>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">在 CI 里加一步，任何 skill 变更先过扫描再合并：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 严格模式：任何活跃 finding 直接失败
+skillspector scan ./skills/ --format sarif --output report.sarif --fail-on-findings
+
+# 输出 SARIF 给代码扫描系统/IDE 用
+skillspector scan ./skills/ --format sarif --output report.sarif</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方建议的门禁映射：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">SAFE</code> → 放行，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">CAUTION</code> → 弹窗/警告，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">DO_NOT_INSTALL</code> → 拦截。至于 CAUTION 要不要挡，官方明确说这是接入方的策略决定，工具只负责算分和建议。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景四：批量体检已有的 skill 库</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装了几十个 skill 之后回头补课，用批量脚本并行扫一整目录：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>python -m contrib.batch_scan.batch_scan ./my-skills/ --workers 20 -f json -o report.json</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">支持中/日/韩文检测，20 个并发 worker 跑一晚上能把一个 skill 库全过一遍。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">用 baseline 把已签收的 finding 吸收掉。</strong> 第一轮扫描之后，对确认无害的 finding 建立基线文件，此后重扫只报新增问题，不然 CI 里永远是那几十条老 finding，真正的信号会被淹掉：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 仓库自带 .skillspector-baseline.example.yaml 作为格式参考
+skillspector scan ./skills/ --baseline .skillspector-baseline.yaml</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">基线支持 glob 规则和指纹两种写法，设好之后迭代开发时"新引入的风险"才浮得出来。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">给 SKILL.md 定扫描范围，避免递归噪音。</strong> 显式指定扫描范围能让报告更干净，尤其在你只改了 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">SKILL.md</code> 描述的时候。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">隐私分级用两条命令。</strong> 内部工具做的私有 skill，可以用 LLM 分析跑满语义检查；带业务密钥、客户数据的 skill 一律 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--no-llm</code> 纯本地静态扫。SC4 依赖查询（只发包名版本到 OSV.dev，不发文件内容）在两种模式下都跑。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">常见踩坑</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">LLM 语义分析默认开着，会把文件内容发到你配置的 provider。</strong> README 的 trust model 写得很直白：LLM 分析会把 analyzer 可读的文件内容发给 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">SKILLSPECTOR_PROVIDER</code> 指向的端点。扫公开 skill 无所谓，扫公司内部 skill 之前，先决定 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--no-llm</code> 还是配一个合规的 endpoint。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">MCP 的 HTTP 传输不带认证。</strong> 它只允许绑定 loopback（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">127.0.0.1</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">::1</code>），并且自动拒绝本地路径和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">file://</code> URL 防止任意文件读取。要远程用必须自己在前面架一个带认证的反向代理。用 stdio 传输则要注意仓库 issue #199 里记录的 initialize 挂起问题。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">静态分析有明确的盲区。</strong> 官方列得很老实：非英文内容可能漏检、图片里的指令看不见、加密/混淆的二进制分析不了、没有任何运行时行为检测。它是"装之前的一道闸"，不是沙箱。你装它拦不住的东西，它也不负责收容。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">别拿扫描通过当免死金牌。</strong> 26.1% 的漏洞率是扫描器自己算出来的，意味着扫描通过只说明"没命中已知模式 + LLM 没看出意图问题"。真正的安全边界还是：装之前扫，装之后最小权限。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">SkillSpector（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">uv tool install</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>71 模式/17 类 + LLM 语义 + MCP/CI 门禁</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>装第三方 skill 前的安检、skill 发布门禁</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 20k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">security-audit 类 skills</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>装进 Claude Code</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>用手册+agent 审自己的代码</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>审自己项目的漏洞</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">依赖扫描（OSV/Snyk 等）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>CI 插件</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>只查依赖包 CVE</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>依赖漏洞</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">通用 SAST（Semgrep 等）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>CI / IDE 插件</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>面向自己代码的规则引擎</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>自己代码的静态规则</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 高</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">和 security-audit、SAST 的核心区别在审查对象：那两类的对象是<strong style="font-weight:bold;color:#000;">你自己的代码</strong>，SkillSpector 的对象是<strong style="font-weight:bold;color:#000;">你要装进 agent 的第三方 skill</strong>。攻击面完全不同：它盯的是 prompt injection、tool poisoning、memory poisoning 这类只存在于 agent 生态里的新手法，这些是传统 SAST 规则库里找不到的模式。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 20k · v2.12.0 · Apache-2.0 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/NVIDIA/SkillSpector</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://docs.nvidia.com/skills/scanning-agent-skills</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">SkillSpector 适合所有已经在给 agent 装 skill 的人，尤其是团队里负责给别人发 skill、要从公开市场挑 skill 装的那位。配置成本是一次性的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">uv tool install</code> 加一条 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">claude mcp add</code>，五分钟内可用，之后每装一个新 skill 前花十秒扫一遍，换掉的是"我的 agent 会不会在某个深夜把 API key POST 到不知名服务器"这种你不愿意想的问题。它自己近 2 万 stars、96 个贡献者、两周前还在发版，配套的 skill-inspector 把裁决流程也写好了。装它，算同类里最没有心理负担的一次安装。</p>
+</section>

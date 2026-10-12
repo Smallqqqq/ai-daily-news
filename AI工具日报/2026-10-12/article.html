@@ -1,0 +1,142 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-12</p>
+
+<p style="margin:0 0 14px 0;">![今日两个工具速览](./summary.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天两个：一个让 agent 把技术概念画成能转的等距机械图，一个把 VS Code 的调试器和终端交给 agent。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Anatomy — 把「缓存命中」画成一把只有所有弹子对齐才转的锁</p>
+
+<!-- 图片 anatomy-demo-1.webp 为 WebP 格式，目标平台不支持，已跳过 -->
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">解释一个技术概念，最难的往往是找一个好比方。文字里写「token bucket 就是这个桶漏水的同时有人往里加」，读者脑子里其实没有桶。Anatomy 走的是另一条路：让 Claude 先发明一台物理机器，让这台机器的运转方式本身就是那个概念，再把它画出来。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">缓存 key 没变就跳过计算，被画成一把弹子锁，只有每一根弹子都对齐，锁才转得动。一个 GPU context 服务多个 canvas，被画成一台龙门绘图仪，一个打印头挨个访问 16 个孔位。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">关键在于它画得有多细。每张图由几十个有实体感、带四层明暗的小零件拼成，放进一张带标题、提示和实时读数的卡片里，指针和键盘操作下零件会平滑地动。每个数字都来自同一套驱动零件的模型——不是画上去的，是算出来的。它还会自己检查作业：把每个关节放大看，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">kit/audit.mjs</code> 证明没有任何一根管子穿过别的东西、每个末端都装在支座上、每一处重叠的绘制顺序都对。headless Chrome 里跑截图、特写、慢放接触表，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">lines.mjs</code> 会让任何一条悬在半空的线直接报错。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">三种产出：纯 SVG（默认，四层明暗的实体零件，可输出独立 HTML、单个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.svg</code> 或 React 组件）；SVG + WebGL（火焰、尾焰、水面焦散、灯光这类线条画不出来的东西，着色器跑在前后两层 SVG 之间的 canvas 里，用的是同一套等距相机）；3D 模式（beta，真三维旋转的旋钮和会抬起的三段式手指）。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">实用的地方在于 prompt 的写法。官方建议：说概念本身，带上真实数字，别描述画面。「解释 token bucket 限流器怎么工作，要可交互的」比「画一堆盒子和箭头」效果好得多。也可以直接点破物件：一台拿掉侧板的热交换式咖啡机，锅炉、group head、泵、蒸汽棒，拉一杯时显示水流怎么走。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">安装</strong>（Claude Code / OpenCode / Codex 通用，装完约 10 MB，含全部示例）：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx skills add wheresryan22/anatomy -g -a claude-code</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">skills</code> CLI 由 Vercel Labs 维护，Anatomy 也按 Agent Skills 开放格式写，官方文档推荐的就是这条路。装好后在会话里直接：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>/anatomy explain how a token bucket rate limiter works, interactive</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">OpenCode 把 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">-a claude-code</code> 换成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">-a opencode</code>；Codex 换成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">-a codex</code>，命令用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">$anatomy</code>。除了 Node 20.10+ 和用于自检的 Chrome，不需要 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npm install</code> 任何东西——它的绘图库只用 Node 内置模块。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Anatomy（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add wheresryan22/anatomy</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>自检几何、可交互、SVG/WebGL/3D 三档输出、零依赖</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3,479</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Excalidraw</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>网页 / 自托管</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>手绘风示意图，人画为主，AI 只搭骨架</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 133.7k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Mermaid / D2</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>代码块</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>声明式图表，快但只有盒子箭头</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 90.6k / 25.6k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Whiteboard</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Claude Code Skill</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>agent 改完代码后把设计画上图</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Mermaid 和 D2 是「快速出结构图」的正解，Anatomy 不解决那个场景。它换来的是理解成本：一张能转、能拆、数字是算出来的机器图，比十个箭头更能让人记住「为什么这个缓存会失效」。代价是慢，作者明说这是故意的，Raptor 发动机那张图的构建要几分钟，30 个零件的完整 3D 轨道审计要 15 到 20 分钟。3D 模式还是 beta，小图 60 fps，380 个零件的压力测试在 1440 px 宽下约 20 fps。</p>
+
+<!-- 图片 anatomy-demo-2.webp 为 WebP 格式，目标平台不支持，已跳过 -->
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 3,479 · v1.0.0 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/wheresryan22/anatomy</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://skills.wheresryan.sh/anatomy</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">VS Code MCP Server — 让 agent 接管你的调试器、终端和语言服务器</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 能改代码，但一到「为什么会崩」就露怯：它看不到你停在哪个断点、调用栈里有什么、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">locals</code> 里那个变量到底是什么。它只能用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">console.log</code> 去猜。这个扩展把 VS Code 自己的一套能力通过 MCP 敞开：<strong style="color:#07c160;">50 个工具</strong>，覆盖调试器、集成终端、LSP、文件操作和命令，走本地 HTTP 端点（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">http://127.0.0.1:9876/mcp</code>），任何 MCP 客户端都能接。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">调试那组是重点：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">start_debugging</code> 启动 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">launch.json</code> 里的配置、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">add_breakpoint</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">remove_breakpoint</code> 增删断点、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">step_over</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">step_into</code> / <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">step_out</code> 单步、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">get_stack_trace</code> 读调用栈、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">evaluate_in_debug_console</code> 在暂停的帧里求值。也就是说，你复现一个 bug 在断点处停下来之后，可以直接问 agent「这个变量为什么是 null」，它会真的去看那一帧的状态，而不是猜。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">终端那组解决的是另一类问题：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">execute_in_terminal</code> 在集成终端里跑命令、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">get_terminal_output</code> 读回输出。跑个测试、装个依赖、看构建报错，都不用你复制粘贴了。LSP 那组给它 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">go_to_definition</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">find_references</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">get_diagnostics</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">rename_symbol</code>，重命名跨文件符号时走语言服务器，比全文替换靠谱。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">架构上有个细节：多窗口场景不是每个窗口各起一个端口。第一个打开的窗口当选 leader 监听 9876，同机器的其他窗口作为 worker 通过 HTTP member channel 加入集群，客户端靠 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">workspace</code> 参数指定要操作哪个窗口。dev container 里的窗口和宿主机上的窗口走同一条通道，能进同一个集群，比每个窗口一个端口省心得多。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">安装与接入</strong>：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>code --install-extension nabheet.vscode-ide-mcp</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">重载 VS Code 后，在 MCP 客户端配置里加：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>{
+  "mcpServers": {
+    "vscode-mcp": {
+      "type": "remote",
+      "url": "http://127.0.0.1:9876/mcp"
+    }
+  }
+}</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">验证服务在跑：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>curl -s -X POST http://127.0.0.1:9876/mcp \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">VS Code MCP Server（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">code --install-extension nabheet.vscode-ide-mcp</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>50 工具，调试器 + 终端 + LSP 全覆盖，多窗口集群</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 274 次安装</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">LSP MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code Marketplace</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>25 个 LSP 操作，专门的 Java 反编译类源码读取</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 915 次安装</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">VS Code MCP Bridge</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code Marketplace</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>27 工具，写文件前先开原生 diff</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 296 次安装</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">VS Code Smart Context MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code Marketplace</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>31 工具，自动把 MCP URL 写进各家客户端配置</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 272 次安装</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这个方向的扩展普遍还很年轻，安装量都在几百这个量级（对比：同生态里做 MCP 市场管理的 Copilot MCP 有 11 万安装，但那是另一类工具）。选它是因为覆盖最全，调试器、终端、LSP 三样都在，其他几个各自只做一块。如果你只缺符号跳转，LSP MCP 更专；如果你更在意改文件前的可视化确认，MCP Bridge 的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">show_diff</code> 更贴合习惯。注意这些数字是今天的快照，选之前建议自己再看一眼最近更新时间。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 VS Code Marketplace · ⬇ 274 次安装 · v0.9.402 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/nabheet/vscode-mcp-server</span></code></p>
+</section>
