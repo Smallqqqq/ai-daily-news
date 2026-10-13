@@ -1,0 +1,149 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-13</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">NotebookLM 是少数“答案必须落在你给的资料上”的 AI 产品：读完你上传的文档再回答，每句话带引用，还能把资料变成播客、思维导图、幻灯片。但它的网页版是给人点鼠标用的，批量的导入导出、定时生成、塞进 Agent 的自动循环，鼠标点不出来。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">notebooklm-py 把 NotebookLM 的全部能力包成了 CLI、Python API、MCP server 和 agent skill，覆盖包括网页 UI 都没暴露的能力。装上之后，你的 Agent 可以自己建笔记本、丢资料、问问题、生成播客再批量下载。</p>
+
+<p style="margin:0 0 14px 0;">![notebooklm-py 官方 demo](./notebooklm-py-demo.png)</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">三个很具体的场景。手头 30 份论文和文档要写综述，全塞进 Claude Code 太贵也太满，不塞又没法问；想把项目文档变成通勤路上听的播客，网页版一次只能生成一集，还要手动一集集下载；希望 Agent 写代码前先查内部架构文档，答案带引用而不是靠猜。这三件事的共同点是：需要有人能编程地驱动 NotebookLM。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">README 把最优模式写得很直白：让 NotebookLM 这个 grounded engine（Gemini 在服务端读完你的资料再回答）承担昂贵的分析，Agent 负责编排和最后一公里。notebooklm-py 就是这座桥，<strong style="color:#07c160;">19.7k stars，skill 层安装量 9.6k</strong>，昨天刚发 v0.8.5。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它分三层。最底层是 CLI 和 Python 库，直接调 NotebookLM 未公开的 Google API（默认 Web batchexecute 传输，也可以选 Android gRPC 后端），把 11 个公开命名空间（笔记本、来源、对话、笔记、研究、分享，以及 9 种内容生成）包成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">notebooklm &lt;动词&gt;</code> 命令。认证走浏览器登录的 cookie，也可以复用已登录 Chrome 的会话，或者用 master token 定期自愈。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">中间层是 agent 集成：自带 SKILL.md，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx skills add</code> 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">notebooklm skill install</code> 装进 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">~/.claude/skills/notebooklm</code>；所有命令支持 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--json</code> 结构化输出；生成类任务返回 task id，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--wait</code> 阻塞到完成。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">notebooklm agent show claude</code> 能直接打印给 Claude Code 用的技能模板。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">最上层是 MCP server，<strong style="color:#07c160;">38 个工具</strong>，本地 stdio 接入 Claude Code / Cursor / Windsurf 等客户端，也可以自托管成远端连接器（Cloudflare 或 Tailscale 隧道），从 claude.ai 和 ChatGPT 连，手机端也一样用。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">安装配置</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 1. 装 CLI（推荐 uv tool 或 pipx，隔离环境，不污染系统 Python）
+uv tool install "notebooklm-py[browser]"
+# 或者：pipx install "notebooklm-py[browser]"
+
+# 2. 登录（首次自动下载 Chromium 约 170MB，然后弹 Google 登录）
+notebooklm login
+
+# 3. 验证
+notebooklm auth check --test --json   # 期望看到 "status": "ok"
+
+# 4. 装成 Agent 技能（两选一）
+notebooklm skill install              # 写入 ~/.claude/skills/notebooklm
+npx skills add teng-lin/notebooklm-py # 或走开放 skills 生态</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">可选 MCP 接入：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>pip install "notebooklm-py[mcp]"
+notebooklm mcp install claude-code    # 自动写入客户端 MCP 配置，幂等</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">使用指南</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景一：零 token 研究卸载</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">触发条件：有一批 PDF 或网页要消化，不想让 agent 把它们统统读进上下文。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>notebooklm create "Claude Code 技能生态"
+notebooklm use &lt;notebook_id&gt;
+# 让 NotebookLM 自己在网上做深度研究，找到的来源自动导入
+notebooklm source add-research "Claude Code CLI skills best practices" --mode deep --no-wait
+# 同时补几个确定的来源
+notebooklm source add "https://docs.anthropic.com/en/docs/claude-code" --json
+notebooklm source add "./内部架构文档.pdf"
+
+# 资料处理完后直接问
+notebooklm ask "这些来源里关于 skill 编写的最佳实践有哪几条？"</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：研究任务在 Google 服务端跑，本地只花“下委托单”的 token，回答带引用。文首那张图就是官方 demo：Claude Code 驱动这套命令导入了 <strong style="color:#07c160;">41 个来源</strong>，然后接着生成播客。查余量用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">notebooklm usage --json</code>，长问题用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--prompt-file</code> 塞文件。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景二：把资料变成播客、思维导图和 quiz</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>notebooklm generate audio "面向通勤听，中文，挑重点" --wait
+notebooklm generate video --style whiteboard --wait
+notebooklm generate mind-map
+notebooklm generate quiz --difficulty hard
+notebooklm generate slide-deck
+
+notebooklm download audio ./podcast.m4a
+notebooklm download mind-map ./mindmap.json
+notebooklm download quiz --format markdown ./quiz.md
+notebooklm download slide-deck ./slides.pdf</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">音频有 4 种形式（deep-dive / brief / critique / debate）、50+ 语言；视频 4 种格式 8 种视觉风格，还有 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">cinematic-video</code> 别名；幻灯片能下成 PPTX，也能用自然语言改单页；quiz 和 flashcards 直接出 JSON / HTML，方便喂 Anki 或评测脚本。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个 README 收录的真实案例：拿 NotebookLM 从资料里生成的 quiz 当作自己 skill 的 eval 集，有人一轮迭代把通过率从 <strong style="color:#07c160;">4/10 提到 10/10</strong>。出题的不受你先入之见影响，这是它比自拟测试题强的地方。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景三：给 coding agent 一个带引用的项目大脑</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 把内部 RFC、架构文档、FAQ 建成一个 notebook
+notebooklm create "项目大脑"
+notebooklm use &lt;brain_id&gt;
+notebooklm source add ./docs/
+notebooklm source add "https://内网.wiki/architecture"</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">预期结果：后续在 Claude Code 里直接问“我们的鉴权方案为什么选 JWT，引用来源”，拿到的是落在文档上的引用答案。把 CLI 从 Obsidian 仓库根目录跑，下载的 report 和 mindmap JSON 直接落进知识库，社区里已经有 skill 把 NotebookLM 的引用标记解析成 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">[[wikilinks]]</code>。会话记忆的玩法：每轮结束把决策存进一个 Master Brain 笔记本（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ask --save-as-note</code>），下次开场先查它。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">定时播客简报。cron 里三行：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">notebooklm auth refresh --quiet</code> 做 cookie 保活，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">notebooklm generate audio --wait</code> 生成，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">notebooklm download audio</code> 取回。每天早上多一集私人播客，配额余量顺手 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">notebooklm usage</code> 打进日志。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">多账号 profile。工作和个人 Google 账号各存一份凭据，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">notebooklm profile switch work</code> 切换，不用重新登录。服务器和 CI 场景用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">login --master-token</code>，按需铸造新 cookie、过期自愈；README 提醒 master token 是全账号凭证，建议配专用账号并保护好 profile。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一个彩蛋：这个仓库自己的架构文档图（docs/diagrams/ 里几十张 JSON + HTML）就是用 archify 生成的，我们 8 月 24 日推荐过那个画图 skill。想让自己的代码库也有同款常青的可交互架构文档，这条流水线可以直接复刻。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">常见踩坑</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">非官方 API 是最大的前提。README 自己写着 undocumented Google APIs that can change without notice，定位就是原型、研究与个人项目。别把它用到公司关键业务上；升级前看 changelog，出问题先跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">notebooklm auth check --test</code>，区分是认证过期还是接口变更。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">PEP 668。macOS（Homebrew Python）和 Debian / Ubuntu 上直接 pip install 会报 externally-managed-environment，用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">uv tool</code> 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">pipx</code> 绕开。首次 login 要下约 170MB 的 Chromium，受限环境可以用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">notebooklm login --browser-cookies chrome</code> 复用已登录的浏览器会话，不下 Playwright。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">配额与速率。notebook / source / studio 的限额随账号 tier 变化（docs/quota-limits.md），批量生成会撞速率限制，脚本里连续开 notebook 要留节奏。批量任务开始前先 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">notebooklm usage</code> 看一眼，别跑到一半发现音频配额没了。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">notebooklm-py（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">uv tool install</code> + <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">notebooklm skill install</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>NotebookLM 全能力可编程，38 工具 MCP，批量导出</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>研究卸载、内容生产、项目大脑</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 19.7k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">book-to-skill</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx skills add virgiliojr94/book-to-skill</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>确定性提取器，书转技能包，离线一次性转化</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>把成册资料变成 agent 知识</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 29.4k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Hindsight</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>一条命令接入</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>项目记忆：抽取、检索、巩固</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>agent 不用每次重新问</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 29.8k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">NotebookLM 网页版</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>无</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>手动上传与点击导出</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>偶尔用一次的轻量场景</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">三者不冲突。book-to-skill 管把资料固化成静态知识，Hindsight 管记住你自己的项目，notebooklm-py 管把动态的算力外包出去再取回成果。它是唯一一个把云端 grounded 引擎变成 agent 可编程组件的。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 19.7K · v0.8.5 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/teng-lin/notebooklm-py</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/teng-lin/notebooklm-py/tree/main/docs</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://pypi.org/project/notebooklm-py/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">适合三类人：经常要把大量资料变研究成果的、想批量生产播客和图谱类学习材料的、想给 coding agent 配一个带引用外脑的。安装十分钟，一条 uv 命令加一次 Google 登录，换来的是：贵的算力（读 30 份文档、生成一小时音频）发生在 Google 服务端，你的 agent 只负责下单和验收。要接受的前提也只有一个：它走非官方接口，Google 改一次就可能要等版本更新。个人项目和实验流水线随便用，生产系统先观望。</p>
+</section>

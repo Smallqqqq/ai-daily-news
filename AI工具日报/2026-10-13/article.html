@@ -1,0 +1,144 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-13</p>
+
+<p style="margin:0 0 14px 0;">![今日两个工具速览](./summary.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天两个：一个在 agent 和模型之间垫一层本地压缩，把上下文账单按场景砍掉 20%–57%；一个给 agent 装上 CAD 内核，让一段话变成能直接送厂的 STEP 文件。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Headroom — 在 agent 和模型之间垫一层压缩，57% 的排障 token 省在原地</p>
+
+<p style="margin:0 0 14px 0;">![Headroom 压缩管线演示](./headroom-demo.gif)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 的上下文账单总是越滚越大：工具输出接得越多，日志、JSON、文件、RAG 片段越是一股脑进窗口。常见解法要么是换更便宜的模型，要么是人肉裁剪 prompt。Headroom 走第三条路：在 agent 和 LLM 之间加一层本地压缩，内容先过一遍再发给模型，压缩全程在这台机器上跑，原文不出网。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">处理管线分三段。ContentRouter 先识别内容类型再挑压缩器：JSON 走 SmartCrusher，源码走基于 AST 的 CodeCompressor，散文和 RAG 文本走 Kompress-v2-base 文本模型（权重开在 HuggingFace）。CacheAligner 负责标记那些会打爆供应商 KV-cache 前缀的易变内容，只标记不改写，保证前缀缓存还能命中。压缩之后原文不丢：CCR 把原始内容缓存在本地，模型需要细节时调 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">headroom_retrieve</code> 按需取回。可逆这点对排障场景是刚需，一条 FATAL 日志的细节一个字都不能裁掉。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方用四种真实 MCP 输出格式做了基准测试：SRE 排障场景 55,957 token 压到 24,340（省 57%），代码库探索省 42%，GitHub issue 分诊省 30%，代码搜索省 21%。压缩本身耗时 0.21 毫秒（10K token 的 JSON）到 1.4 毫秒（100K token），不进 agent 延迟。答案质量上，GSM8K 压缩前后都是 0.870，SQuAD v2 在 19% 压缩率下保持 97%，BFCL 工具调用在 32% 压缩率下保持 97%。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">接入形态有四种：Python/TypeScript 库里直接 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">compress(messages)</code>；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">headroom proxy</code> 起一个零代码改动的代理；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">headroom wrap claude</code> 等命令包装编码 agent，官方兼容表列了 18 种，其中 16 种能一条命令接管，wrap Claude Code 时会顺带注册 Serena 语义导航 MCP；MCP 原生的客户端用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">headroom mcp install</code>。除了输入侧，它还管模型回话的输出 token，通过 verbosity steering 和 effort routing 削减，官方给出的估算是 31.7%（含 95% 置信区间，也支持留 10% 会话做对照实测）。另外 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">headroom learn</code> 会从失败会话里挖教训写进 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">CLAUDE.local.md</code>，下一次会话开头就带上。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 安装（CLI 只随 PyPI 包发，npm 上的 headroom-ai 是 TypeScript SDK）
+uv tool install --python 3.13 "headroom-ai[all]"   # 隔离环境装 CLI
+pip install "headroom-ai[all]"                     # 或直接进当前环境
+
+# 选一种形态
+headroom wrap claude            # 包装 Claude Code（含 Serena）
+headroom proxy --port 8787      # 或起零改动代理
+headroom mcp install            # MCP 客户端
+headroom dashboard              # 看实时节省</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">Headroom（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install "headroom-ai[all]"</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>本地压缩 + CCR 可逆取回，覆盖 18 种 agent，连输出 token 一起管</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费（有企业版）</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 75.1k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Context Mode</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>MCP + hooks</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>把工具输出挡在上下文窗口之外，官方称削减 98%，另带会话记忆</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 27.3k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">LLMLingua</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install llmlingua</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>微软研究项目，prompt 和 KV-Cache 压缩最高 20x，偏实验</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 6.7k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Context Mode 削减得更激进，但只处理工具输出这一处；LLMLingua 是研究导向，落地要自己搭管线。Headroom 的差异在可逆：原文留在本地、按需取回，刀口才敢下得狠。覆盖面也是最宽的，18 种 agent 各有接入路径，还顺手管模型回话：输出 token 在 Opus 级模型上比输入贵 <strong style="color:#07c160;">5 倍</strong>，这块省下来不比输入侧少。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 75,145 · v0.40.0 · Apache-2.0 · Trendshift 当日榜第一 · 🏪 PyPI 月下载 29.3 万 · npm 62,319 次/周 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/headroomlabs-ai/headroom</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://docs.headroomlabs.ai/docs</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">text-to-cad — 给 agent 装上 CAD，一段话变成一个能送厂的 STEP 文件</p>
+
+<p style="margin:0 0 14px 0;">![text-to-cad 建模演示](./texttocad-demo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">让 agent 写个网页已经很成熟，让它画一个能真正加工出来的零件是另一回事。3D 打印、钣金、CNC 要的是工程格式（STEP、STL）和壁厚、悬垂这类可制造性约束，不是一段渲染代码。text-to-cad 把这一套做成了 agent 插件：模型在本地生成，输出直接是制造格式，自带可制造性检查和工程图。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">本地是它的分水岭。CAD 内核用 build123d 加 Open CASCADE 7.9，工业界用了多年的几何内核，跑在你自己机器上；cadgen 负责 STEP-first 的生成、校验和检查。agent 通过一组 skill 驱动它，插件同时起一个本地 MCP 服务器（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">cadgen mcp</code>）和一个 CAD Viewer：在 Claude Code 里，模型以可旋转的 viewer 卡片出现在对话里；在只渲染文本的 agent 里，给一个浏览器链接。生成的模型可以直接对接 3D 打印、钣金和 CNC 制造服务下单，从 prompt 到打样没有断点。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">安装路径覆盖主流 agent，Claude Code、Codex、Cursor、Gemini CLI、Grok Build、Copilot、Cline、Goose、OpenCode、Windsurf、Zed 都有各自的命令；插件市场没收的那批用 skills CLI 装。典型场景：「给一块 100×60 的铝板四角加 M3 沉头孔，出 STEP」，agent 写建模代码、跑可制造性检查、把文件落在本地；打印前也可以先让它检查壁厚和悬垂。第一次启动要联网下载 CAD runtime，遥测默认开启，介意的话 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">uvx cadgen telemetry off</code> 关掉。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">采用数据在涨：GitHub 19,660 stars，PyPI 上 cadgen 周下载约 1.5 万。这类工具的用户基数本来就窄（机械、硬件工程师），这个下载量的密度不低。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Claude Code
+claude plugin marketplace add earthtojake/text-to-cad#latest
+claude plugin install text-to-cad@earthtojake
+
+# 没有插件市场的 agent 用 skills CLI
+npx skills add earthtojake/text-to-cad#latest
+
+# Claude Desktop 走 MCP（settings 里加 cadgen mcp 服务器）</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">text-to-cad（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">claude plugin install text-to-cad@earthtojake</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>本地 CAD 内核，STEP/GLB/STL/3MF + 可制造性检查 + 制造服务对接</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 19.7k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Zoo Text-to-CAD</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>云端 API / 网页</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>云端的 text-to-CAD，模型在服务器生成</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>商业服务</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">CadQuery</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install cadquery</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Python 脚本式 CAD 框架，面向人手写代码</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 5.9k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">build123d</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">pip install build123d</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>text-to-cad 的底层依赖，Python CAD 库</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 3.4k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">OpenSCAD</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>下载安装</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>老牌代码建模工具，面向人手写脚本</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 10.4k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">CadQuery 和 build123d 是给工程师写代码用的库，要让 agent 用还得自己写胶水层；Zoo 把生成放在云端，图纸要出网。text-to-cad 把本地几何内核、agent skill 和制造服务对接打包成一个插件，装完就是一个能出工程文件的 agent，这在同类里比较少见。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 19,660 · MIT · 🏪 PyPI 包 cadgen 周下载约 1.5 万 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/earthtojake/text-to-cad</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.texttocad.dev</span></code></p>
+
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">mattpocock/skills</p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">Matt Pocock 从自己 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">.agents</code> 目录整理的工程技能包，288,050 stars。安装走 Claude 官方插件市场（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">claude plugin install mattpocock-skills@claude-plugins-official</code>），自带更新。上周刚推过 Addy Osmani 的工程流程技能包，这个是同类里的另一个选择。</p>
+<p style="margin:4px 0 0 0;font-size:13px;color:#999999;line-height:1.8;text-align:left;"><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>https://github.com/mattpocock/skills</span></code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">smolvm</p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">可嵌入、可快照分叉的微型虚拟机，专门用来在本机安全跑 agent，Apache-2.0，6,700 stars。容器隔离在 agent 场景被诟病不少，MicroVM 方案本周在 HN 沙箱讨论里被反复点名，smolvm 是其中集成度较高的一个。</p>
+<p style="margin:4px 0 0 0;font-size:13px;color:#999999;line-height:1.8;text-align:left;"><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;"><span>https://github.com/smol-machines/smolvm</span></code></p>
+</section>
+</section>
