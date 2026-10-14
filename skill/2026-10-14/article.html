@@ -1,0 +1,153 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-14</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Matt Pocock 在 TypeScript 圈的名字不用多介绍：Total TypeScript 的作者，讲 TypeScript 讲了快十年。他把每天自己在用的 agent skills 原样导出成一个公开仓库，从 2 月建仓到 <strong style="color:#07c160;">289,774 stars</strong>。本周新增 <strong style="color:#07c160;">11,955</strong>，直接顶到 GitHub trending 第一。仓库开场只有一句话：My agent skills that I use every day to do real engineering - not vibe coding.</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">用 agent 写代码的人都在同一个坑里：代码写得越快，代码库烂得越快，而市面上的“流程框架”要么管得太宽，要么管得太少。这个仓库选了第三条路。</p>
+
+<p style="margin:0 0 14px 0;">![mattpocock/skills 仓库横幅](./mattpocock-skills-demo.png)</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">README 里 Matt 直接点了名：GSD、BMAD、Spec-Kit 这类流程框架想帮你，方式是接管你的流程，从需求到实现全走它的固定管道。用起来顺，但流程本身出问题时你没法从里面修，只能绕开它。他的判断是：流程一旦变成黑盒，调试流程的痛苦就超过了它省下的力气。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">所以他把方案反过来：技能做得小、可组合、随便改。整套技能基于他总结的四类失败模式，用 agent 写代码的人基本都撞见过：</p>
+
+<ul style="padding-left:24px;margin:8px 0 12px 0;line-height:2.0;">
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">Agent 做的不是你想要的</strong>：你以为说清楚了，看到结果才发现它理解的完全是另一回事。对策是让 agent 反过来拷问你——<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/grill-me</code> 和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/grill-with-docs</code> 会把你的设计树每个分支问到没有死角。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">Agent 太啰嗦</strong>：新 session 里它不懂你项目的术语，用 20 个词说 1 个词能说清的事。对策是共享语言：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">GLOSSARY.md</code> 术语表 + ADR，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/grill-with-docs</code> 顺手把这两样建起来。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">代码跑不起来</strong>：没有反馈回路，agent 在盲飞。对策是静态类型 + 浏览器访问 + 自动测试三件套，落到 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/tdd</code>（红-绿-重构）和 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/diagnosing-bugs</code>（分阶段诊断循环）两个技能上。</li>
+<li style="margin-bottom:6px;font-size:15px;color:#555;"><strong style="font-weight:bold;color:#000;">建成一坨泥球</strong>：agent 加速写代码，同时也在加速软件熵增。对策是把“每天关心设计”变成技能：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/improve-codebase-architecture</code> 扫描代码库里的“深化”机会，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/codebase-design</code> 提供深模块（小接口、多行为）的共享词汇。</li>
+</ul>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">整个仓库的设计只沿一条轴切开：<strong style="font-weight:bold;color:#000;">谁能调用这个技能</strong>。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">User-invoked 技能（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/grill-me</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/triage</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/to-tickets</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/implement-spec</code>）只有你手动敲命令才会跑，它们负责编排，决定这次任务走哪条流程。Model-invoked 技能（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/tdd</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/code-review</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/domain-modeling</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/research</code>）你敲或者 agent 判断任务合适时自动触发都行，它们承载可复用的纪律。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">一条硬规则把两者串起来：user-invoked 技能可以调用 model-invoked 技能，但永远不会调用另一个 user-invoked 技能。编排层不嵌套编排层，复杂度就不会指数级堆叠。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/grilling</code> 是这套设计里最典型的原语——<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/grill-me</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/grill-with-docs</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/triage</code>、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/wayfinder</code> 四个技能底层都是它在干活。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">另一条原则是<strong style="font-weight:bold;color:#000;">每一步都留证据</strong>。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/tdd</code> 要求先写红测试再修绿；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/diagnosing-bugs</code> 先构造能复现的反馈回路才允许改代码；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/code-review</code> 双轴并行审查——Standards（符不符合仓库规范，附 Fowler 坏味道基线）和 Spec（有没有忠实实现原始 issue），两个子 agent 各查各的、互不污染上下文。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">安装配置</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Claude Code 用户最省事，它上架了官方插件市场，一条命令，自动更新：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>claude plugin install mattpocock-skills@claude-plugins-official</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">其他 agent 各有对应入口（也支持 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx skills@latest add mattpocock/skills -a &lt;agent&gt;</code> 装可编辑副本到项目里）：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># Codex
+codex plugin marketplace add mattpocock/skills
+codex plugin add mattpocock-skills@mattpocock
+
+# GitHub Copilot CLI / VS Code
+copilot plugin marketplace add mattpocock/skills
+copilot plugin install mattpocock-skills@mattpocock
+
+# Gemini CLI
+gemini skills install https://github.com/mattpocock/skills.git --path skills/engineering
+gemini skills install https://github.com/mattpocock/skills.git --path skills/productivity</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">装完在每个仓库跑一次初始化，它会问你三件事：issue tracker 用哪个（GitHub、GitLab、本地文件、或者你描述的任意系统）、triage 用哪些标签、生成的文档存哪：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>/setup-matt-pocock-skills</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">plugin 和 skills.sh 两种方式只选一个，两个都装，每个技能会出现两份。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">使用指南</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景一：动手之前，先让 agent 把需求问清楚</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">接到一个模糊需求直接让 agent 开写，产出十有八九不是你脑子里那个东西。这个仓库里 Matt 自己标注“最受欢迎”的技能就是把这件事提前：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>/grill-with-docs 给订单系统加一个"部分退款"功能</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 开始连环追问：部分退款允许退几次？跨支付渠道吗？和优惠券叠加怎么算？退款中订单状态怎么流转？每个问题都落在一个还没定下来的设计分支上。追问过程中它同步维护两份产物：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">GLOSSARY.md</code>（把“部分退款”这类术语定义清楚，后续所有 session 都读它）和 ADR（把难以解释的决策记下来）。问完再动手，返工率会明显下降。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景二：写代码，让反馈回路盯着它</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/tdd</code> 把红-绿-重构焊死成流程：先写一个失败的测试，跑红，再写实现让它变绿，最后重构。它还给 agent 灌了不少“什么测试是坏测试”的判断标准，防止写出冻结实现细节的测试。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>/implement 按 #42 的 spec 实现，在约定接缝驱动 /tdd</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/implement</code> 会读 spec 或工单，在预先商量好的接缝处调用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/tdd</code>，收尾前自动跑 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/code-review</code> 再提交。遇到难啃的 bug 换 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/diagnosing-bugs</code>：先构造一个“能对这个 bug 变红”的反馈回路，最小化复现，立假设，埋点，修，补回归测试——六个阶段逐段过闸，不让 agent 跳步。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景三：定期给代码库做体检</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">agent 写代码的速度是人的好几倍，代码库变泥球的速度也是。Matt 建议每隔几天跑一次：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>/improve-codebase-architecture</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它扫描整个代码库找“深化”机会——哪些模块值得把更多行为藏到更小的接口后面、哪些接缝不干净，产出一份可视化 HTML 报告。你从候选里挑一个，它再切换到追问模式，把“怎么改”问清楚。注意它的定位是体检不是抢救：老代码库上它能找出真实的候选，但不会替你把泥球解开。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景四：大改造拆成决策地图</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">工作量超过单个 session 能装下的改造，用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/wayfinder</code> 规划：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>/wayfinder 把支付模块从 Stripe v2 API 迁移到 v3</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它把整个工程拆成一张“决策工单地图”发到 issue tracker 上，每个工单是一个待拍板的决策而不是一段代码。你和 agent 一次解决一个，等地图上所有决策点都清空，“怎么迁”本身就清晰了。落地阶段 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/implement-spec</code> 会按任务图的依赖关系，在所有“就绪前沿”上并行跑实现子 agent，最后一个 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/code-review</code> 收口。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/wizard</code> 给你生成交互式 bash 向导。</strong> 有些步骤只有人能执行——开通云服务、配 CI secret、走一遍第三方 dashboard。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/wizard</code> 把这些步骤生成一个带交互提示的 bash 脚本，人照着走，agent 在旁边等结果。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/handoff</code> 做会话交接压缩。</strong> 上下文快满时用它把当前对话压成一份交接文档，开到新 session 丢给另一个 agent 无缝续上，比 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/compact</code> 保留了更多任务上下文。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/retro</code> 让 agent 自己提出环境改进。</strong> 一个 session 结束后它按严重程度列出建议：常用的导航路径该加个快捷方式、某类错误应该加自动检查、编码规范里哪条该写进 steering 文件。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;"><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ask-matt</code> 是全域路由器。</strong> 不确定当前情况该用哪个技能，直接问它，它会在整个技能树上给你指路。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">常见踩坑</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">不跑 setup，一半技能是哑的。</strong> <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/triage</code> 依赖你配置好的标签体系，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">to-spec</code> 依赖 issue tracker 指向，这些都在 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/setup-matt-pocock-skills</code> 里配置。新仓库忘了跑，报错信息未必直观。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">grilling 技能会一直追问，这是故意的。</strong> 第一次用 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/grill-me</code> 会被问十几个问题，觉得烦很正常——它的设计目标就是“问到你烦”，因为每个没被问到的分支，都会在后面变成返工。问题回答得越具体，后面越省事。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">插件和 npx 安装别混用。</strong> plugin 版本是只读托管、自动更新；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx skills add</code> 是把可编辑文件拷进你的项目、手动更新。两个都装，每个技能出现两次，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">/</code> 菜单里会看到重名条目。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">mattpocock/skills（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">claude plugin install mattpocock-skills@claude-plugins-official</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>27 个技能双轨编排，强调可组合、可修改</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>日常开发全流程</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 289.8k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">pstack（Cursor 官方插件）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/add-plugin pstack</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>verification-first，22 个 playbook，多模型分派</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>Cursor 用户、agent 自动合并 PR</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 11.2k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">addyosmani/agent-skills</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">/plugin marketplace add addyosmani/agent-skills</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>25 个生命周期技能，反合理化表格</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>团队统一规范</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 106.2k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">ccpm</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>git clone + 软链接</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>GitHub Issues 当真相源，多 agent worktree 并行</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>多人协作的并行交付</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 8.4k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">pstack 是本仓库的“近亲”——它的作者 Lauren Tan 和 Matt Pocock 十月初一起做过访谈，两个仓库都在解决“让 agent 写出可验证的代码”，但路线不同：pstack 把验证流程焊得更死（专门的验证技能 + 多模型审查面板），偏 Cursor 生态；mattpocock/skills 更松散，每个技能都能单独拎出来用，也都能改。如果你已经在用 Claude Code、想要一套能自己动手改的工程纪律，今天这个更顺手。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 289,774 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/mattpocock/skills</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://aihero.dev/skills</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">这套技能适合所有用 coding agent 写真实项目的人，尤其是已经吃过“agent 写得快、代码烂得更快”苦头的团队。30 秒装好（一条命令 + 每仓库一次 setup），之后从需求追问、TDD 实现、诊断循环到架构体检、双轴审查，agent 的每个环节都会有人在旁边立规矩——而规矩本身是二十多个可读可改的纯文本文件，不满意随时改。</p>
+</section>
