@@ -1,0 +1,136 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-15</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">你看到一个 App 里的功能想搬进自己项目，对方没开源。以前只能手动开 Hopper 一层层扒，现在可以让 Agent 通过 REA 去查，拿回带证据链的结论，甚至帮你重建实现。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天推荐 morluto/rea，GitHub 当日顶流（<strong style="color:#07c160;">244,093 stars</strong> / 60,980 forks），npm 上月下载 237,204 次，当前版本 v6.5.0。它有个做法很对：每个结论都附证据和局限说明，“怎么知道的”和“知道了什么”一样清楚。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="margin:0 0 14px 0;">![REA 工作流演示](./rea-demo-1.png)</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">它解决什么问题</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">逆向工程一直是高门槛手艺活：装引擎、读汇编、追调用链，一个函数能耗掉一下午。LLM 出现后，大家试着让 Agent 直接“猜”闭源软件的行为，结果经常是编造 API 和调用关系，因为模型看不到机器码。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">REA 补的就是这一段。它把 Hopper、Ghidra、IDA、JADX、tshark 这些分析工具统一成一个 MCP server，让 Agent 能真正“看上”目标：反汇编、伪代码、符号、字符串、调用引用，全部以结构化结果返回。Agent 拿到的每条结论都有自己的出处。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">核心原理</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">REA 由两层组成：一个本地 MCP server，加一套安装到 Agent 里的工作流指令。流程走一圈：Agent 提出问题 → REA 调用分析引擎检查目标、追踪相关代码 → 把发现连同证据与“未知项”返回 → Agent 基于证据追问、解释行为、写实现并测试。CLI 命令走的是同一套工作流，所以你在终端里也能复现 Agent 的每一步。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">分析全程在本地跑，目标文件不上传（Agent 的模型提供商有自己的数据政策，这是另一回事）。静态分析（JS、.NET）只读取文件不运行程序；运行时捕获会以你的用户权限与目标交互，每份指南里都写明了副作用。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">引擎依赖分三档：深度原生分析需要 Hopper、Ghidra 或 IDA 之一，用你已有的安装即可；Go / Rust 二进制内置静态检查，不需要装对应工具链；JavaScript / Electron 和 .NET 的静态检查完全不需要逆向引擎，装完就能用。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">安装配置</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 一行命令完成 setup：注册 MCP server + 安装匹配的 Agent 工作流指令
+npx rea-agents setup</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">运行后选择你的 Agent（支持 Claude Code、Codex、Cursor、Gemini CLI 等），审查它提议的改动，批准，然后重启 Agent。已有配置会先备份。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">日常在终端用的话再装全局 CLI：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npm install --global rea-agents
+rea --help</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">环境要求：Node.js 22.x（&gt;=22.19）、24.x（&gt;=24.11）或 26+，加 npm。原生深度分析需要上面提到的商业或开源引擎，静态 JS/.NET 分析无此要求。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">使用指南</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景一：复刻一个 App 里的功能</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">官方 showcase 里的 Notion 案例：想搞清楚 Notion 的富剪贴板是怎么实现的。对 Agent 说：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>Understand how the clipboard bridge works in Notion, show me the evidence,
+and build a similar feature for my project.</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">REA 会从 renderer 的 clipboard API 追进 preload 脚本，再穿过 IPC 到主进程，把每一跳的代码和证据摆出来。Agent 据此解释机制，并在你的项目里写一个可测试的实现。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景二：还原遗留二进制的算法</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">DX-Ball 案例值得细看：Agent 跟随一个声像（sound-pan）调用，定位到 position-to-pan 辅助函数，读懂指令，把不完整的伪代码补成 C。重建实现通过了 3,205 个原始 x86 用例，并且完整复现了原编译函数的全部 63 字节。TH04 那个案例更硬核，从 PC-98 游戏的 16 位指令里还原出弹幕角度计算，和当年编译器输出逐字节对照。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">native 分析要配好引擎（Hopper / Ghidra / IDA），配置流程见官方 installation 文档，setup 也可以在你批准后替你装 Hopper。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景三：审计一个 Electron / JS 应用，不装逆向引擎</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">拿到一个来路不明的 Electron 应用或拆开的 ASAR，直接命令行跑：</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code>npx -y rea-agents@latest analyze-javascript-application /absolute/path/to/app --json</code></pre>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">返回模块、导入关系、Electron 边界和各自的证据。<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">--json</code> 输出适合脚本化，也可以直接让 Agent 据此回答“这个包到底干了什么”。这条路径不需要 Hopper/Ghidra/IDA，是上手成本最低的一种用法。</p>
+
+<p style="font-size: 17px; font-weight: bold; color: #222222; margin: 20px 0 10px 0;">场景四：协议与抓包分析</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">手上有 HAR、Fiddler SAZ 文件或 pcap 抓包，REA 能提取请求响应、暴露的载荷和来源位置，也能做包摘要（端点、DNS、TLS SNI、协议分布）。逆向一个 App 时，静态代码和网络流量互相佐证，结论更扎实。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">进阶技巧</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">CLI 与 Agent 共享同一工作流。</strong> 所有 MCP 工具都有对应 CLI 命令，可以在脚本、CI、批处理里跑，输出 JSON 便于流水线消费。Agent 会话里验证过的命令，原样拿到终端就能复现。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">读 Go / Rust 二进制的编译元数据。</strong> 不用装 Go 或 Rust 工具链，REA 内置静态检查能读出 Go 二进制的编译器版本、模块替换列表，以及 Rust cargo-auditable 标记的 crate 名称、版本和依赖图。供应链审查场景很实用。</p>
+
+<p style="margin:0 0 14px 0;">![REA 读取二进制编译元数据演示](./rea-demo-2.png)</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">常见踩坑</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Node 版本卡得比较严。</strong> 要求 22.19+ / 24.11+ / 26+，低于这个范围要先生级，<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">nvm use</code> 一下即可。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Hopper 首次运行可能弹 demo/license 选择框。</strong> 无人值守任务之前，先在同一个用户会话里手动过掉这个对话框，否则后台任务会挂住。IDA、Hopper、JEB 这类商业工具需要你自行合法获得授权，REA 不附带任何 license。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">Linux 下部分功能需要系统组件。</strong> Ghidra、JADX、固件工具的启动依赖 procps 兼容的 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">ps</code>，缺失时按官方 installation 文档的“Linux owned-process prerequisite”一节补装。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">遇 bug 先更新。</strong> 项目迭代极快，很多问题在新版本已修：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">rea update</code>，或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx rea-agents@latest setup</code> 刷新 Agent 侧配置后重启。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;"><strong style="font-weight:bold;color:#000;">大二进制超时。</strong> 引擎启动慢导致超时的话，调大 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">REA_GHIDRA_STARTUP_TIMEOUT_MS</code> 或 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">REA_HOPPER_STARTUP_TIMEOUT_MS</code>。</p>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类技能对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">REA（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx rea-agents setup</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>20+ 种目标的统一工作流，结论带证据链，内置 Agent 指令</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>复刻功能、还原算法、闭源应用审计</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 244k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">LaurieWired/GhidraMCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>手动注册 MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>只桥接 Ghidra 一个引擎，工具面窄</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>已有 Ghidra 深度工作流的人</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 11.3k</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">GitHub：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">https://github.com/LaurieWired/GhidraMCP</code></p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">cloudflare/security-audit-skill</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>手动装 skill</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>面向安全审计，产出漏洞结论</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>代码安全审计</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 29.6k</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">GitHub：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">https://github.com/cloudflare/security-audit-skill</code></p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">AlmogBaku/debug-skill</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>手动装 skill</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>给 Agent 接真调试器，断点单步</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">适用场景：</strong>调试自己能跑起来的代码</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 331</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">GitHub：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">https://github.com/AlmogBaku/debug-skill</code></p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">GhidraMCP 是“把引擎桥给 Agent”，REA 是“把逆向工作流给 Agent”：覆盖 20 多种目标类型，证据链和未知项都结构化返回，还自带 Agent 指令。代价是概念更多、配置面更宽，纯 Ghidra 用户可能觉得前者更顺手。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">REA 的官方定位是合法研究、教育、互操作性、软件保存，以及分析你自己拥有或获授权检查的软件。用它之前确认场景合规。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 9/10 · v6.5.0 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/morluto/rea</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://rea.tools/guides/</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">今日小结</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">如果你经常对着闭源软件好奇“这功能怎么实现的”，或者手上有一堆需要搞明白的二进制、APK、抓包，REA 是当前把这件事交给 Agent 做得最完整的一个。装它花一条命令和几分钟配置，静态 JS/.NET 分析甚至不需要逆向引擎就能跑起来；有 Hopper 或 Ghidra 的话，深度原生分析直接可用。</p>
+</section>
