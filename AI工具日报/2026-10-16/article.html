@@ -1,0 +1,205 @@
+<section style="max-width: 677px; margin: 0 auto; padding: 10px 0; font-size: 16px; line-height: 2.1; color: #333333; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;">
+<p style="text-align:left;font-size:18px;color:#07c160;margin:0 0 24px 0;font-weight:bold;letter-spacing:0.5px;">2026-10-16</p>
+
+<p style="margin:0 0 14px 0;">![今日三个工具速览](./summary.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">今天三个：一个把 agent 的输出从文本换成真正的界面；一个给逆向工程装上 209 个 MCP 工具；一个把 IntelliJ 的调试、Git、数据库、Gradle 一共 102 项能力交给任何 AI 助手。</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">OpenUI 1.0 — 生成式 UI 的开放标准，比 JSON 省 67% token</p>
+
+<p style="margin:0 0 14px 0;">![OpenUI 生成的 business health 仪表盘](./openui-demo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">Agent 的回复一直只有一种形态：文本。顶多富一点，是 Markdown。生成式 UI 想解决的就是这个断层：让模型直接生成界面。图表、表单、数据表、仪表盘，边生成边渲染。OpenUI 是这个方向里走得最"标准化"的一个，昨天（10 月 15 日）发布 1.0，仓库 11,061 星，MIT 协议。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">它的核心是 OpenUI Lang，一门为模型输出设计的紧凑流式语言。整个链路很短：定义或复用一个组件库，从组件库自动生成 system prompt，发给任意模型，模型流式吐回 OpenUI Lang 文本，客户端渲染器边收边渲染。模型能画的界面被组件库锁死：allowlist 即安全边界，模型想画一个不存在的组件，渲染层直接忽略。上面那张图就是官方组件库渲染出的 business health 仪表盘，整块界面全部由声明式文本流拼成。官方给的 token 账：OpenUI Lang 比等价的 JSON 生成省至多 <strong style="color:#07c160;">67% 的 token</strong>，在 60 tok/s 的模型上，一屏界面 4.9 秒拼完，用 JSON 输出的方案要 14.2 秒。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">1.0 的更新集中在表达能力：<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">defineFunction</code> 注册自定义函数（参数按组件 prop 规则校验，调用失败返回 null 而不是炸掉整页）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">library.extend</code> 从既有组件库派生新库（增删改组件、加函数和 action）、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">buildMessage</code>/<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">parseMessage</code> 给回复套一层 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">openui:</code> 消息格式以便存储重放。注意 runtime 覆盖：只有 React 的包升到了 1.0，Vue、Svelte、Angular 还停在 0.4。生态接口是它的另一半卖点：Vercel AI SDK 有官方 adapter（兼容 v6/v7，处理文本、tool call、多步执行），LangChain/LangGraph 走 AG-UI 通道，LangChain 官方文档已经把 OpenUI 和 CopilotKit、assistant-ui 并列为推荐前端集成。对编码 agent 还提供了 skill：一句 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">npx skills add thesysdev/skills --skill openui</code>，Claude Code、Codex、Cursor 就能直接照着 scaffold 生成式 UI 应用。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 一条命令起一个带流式生成式 UI 的聊天应用（Next.js + React）
+npx @openuidev/cli@latest create --name genui-chat-app
+
+# 给编码 agent 装 OpenUI skill：组件库设计、Lang 语法、prompt 生成、调试坏输出
+npx skills add thesysdev/skills --skill openui</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">OpenUI（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npx @openuidev/cli</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>流式 DSL，官方对比 token 消耗 1x，内置组件库和 chat UI</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费 MIT</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 11.1k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">CopilotKit</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm 包</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>完整 chat runtime + AG-UI 协议提出者，官方对比 token 消耗 4x</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费 MIT</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 38k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Vercel AI SDK</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong><code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:14px;">npm i ai</code></p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>TypeScript AI 工具包，generative UI 需要手动做工具到组件的映射</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 27.3k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">json-render</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm 包</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>Vercel Labs 出品，模型输出 JSON patch 渲染，官方对比 token 消耗 3x</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 18.7k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">Tambo</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>npm 包</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>React 生成式 UI 工具包，Zod schema 注册组件，自带后端</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费 MIT</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 11.2k</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">CopilotKit 星最多、生态最厚，但它是"完整 agent 前端框架"，从 chat runtime 到协议层全都做；OpenUI 只押注一件事：让模型用最省 token 的方式画出结构化界面。差别在数字上很直白，官方对比里 CopilotKit OpenGenUI 版路线 token 消耗是 4 倍、延迟约 20 秒，json-render 和 Google A2UI 都是 3 倍。要做数据仪表盘、日报报表这类"界面全是组件、结构固定"的产品，Token 预算 1x 的路线值得先试。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 11,061 · v1.0.0 · MIT · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/thesysdev/openui</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://www.openui.com</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">Ghidra MCP Server — 209 个工具，把反编译器交给 AI 逆向</p>
+
+<p style="margin:0 0 14px 0;">![装好 GhidraMCP 扩展后的 Tools 菜单](./ghidra-mcp-demo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">逆向工程的工作面是很枯燥的：在反编译器里一个函数一个函数读，认出来就改名、打注释、定结构体，重复几百遍。把这个过程交给 LLM 的前提是 AI 能用你的反编译器。Ghidra 的 MCP 实现已经有好几个，bethington 这个是目前工具面最全的：209 个 MCP 工具，README 里直言是竞品的 3 倍，而且读操作之外，命名、改类型、写注释、建结构体、执行脚本、P-code 模拟、实时调试这些写操作也一应俱全。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">架构是两件套：一个跑在 Ghidra 里的 Java 扩展（GhidraMCPPlugin，监听 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">127.0.0.1:8089</code>），加一个 Python 桥（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">bridge-mcp-ghidra</code>），MCP 客户端拉起桥进程，桥把每次工具调用代理给扩展。除常规的反编译/导航/交叉引用之外，真正拉开差距的是三样。一是 P-code 模拟和 PCode-graph 数据流分析，能驱动 Ghidra 的仿真引擎跑指令流。二是批量操作：一次调用处理整批函数，官方口径减少 <strong style="color:#07c160;">93% 的 API 调用</strong>。三是跨二进制文档转移，用 SHA-256 函数哈希匹配，把 v1 上人工整理的注释和命名自动迁移到打补丁后的 v2，同一个函数只需要标注一次。配套还有一批实战打磨的 AI 工作流 prompt：文档化流程 V5、匈牙利命名法参考、孤儿代码发现指南。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">上面那张截图是装完扩展后的样子：Ghidra 的 Tools 菜单里多出一个 GhidraMCP 子菜单。版本耦合是硬约束：7.x 扩展只加载在编译时的 Ghidra 12.1.4 + Java 21 上；带 tag 的 release（7.0.0、7.1.0）是稳定版，main 和 rc 是 beta，dev 分支工具名随便改，别在其上搭自动化。所有通信走回环地址，扩展不访问外部服务，恶意样本分析场景没有额外外联风险。Windows 用户记一个坑：MCP 客户端要用桥的绝对路径配置 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">command</code>，GUI 启动的客户端看不到 shell 的 PATH，写裸命令名会 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">spawn ENOENT</code>。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 前提：Ghidra 12.1.4、Java 21、uv
+# 1. Ghidra 里装扩展：File > Install Extensions → + → 选 GhidraMCP-&lt;version&gt;.zip → 重启
+# 2. 启用插件：File > Configure > Utility > Configure → 勾选 GhidraMCPPlugin
+curl http://127.0.0.1:8089/check_connection
+# → {"status": "ok", "server_kind": "gui", "version": "7.0.0"}
+
+# 3. 从 Releases 复制 bridge wheel 的链接安装
+uv tool install https://github.com/bethington/ghidra-mcp/releases/download/v7.0.0/ghidra_mcp_bridge-7.0.0-py3-none-any.whl
+
+# 4. MCP 客户端配置（Windows 用绝对路径，注意双反斜杠）
+# {"mcpServers": {"ghidra-mcp": {"command": "C:\\Users\\&lt;you&gt;\\.local\\bin\\bridge-mcp-ghidra.exe"}}}
+
+# 也提供 Docker 部署和无 GUI 的 headless server 模式，适合跑批量分析流水线</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">bethington/ghidra-mcp（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Ghidra 扩展 + uv wheel</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>209 工具、P-code 模拟、批量操作、跨二进制文档转移、headless/Docker</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费 Apache-2.0</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 5.6k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">LaurieWired/GhidraMCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>Ghidra 扩展 + uvx</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>最早出圈的 Ghidra MCP，引用最多，以读操作和基础改名为主</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费 Apache-2.0</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 11.3k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">ida-pro-mcp</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>pip + IDA 插件</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>IDA Pro 生态，功能强，但绑定商业授权</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>需 IDA Pro 授权</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⭐ 12.9k</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">x64dbg-MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>x64dbg 插件</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>动态调试路线，覆盖运行时行为而非静态反编译</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>开源免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">LaurieWired 版和 ida-pro-mcp 星都更多，选型的分野在"AI 干多少活"：前者适合问答式辅助，问"这个函数在干嘛"，AI 读给你听；后者绑定 IDA Pro 的付费授权，且 IDA 的 MCP 工具面普遍停留在只读加少量编辑。要把"整理一百个函数"这种体力活整体外包给 AI（批量改名、批量注释、编译版本之间的文档迁移），目前只有这个 209 工具的实现撑得起流程。手上如果正好有一批等着做标注的样本，我会选它，能省掉大部分体力活。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>⭐ 5,621 · v7.0.0 · Apache-2.0 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/bethington/ghidra-mcp</span></code></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">MCP Server AI Companion — IntelliJ 的 102 项能力，全部交给 AI 助手</p>
+
+<p style="margin:0 0 14px 0;">![MCP Companion 调用监控面板](./mcp-companion-demo.png)</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">编码 agent 跑在 IDE 外面，盲区一大片：编译错误在 Build 窗口里、测试结果在 Test 窗口里、断点暂停时变量在 Debugger 里，Git 状态要看 VCS 面板，SQL 结果在 Database 窗口。它要修编译错误，只能猜你改了哪行；要看测试挂了什么，只能自己重跑。这个 JetBrains 插件把 IDE 的这些状态和能力整理成 <strong style="color:#07c160;">102 个 MCP 工具</strong>全部暴露出去，任何兼容 MCP 的助手（Claude、Claude Code、Copilot、Codex、Cursor、Windsurf）接上就能看到你 IDE 里正在发生什么。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">102 个工具的分布：编辑器与导航（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">get_open_editors</code> 返回打开的文件、光标位置、选中内容；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">highlight_text</code> 用 IDE 的高亮色标出多处代码；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">show_diff</code> 调起 IntelliJ 原生 diff 查看器对比提案）;构建与测试（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">get_build_output</code> 返回结构化的错误树而不是纯文本；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">get_test_results</code> 带通过/失败状态和堆栈；<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">send_to_terminal</code> 支持 <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">waitForIdle=true</code>，等输出稳定再返回）;调试（条件断点增删改、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">debug_run_configuration</code> 启动调试、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">get_debug_variables</code> 在断点处直接读局部变量）;代码分析（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">run_inspections</code> 对整个项目跑检查、<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">get_quick_fixes</code> + <code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">apply_quick_fix</code> 拿修复建议并应用）;数据库（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">execute_database_query</code> 返回 JSON 结果，UPDATE/DELETE/DROP 前要确认）;Gradle（任务列表、依赖树、refresh）;以及最大的一块 VCS——30 多个 git 操作：blame、文件历史、跨分支 diff、stash、branch 管理、rebase、cherry-pick、merge 冲突列表、甚至 IntelliJ 的本地历史（<code style="background-color:#f5f5f5;color:#e91e63;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:15px;">get_local_history</code>，Git 之外那层自动快照）。GitHub PR 和 GitLab MR 也有一整组工具，从列表、详情、评论、diff 到创建、合并、请求 review，不用装 gh / glab CLI。</p>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">上面那张图是它的监控面板（MCP Companion Monitoring），也是同类插件里少见的设计：AI 每次工具调用都会列出时间戳、耗时、完整 JSON 参数和响应内容，连其他 MCP 插件的调用也以灰色显示进来。出了"这个改动是谁动的"的疑问时，翻这个面板比翻日志直观。工具粒度可配置——Settings → Tools → MCP Server Companion 里每一项都能单独开关；带副作用的操作（终端执行、数据库写、commit/push、删分支）都有确认门。典型对话像这样："检查编译错误并修复"、"跑测试，告诉我哪个挂了、为什么"、"在 18 行加个断点，启动调试，跑到 i==3 时告诉我 jj 的值"、"把改过的文件 stage 起来，根据 diff 写 commit message 然后 push"。</p>
+
+<pre style="background-color: #282c34; color: #abb2bf; border-radius: 8px; padding: 16px; font-family: Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0 0 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"><code># 安装：JetBrains IDE → Settings → Plugins → Marketplace 搜索 "MCP Server AI Companion"
+# 安装后重启 IDE，Settings → Tools → MCP Server Companion 里逐项配置工具开关
+# 再按插件说明把 MCP 端点接入你的 AI 客户端（Claude / Copilot / Codex / Cursor / Windsurf 任意）</code></pre>
+
+<p style="font-size: 18px; font-weight: bold; color: #222222; margin: 22px 0 12px 0;">同类工具对比</p>
+
+<section style="margin:20px 0;">
+<section style="background-color:#f0f9eb;border:1px solid #c8e6c9;border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+<p style="margin:0 0 10px 0;font-size:16px;font-weight:bold;color:#07c160;">MCP Server AI Companion（今日推荐）</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>JetBrains 插件市场</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>102 工具：调试变量、测试结果、30+ Git 操作、数据库、Gradle、PR/MR，带调用监控面板</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#555;line-height:1.8;"><strong style="color:#333;">热度：</strong>🏪 8,035 下载</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">IDE Index MCP Server</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>JetBrains 插件市场</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>把 IDE 的索引、符号和重构交给 agent，聚焦代码理解</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:10px;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">VS Code MCP</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>VS Code 插件市场</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>同类思路的 VS Code 原版，但只支持 macOS/Linux，安装量三位数</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>⬇ 160</p>
+</section>
+<section style="background-color:#fafafa;border:1px solid #eee;border-radius:8px;padding:14px 18px;margin-bottom:0;">
+<p style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">MCP Servers for AI Assistants</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">安装方式：</strong>JetBrains 插件市场</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">核心特点：</strong>统一管理多个 MCP server 的配置控制台，本身不提供 IDE 能力</p>
+<p style="margin:0 0 4px 0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">价格：</strong>免费</p>
+<p style="margin:0;font-size:14px;color:#666;line-height:1.8;"><strong style="color:#333;">热度：</strong>—</p>
+</section>
+</section>
+
+<p style="font-size:16px;color:#333;line-height:2.1;letter-spacing:0.5px;margin:0 0 1.4em 0;text-indent:2em;">VS Code 侧的同类扩展（VS Code MCP、Smart Context MCP）安装量还停在几百，且平台限制多；JetBrains 官方系的 IDE 能力 MCP 也大多聚焦索引和重构，调试变量、测试结果、数据库这几块基本没人覆盖。这个插件的独有价值是把"调试会话"和"VCS 全操作"也给了 AI：agent 可以自己起调试器、自己读断点变量、自己走完 stage→commit→push。这组能力目前是 JetBrains 生态里覆盖最全的。</p>
+
+<p style="font-size:14px;color:#999999;margin:0 0 14px 0;letter-spacing:0.3px;text-align:left;"><span>🏪 JetBrains Marketplace · ⬇ 8,035 次下载 · </span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://plugins.jetbrains.com/plugin/31060-mcp-server-ai-companion</span></code><span>&nbsp;·&nbsp;</span><code style="background-color:#f5f5f5;color:#666666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;"><span>https://github.com/maximehamm/mcp-intellij-all</span></code></p>
+
+<p style="text-align: center; margin: 32px 0; color: #07c160; letter-spacing: 8px; font-size: 12px;">··· ◆ ···</p>
+
+<p style="font-size:22px;font-weight:bold;color:#000;margin:32px 0 14px 0;padding-left:14px;border-left:5px solid #07c160;line-height:1.5;">其他值得关注</p>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">cli-printing-press <span style="font-size:13px;font-weight:normal;color:#999999;">⭐ 4.8k</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">读官方 API 文档、研究所有流行的社区 CLI 和 MCP 实现，然后"印刷"出一套三件套：token 高效的 Go CLI + Claude Code skill + MCP server。产出的 CLI 自带 SQLite 本地镜像（常见查询 50ms）和 API 本身答不了的复合命令。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">curl -fsSL https://raw.githubusercontent.com/mvanhorn/cli-printing-press/main/scripts/install.sh | bash</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">ghx <span style="font-size:13px;font-weight:normal;color:#999999;">⭐ 106</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">GitHub CLI 的缓存代理：允许列表里的只读命令（<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">gh pr list</code>、<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">gh issue view</code>）走缓存 0.1 秒返回，singleflight 把 10 个 agent 的并发请求合并成 1 次 GitHub API 调用，直接治 agent 场景的 rate limit。装完自动放一个 <code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">gh</code> shim 到 PATH，agent 零配置透明走缓存。Windows 有预编译。<code style="background-color:#f5f5f5;color:#666;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px;">brew install brunoborges/tap/ghx</code></p>
+</section>
+
+<section style="margin:0 0 14px 0;">
+<p style="margin:0 0 4px 0;font-size:17px;font-weight:bold;color:#222222;">toolport <span style="font-size:13px;font-weight:normal;color:#999999;">⭐ 228</span></p>
+<p style="margin:0;font-size:15px;color:#666666;line-height:2.0;">本地优先的 MCP 网关：所有 MCP server 收进一个端口，工具懒加载（官方口径省约 90% 的上下文 token），带工具完整性校验和疑似工具隔离，密钥存操作系统钥匙串。</p>
+</section>
+
+</section>
